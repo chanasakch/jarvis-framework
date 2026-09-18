@@ -1,0 +1,88 @@
+name: bugfix
+id_prefix: BUG
+description: Defect fix, not urgent; regression evidence mandatory.
+
+phases:
+  - id: intake
+    owner: orchestrator
+    outputs: [intake.md]
+    template: [intake.md]
+    checklist: intake.md
+
+  - id: investigation
+    agent: jarvis-investigator
+    mode: bug
+    requires: [intake]
+    inputs: [intake.md]
+    outputs: [investigation.md]
+    template: [investigation.md]
+    checklist: investigation.md
+    standards: [documentation.md, coding-go.md, logging.md]
+
+  - id: plan
+    agent: jarvis-planner
+    requires: [investigation]
+    inputs: [investigation.md]
+    outputs: [plan.md]
+    template: [plan.md]
+    checklist: plan.md
+    standards: [structure.md, testing.md]
+
+  - id: implement
+    agents: { backend: jarvis-dev-backend, frontend: jarvis-dev-frontend }
+    loop: per_task
+    requires: [plan]
+    inputs: [plan.md, investigation.md]
+    outputs: [impl-log.md]
+    template: [impl-log.md]
+    checklist: implement.md
+    standards: [structure.md, coding-go.md, coding-react.md, api.md, database.md, caching.md, error-handling.md, logging.md, security.md, performance.md, testing.md]
+    deterministic_checks: [backend.format, backend.lint, backend.test, frontend.lint, frontend.typecheck, frontend.test, jarvis_lint]
+
+  - id: test
+    agent: jarvis-tester
+    mode: regression
+    requires: [implement]
+    inputs: [investigation.md, plan.md]
+    outputs: [test-plan.md, test-report.md]
+    template: [test-plan.md, test-report.md]
+    checklist: test.md
+    standards: [testing.md, security.md, performance.md]
+    deterministic_checks: [backend.test, frontend.test]
+
+  - id: review
+    agents: [jarvis-review-standards, jarvis-review-performance, jarvis-review-security, jarvis-review-database]
+    parallel: true
+    blocking_reviewers: all
+    on_fail: implement
+    requires: [test]
+    inputs: [investigation.md, plan.md, test-report.md]
+    outputs: [review/standards.md, review/performance.md, review/security.md, review/database.md, review-report.md]
+    template: [review-report.md]
+    checklist: review.md
+    reviewer_standards:
+      standards: [structure.md, coding-go.md, coding-react.md, error-handling.md, logging.md, testing.md]
+      performance: [performance.md, caching.md, coding-go.md, coding-react.md]
+      security: [security.md, error-handling.md, logging.md, api.md]
+      database: [database.md, caching.md, performance.md]
+
+  - id: qa
+    agent: jarvis-qa
+    requires: [review]
+    inputs: [investigation.md, test-plan.md, test-report.md, review-report.md]
+    outputs: [qa-report.md]
+    template: [qa-report.md]
+    checklist: qa.md
+    standards: [testing.md, documentation.md]
+
+  - id: release
+    agent: jarvis-release
+    requires: [qa]
+    inputs: [investigation.md, qa-report.md, review-report.md]
+    outputs: [release-notes.md]
+    conditional_outputs:
+      has_db_change: [runbook.md]
+    template: [release-notes.md, runbook.md]
+    checklist: release.md
+    standards: [git.md, documentation.md]
+    approval: human

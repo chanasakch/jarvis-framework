@@ -1,0 +1,101 @@
+name: performance
+id_prefix: PERF
+description: Measurable speed or resource improvement; before/after evidence mandatory.
+
+phases:
+  - id: intake
+    owner: orchestrator
+    outputs: [intake.md]
+    template: [intake.md]
+    checklist: intake.md
+
+  - id: investigation
+    agent: jarvis-investigator
+    mode: baseline
+    requires: [intake]
+    inputs: [intake.md]
+    outputs: [investigation.md]
+    template: [investigation.md]
+    checklist: investigation.md
+    standards: [documentation.md, performance.md, database.md, caching.md]
+
+  - id: architecture
+    agent: jarvis-architect
+    mode: lite
+    requires: [investigation]
+    inputs: [investigation.md]
+    outputs: [tech-spec.md, api-contract.yaml]
+    conditional_outputs:
+      has_db_change: [migration-plan.md]
+    template: [tech-spec.md, adr.md, migration-plan.md]
+    checklist: architecture.md
+    standards: [structure.md, api.md, database.md, caching.md, security.md, error-handling.md, logging.md, performance.md, documentation.md]
+    approval: human
+
+  - id: plan
+    agent: jarvis-planner
+    requires: [architecture]
+    inputs: [tech-spec.md, investigation.md]
+    outputs: [plan.md]
+    template: [plan.md]
+    checklist: plan.md
+    standards: [structure.md, testing.md]
+
+  - id: implement
+    agents: { backend: jarvis-dev-backend, frontend: jarvis-dev-frontend }
+    loop: per_task
+    requires: [plan]
+    inputs: [plan.md, tech-spec.md, investigation.md]
+    outputs: [impl-log.md]
+    template: [impl-log.md]
+    checklist: implement.md
+    standards: [structure.md, coding-go.md, coding-react.md, api.md, database.md, caching.md, error-handling.md, logging.md, security.md, performance.md, testing.md]
+    deterministic_checks: [backend.format, backend.lint, backend.test, frontend.lint, frontend.typecheck, frontend.test, jarvis_lint]
+
+  - id: test
+    agent: jarvis-tester
+    mode: benchmark
+    requires: [implement]
+    inputs: [investigation.md, tech-spec.md, plan.md]
+    outputs: [test-plan.md, test-report.md]
+    template: [test-plan.md, test-report.md]
+    checklist: test.md
+    standards: [testing.md, security.md, performance.md]
+    deterministic_checks: [backend.test, frontend.test]
+
+  - id: review
+    agents: [jarvis-review-standards, jarvis-review-performance, jarvis-review-security, jarvis-review-database]
+    parallel: true
+    blocking_reviewers: all
+    on_fail: implement
+    requires: [test]
+    inputs: [tech-spec.md, investigation.md, test-report.md]
+    outputs: [review/standards.md, review/performance.md, review/security.md, review/database.md, review-report.md]
+    template: [review-report.md]
+    checklist: review.md
+    reviewer_standards:
+      standards: [structure.md, coding-go.md, coding-react.md, error-handling.md, logging.md, testing.md]
+      performance: [performance.md, caching.md, coding-go.md, coding-react.md]
+      security: [security.md, error-handling.md, logging.md, api.md]
+      database: [database.md, caching.md, performance.md]
+
+  - id: qa
+    agent: jarvis-qa
+    requires: [review]
+    inputs: [investigation.md, tech-spec.md, test-report.md, review-report.md]
+    outputs: [qa-report.md]
+    template: [qa-report.md]
+    checklist: qa.md
+    standards: [testing.md, documentation.md]
+
+  - id: release
+    agent: jarvis-release
+    requires: [qa]
+    inputs: [tech-spec.md, qa-report.md, review-report.md]
+    outputs: [release-notes.md]
+    conditional_outputs:
+      has_db_change: [runbook.md]
+    template: [release-notes.md, runbook.md]
+    checklist: release.md
+    standards: [git.md, documentation.md]
+    approval: none
