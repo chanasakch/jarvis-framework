@@ -46,3 +46,7 @@ Format: decision · options considered · reason.
 ## D-008 — `.claude/settings.json` is written last
 - **Decision:** Hooks are installed only after every other framework file exists (operator instruction).
 - **Reason:** G1 blocks writes under `.claude/` and `.jarvis/core|scripts`, which would block the rest of the build. `JARVIS_DEV=1` is the documented bypass for framework development.
+
+## D-009 — `MultiEdit` removed from the dev agents' tool lists
+- **Decision:** `jarvis-dev-backend`, `jarvis-dev-frontend` and `jarvis-tester` declare `Read, Write, Edit, Glob, Grep, Bash` instead of the spec's list that includes `MultiEdit`.
+- **Reason:** `MultiEdit` is no longer a distinct Claude Code tool (same source as D-006); `Edit` covers it. Declaring a non-existent tool grants nothing and risks a load error.
