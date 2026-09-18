@@ -1,0 +1,61 @@
+name: jarvis
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  gate:
+    name: Jarvis gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # `ci --base` needs history to find the merge-base
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Jarvis script dependency
+        run: cd .jarvis && npm install --no-audit --no-fund
+
+      # Fails the PR when the branch's work item has a phase that is not
+      # approved/passed/forced/skipped, when a lint rule is violated, or when the
+      # error registry is invalid.
+      - name: Jarvis CI gate
+        run: node .jarvis/scripts/jarvis.js ci --base origin/main
+
+      - name: Framework consistency
+        run: node .jarvis/scripts/audit.js
+
+      - name: Jarvis script tests
+        run: node --test ".jarvis/scripts/test/*.test.js"
+
+  backend:
+    name: Backend checks
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('apps/api/go.mod') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.22' }
+      - run: cd apps/api && gofmt -l . | tee /dev/stderr | (! read)
+      - uses: golangci/golangci-lint-action@v6
+        with: { working-directory: apps/api }
+      - run: cd apps/api && go test -race -cover ./...
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest && cd apps/api && govulncheck ./...
+
+  frontend:
+    name: Frontend checks
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('apps/web/package.json') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+      - run: npm ci
+      - run: npm run -w apps/web lint
+      - run: npm run -w apps/web typecheck
+      - run: npm run -w apps/web test -- --run --coverage
+      - run: npm audit --omit=dev --audit-level=high

@@ -1,0 +1,23 @@
+name: spike
+id_prefix: SPK
+description: >
+  Time-boxed research. Ends after investigation - no production code, no implement phase.
+  Outputs spike-report.md plus an ADR draft; follow-up work items are created separately
+  with `jarvis.js new`.
+
+phases:
+  - id: intake
+    owner: orchestrator
+    outputs: [intake.md]
+    template: [intake.md]
+    checklist: intake.md
+
+  - id: investigation
+    agent: {{name}}-investigator
+    mode: spike
+    requires: [intake]
+    inputs: [intake.md]
+    outputs: [spike-report.md]
+    template: [spike-report.md, adr.md]
+    checklist: investigation.md
+    standards: [documentation.md]

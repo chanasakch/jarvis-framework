@@ -68,3 +68,17 @@ Format: decision · options considered · reason.
 ## D-013 — `docs/architecture/query-index-matrix.md` ships seeded
 - **Decision:** Commit the matrix with its header, evidence format and Active/Proposed/Retired sections rather than leaving `/jarvis-init` to scaffold it.
 - **Reason:** Four standards files, three agents and a checklist item reference this path. An absent file makes those references dead on day one, and the architect would invent its own column layout.
+
+## D-014 — `{{name}}` templatizes the user-facing prefix only
+- **Decision:** `init --name <x>` renames slash commands, agent names, the npm script and `jarvis.name` in the config. It does **not** rename `.jarvis/`, `jarvis.config.yaml`, `jarvis.js` or the `jarvis-ignore` lint pragma.
+- **Options:** (a) blanket replace every occurrence of "jarvis"; (b) rename the user-facing prefix only.
+- **Reason:** `jarvis.config.yaml` itself documents `name` as "prefix for commands/agents". A blanket replace rewrote `jarvis-ignore` inside a regex literal and `scripts/jarvis.js` inside paths, which silently broke lint suppressions in a renamed install — caught by running the full suite inside a test install.
+
+## D-015 — `guard.js` reads the command prefix from the config
+- **Decision:** G2 builds its human-only-command regex from `jarvis.name` instead of the literal string `jarvis`.
+- **Reason:** A renamed install runs `npm run -s ops -- approve`, which a hardcoded regex did not match — Claude could have approved its own work in any renamed install. Covered by a regression test.
+
+## D-016 — `upgrade` reports unknown framework files instead of deleting them
+- **Decision:** Files under `.claude/agents`, `.claude/commands` and `.jarvis/core` that the new version does not ship are listed as `?` and left in place.
+- **Options:** (a) delete for a clean tree; (b) report.
+- **Reason:** A team may add its own agent or command next to the shipped ones. Deleting someone's work during an upgrade is not recoverable from inside the tool.

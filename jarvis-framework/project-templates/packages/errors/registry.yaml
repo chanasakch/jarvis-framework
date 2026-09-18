@@ -1,0 +1,51 @@
+# Error code registry — the single source of truth for every error a client can receive.
+# Rules: .jarvis/standards/error-handling.md
+#   code        internal, unique, UPPER_SNAKE — never sent to a client
+#   public      safe key returned to the client; default is bmsg_error
+#   http        HTTP status the response middleware writes
+#   level       log level used when this error is logged at the boundary
+#   description what happened, for humans reading the registry
+# Adding a code: append here, run `npm run gen:errors`, commit the generated files.
+# Codes are never deleted — mark them deprecated in the description instead.
+
+- code: INTERNAL_ERROR
+  public: bmsg_error
+  http: 500
+  level: error
+  description: Unexpected failure; the cause is logged, never returned
+
+- code: VALIDATION_FAILED
+  public: bmsg_validation_error
+  http: 400
+  level: info
+  description: Request failed input validation; response carries a fields array
+
+- code: UNAUTHORIZED
+  public: bmsg_unauthorized
+  http: 401
+  level: warn
+  description: Missing, expired or invalid credentials
+
+- code: FORBIDDEN
+  public: bmsg_forbidden
+  http: 403
+  level: warn
+  description: Authenticated but not permitted to access this resource
+
+- code: NOT_FOUND
+  public: bmsg_not_found
+  http: 404
+  level: info
+  description: Resource does not exist or is not visible to this caller
+
+- code: CONFLICT
+  public: bmsg_conflict
+  http: 409
+  level: info
+  description: State conflict, such as a duplicate key or a stale version
+
+- code: RATE_LIMITED
+  public: bmsg_rate_limited
+  http: 429
+  level: warn
+  description: Caller exceeded the rate limit for this endpoint

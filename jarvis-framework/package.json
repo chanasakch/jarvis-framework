@@ -1,0 +1,10 @@
+{
+  "name": "jarvis-framework",
+  "version": "1.0.0",
+  "description": "AI-driven SDLC framework for Claude Code: specialist subagents, three-layer gates, hook-enforced rules",
+  "bin": { "jarvis-framework": "bin/cli.js" },
+  "files": ["bin", "framework", "project-templates", "VERSION", "README.md"],
+  "engines": { "node": ">=18" },
+  "license": "MIT",
+  "private": true
+}

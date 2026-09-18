@@ -1,0 +1,68 @@
+jarvis:
+  version: 1.0.0
+  name: {{name}}                  # prefix for commands/agents; set by installer
+  doc_language: en
+
+project:
+  name: my-project
+  monorepo: true
+  paths:
+    docs: docs/work
+    adr: docs/adr
+    web: apps/web
+    api: apps/api
+    packages: packages
+    error_registry: packages/errors/registry.yaml
+    migrations_mysql: apps/api/migrations/mysql
+    migrations_mongo: apps/api/migrations/mongo
+    openapi: apps/api/api/openapi.yaml
+  stack:
+    frontend: "React 18, TypeScript (strict), Vite, TanStack Query, Zod"
+    backend: "Go 1.22+, slog, go-playground/validator"
+    databases: ["MySQL 8", "MongoDB 7"]
+    cache: "Redis"
+
+gates:
+  strictness: high              # every Blocking checklist item must pass
+  max_retries: 3
+  human_approval: [requirements, ux, architecture, release]
+  allow_force: true
+  force_requires_reason: true
+  non_forceable:                # need --accept-risk in addition to --reason
+    - review.security.critical
+    - qa.acceptance_failed
+  source_guard: true            # block source edits outside implement/test phases
+
+review:
+  block_on: [critical, major]
+  reviewers: [standards, performance, security, database]
+
+quality:
+  coverage_min: { backend: 80, frontend: 70 }
+  perf_budget: { api_p95_ms: 200, web_lcp_ms: 2500 }
+  max_task_loc: 300
+
+commands:
+  backend:
+    format: "cd apps/api && gofmt -l ."
+    lint: "cd apps/api && golangci-lint run ./..."
+    test: "cd apps/api && go test -race -cover ./..."
+    vuln: "cd apps/api && govulncheck ./..."
+  frontend:
+    lint: "npm run -w apps/web lint"
+    typecheck: "npm run -w apps/web typecheck"
+    test: "npm run -w apps/web test -- --run --coverage"
+    audit: "npm audit --omit=dev --audit-level=high"
+  jarvis_lint: "node .jarvis/scripts/jarvis.js lint --changed"
+
+models:                         # applied to agent frontmatter by installer
+  default: inherit
+  overrides:
+    {{name}}-gatekeeper: opus
+    {{name}}-architect: opus
+    {{name}}-review-security: opus
+    {{name}}-release: haiku
+
+team:
+  record_git_user: true
+  state_in_git: true

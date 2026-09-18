@@ -1,0 +1,22 @@
+# Jarvis: the files below encode team standards and the framework contract.
+# A change to any of them needs a review from the owning group, not just any approver.
+# Replace the placeholder teams with real ones before enabling branch protection.
+
+# Team standards — relaxing a rule requires an ADR in docs/adr/ referencing the rule ID.
+/.jarvis/standards/                 @your-org/tech-leads
+
+# Framework-owned: normally replaced by `jarvis-framework upgrade`, not edited by hand.
+/.jarvis/core/                      @your-org/tech-leads
+/.jarvis/scripts/                   @your-org/tech-leads
+/.claude/agents/                    @your-org/tech-leads
+/.claude/commands/                  @your-org/tech-leads
+/.claude/settings.json              @your-org/tech-leads
+
+# Error contract: a public key change is a breaking API change for every client.
+/packages/errors/registry.yaml      @your-org/tech-leads @your-org/frontend
+
+# Gate configuration: who may weaken a gate.
+/jarvis.config.yaml                 @your-org/tech-leads
+
+# Index evidence.
+/docs/architecture/query-index-matrix.md  @your-org/tech-leads @your-org/dba

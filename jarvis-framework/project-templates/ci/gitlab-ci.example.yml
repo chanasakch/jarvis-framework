@@ -1,0 +1,48 @@
+# GitLab CI equivalent of .github/workflows/jarvis.yml.
+# Copy into .gitlab-ci.yml, or `include:` it from one.
+
+stages: [gate, checks]
+
+variables:
+  GIT_DEPTH: "0"          # `ci --base` needs history to find the merge-base
+
+jarvis:gate:
+  stage: gate
+  image: node:20
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  before_script:
+    - git fetch origin main
+    - cd .jarvis && npm install --no-audit --no-fund && cd ..
+  script:
+    # Fails the MR when a phase is not approved/passed/forced/skipped, a lint rule
+    # is violated, or the error registry is invalid.
+    - node .jarvis/scripts/jarvis.js ci --base origin/main
+    - node .jarvis/scripts/audit.js
+    - node --test ".jarvis/scripts/test/*.test.js"
+
+backend:checks:
+  stage: checks
+  image: golang:1.22
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      exists: [apps/api/go.mod]
+  script:
+    - cd apps/api
+    - test -z "$(gofmt -l .)"
+    - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && golangci-lint run ./...
+    - go test -race -cover ./...
+    - go install golang.org/x/vuln/cmd/govulncheck@latest && govulncheck ./...
+
+frontend:checks:
+  stage: checks
+  image: node:20
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      exists: [apps/web/package.json]
+  script:
+    - npm ci
+    - npm run -w apps/web lint
+    - npm run -w apps/web typecheck
+    - npm run -w apps/web test -- --run --coverage
+    - npm audit --omit=dev --audit-level=high

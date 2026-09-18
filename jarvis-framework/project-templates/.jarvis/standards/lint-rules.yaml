@@ -1,0 +1,133 @@
+# Jarvis lint rules — machine-checkable subset of .jarvis/standards/*.md
+# Run: node .jarvis/scripts/jarvis.js lint [--changed] [--path <glob>]
+#
+# Schema per rule:
+#   id        Rule ID from the standards file that defines it (the full rule lives there).
+#   desc      One line, shown in the finding.
+#   paths     Glob list the rule applies to. Supports **, *, ? and {a,b} braces.
+#   exclude   Optional glob list subtracted from paths.
+#   pattern   JavaScript RegExp source, matched per line. Case flags go inside the pattern: (?i) is
+#             translated to the 'i' flag by the linter.
+#   severity  critical | major | minor | info — defined once in .jarvis/core/rules/conventions.md §4.
+#
+# Suppression:
+#   Put `// jarvis-ignore <RULE-ID> <ADR-ID>` on the offending line or the line directly above it.
+#   YAML/SQL files use `-- jarvis-ignore ...` or `# jarvis-ignore ...`.
+#   The linter resolves <ADR-ID> to docs/adr/<ADR-ID>-*.md and accepts the suppression only if that
+#   file exists AND its front matter (or a `Status:` line) says `accepted`. An unresolved or
+#   non-accepted ADR is reported as a violation of the rule it tried to suppress.
+#
+# Rules marked [ADDED] in `desc` are not in JARVIS_SPEC.md; they are regex-reliable additions and are
+# the first thing to review if the team sees false positives.
+
+rules:
+  - id: DB-01
+    desc: No SQL JOIN
+    paths: ["apps/api/**/*.go", "apps/api/migrations/mysql/**/*.sql"]
+    pattern: "(?i)\\bjoin\\b"
+    severity: major
+
+  - id: DB-02
+    desc: No SELECT *
+    paths: ["apps/api/**/*.go"]
+    pattern: "(?i)select\\s+\\*"
+    severity: major
+
+  - id: DB-10
+    desc: No $lookup
+    paths: ["apps/api/**/*.go"]
+    pattern: "\\$lookup"
+    severity: major
+
+  - id: ERR-01
+    desc: Raw error returned to client
+    paths: ["apps/api/**/*.go"]
+    pattern: "(JSON|Encode|Write)\\(.*err\\.Error\\(\\)"
+    severity: critical
+
+  - id: LOG-01
+    desc: Use logger, not fmt.Print
+    paths: ["apps/api/**/*.go"]
+    exclude: ["**/*_test.go", "apps/api/cmd/**"]
+    pattern: "fmt\\.Print"
+    severity: major
+
+  - id: RX-01
+    desc: No any
+    paths: ["apps/web/src/**/*.{ts,tsx}"]
+    pattern: ":\\s*any\\b|as any\\b"
+    severity: major
+
+  - id: SEC-10
+    desc: dangerouslySetInnerHTML requires DOMPurify
+    paths: ["apps/web/src/**/*.tsx"]
+    pattern: "dangerouslySetInnerHTML"
+    severity: major
+
+  - id: DB-03
+    desc: "[ADDED] SQL built with string formatting instead of placeholders"
+    paths: ["apps/api/**/*.go"]
+    pattern: "(?i)fmt\\.Sprintf\\(\\s*\"\\s*(select|insert|update|delete)\\b"
+    severity: critical
+
+  - id: SEC-11
+    desc: "[ADDED] Hardcoded credential literal"
+    paths: ["apps/api/**/*.go", "apps/web/src/**/*.{ts,tsx}"]
+    exclude: ["**/*_test.go", "**/*.test.{ts,tsx}"]
+    pattern: "(?i)(password|passwd|secret|api_?key|access_?token|private_?key)\\s*(:=|=|:)\\s*\"[^\"]{8,}\""
+    severity: critical
+
+  - id: LOG-07
+    desc: "[ADDED] Secret or PII field name in a log call"
+    paths: ["apps/api/**/*.go"]
+    exclude: ["**/*_test.go"]
+    pattern: "(?i)(slog|logger|log)\\.[A-Za-z]+\\([^)]*\"(password|token|otp|secret|card|national_id|id_card)\""
+    severity: critical
+
+  - id: GO-04
+    desc: "[ADDED] No panic in the request path"
+    paths: ["apps/api/internal/**/*.go"]
+    exclude: ["**/*_test.go", "apps/api/internal/platform/**"]
+    pattern: "\\bpanic\\("
+    severity: major
+
+  - id: ERR-02
+    desc: "[ADDED] String literal error code instead of a registry constant"
+    paths: ["apps/api/**/*.go"]
+    exclude: ["**/*_test.go"]
+    pattern: "apperror\\.(New|Wrap)\\(\\s*\""
+    severity: major
+
+  - id: PERF-07
+    desc: "[ADDED] context.Background() outside main wiring and tests — propagate the request context"
+    paths: ["apps/api/internal/**/*.go"]
+    exclude: ["**/*_test.go", "apps/api/internal/platform/**"]
+    pattern: "context\\.(Background|TODO)\\(\\)"
+    severity: minor
+
+  - id: API-06
+    desc: "[ADDED] Offset pagination in SQL — cursor pagination is mandatory"
+    paths: ["apps/api/**/*.go"]
+    exclude: ["**/*_test.go"]
+    pattern: "(?i)\\boffset\\s+(\\?|\\$\\d)"
+    severity: major
+
+  - id: TEST-12
+    desc: "[ADDED] time.Sleep used for synchronization in a test"
+    paths: ["apps/api/**/*_test.go"]
+    pattern: "time\\.Sleep\\("
+    severity: minor
+
+  - id: ERR-08
+    desc: "[ADDED] Raw backend error text rendered in the UI — use the message-key map"
+    paths: ["apps/web/src/**/*.{ts,tsx}"]
+    exclude: ["**/*.test.{ts,tsx}", "apps/web/src/lib/**"]
+    pattern: "(error|err)\\.(message|response\\.data\\.message)\\b"
+    severity: major
+
+  - id: CACHE-03
+    desc: "[ADDED] Cache write without a TTL"
+    paths: ["apps/api/**/*.go"]
+    exclude: ["**/*_test.go"]
+    pattern: "\\.Set\\([^)]*,\\s*0\\s*\\)"
+    severity: major

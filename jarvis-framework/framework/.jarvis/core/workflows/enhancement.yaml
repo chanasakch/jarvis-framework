@@ -1,0 +1,123 @@
+name: enhancement
+id_prefix: ENH
+description: Change to an existing capability; requirements run in delta mode.
+
+phases:
+  - id: intake
+    owner: orchestrator
+    outputs: [intake.md]
+    template: [intake.md]
+    checklist: intake.md
+
+  - id: requirements
+    agent: {{name}}-po
+    mode: delta
+    requires: [intake]
+    inputs: [intake.md]
+    outputs: [prd.md, stories.md]
+    template: [prd.md, user-story.md]
+    checklist: requirements.md
+    standards: [documentation.md, error-handling.md]
+    approval: human
+
+  - id: business-flow
+    agent: {{name}}-ba
+    requires: [requirements]
+    inputs: [prd.md, stories.md]
+    outputs: [business-flow.md]
+    template: [business-flow.md]
+    checklist: business-flow.md
+    standards: [documentation.md]
+    optional_if_false: changes_flow
+
+  - id: ux
+    agent: {{name}}-ux
+    optional_if_false: has_ui
+    requires: [requirements]
+    inputs: [prd.md, stories.md, business-flow.md]
+    outputs: [ux-spec.md]
+    template: [ux-spec.md]
+    checklist: ux.md
+    standards: [documentation.md, coding-react.md, error-handling.md, security.md]
+    approval: human
+
+  - id: architecture
+    agent: {{name}}-architect
+    mode: lite
+    requires: [requirements]
+    inputs: [prd.md, stories.md, business-flow.md, ux-spec.md]
+    outputs: [tech-spec.md, api-contract.yaml]
+    conditional_outputs:
+      has_db_change: [migration-plan.md]
+    template: [tech-spec.md, adr.md, migration-plan.md]
+    checklist: architecture.md
+    standards: [structure.md, api.md, database.md, caching.md, security.md, error-handling.md, logging.md, performance.md, documentation.md]
+    approval: human
+
+  - id: plan
+    agent: {{name}}-planner
+    requires: [architecture]
+    inputs: [tech-spec.md, stories.md]
+    outputs: [plan.md]
+    template: [plan.md]
+    checklist: plan.md
+    standards: [structure.md, testing.md]
+
+  - id: implement
+    agents: { backend: {{name}}-dev-backend, frontend: {{name}}-dev-frontend }
+    loop: per_task
+    requires: [plan]
+    inputs: [plan.md, tech-spec.md, ux-spec.md]
+    outputs: [impl-log.md]
+    template: [impl-log.md]
+    checklist: implement.md
+    standards: [structure.md, coding-go.md, coding-react.md, api.md, database.md, caching.md, error-handling.md, logging.md, security.md, performance.md, testing.md]
+    deterministic_checks: [backend.format, backend.lint, backend.test, frontend.lint, frontend.typecheck, frontend.test, jarvis_lint]
+
+  - id: test
+    agent: {{name}}-tester
+    mode: standard
+    requires: [implement]
+    inputs: [stories.md, tech-spec.md, plan.md]
+    outputs: [test-plan.md, test-report.md]
+    template: [test-plan.md, test-report.md]
+    checklist: test.md
+    standards: [testing.md, security.md, performance.md]
+    deterministic_checks: [backend.test, frontend.test]
+
+  - id: review
+    agents: [{{name}}-review-standards, {{name}}-review-performance, {{name}}-review-security, {{name}}-review-database]
+    parallel: true
+    blocking_reviewers: all
+    on_fail: implement
+    requires: [test]
+    inputs: [tech-spec.md, plan.md, test-report.md]
+    outputs: [review/standards.md, review/performance.md, review/security.md, review/database.md, review-report.md]
+    template: [review-report.md]
+    checklist: review.md
+    reviewer_standards:
+      standards: [structure.md, coding-go.md, coding-react.md, error-handling.md, logging.md, testing.md]
+      performance: [performance.md, caching.md, coding-go.md, coding-react.md]
+      security: [security.md, error-handling.md, logging.md, api.md]
+      database: [database.md, caching.md, performance.md]
+
+  - id: qa
+    agent: {{name}}-qa
+    requires: [review]
+    inputs: [prd.md, stories.md, tech-spec.md, test-plan.md, test-report.md, review-report.md]
+    outputs: [qa-report.md]
+    template: [qa-report.md]
+    checklist: qa.md
+    standards: [testing.md, documentation.md]
+
+  - id: release
+    agent: {{name}}-release
+    requires: [qa]
+    inputs: [prd.md, tech-spec.md, qa-report.md, review-report.md]
+    outputs: [release-notes.md]
+    conditional_outputs:
+      has_db_change: [runbook.md]
+    template: [release-notes.md, runbook.md]
+    checklist: release.md
+    standards: [git.md, documentation.md]
+    approval: human

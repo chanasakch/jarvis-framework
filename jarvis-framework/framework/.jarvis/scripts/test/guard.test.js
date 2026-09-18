@@ -37,7 +37,7 @@ function setPhase(dir, id, phase, status) {
 test('G1 blocks writes to framework-owned paths', () => {
   const dir = H.makeRepo('g1');
   for (const f of ['.jarvis/state/FEAT-001.json', '.jarvis/core/workflows/feature.yaml',
-                   '.jarvis/scripts/jarvis.js', '.claude/settings.json', '.claude/agents/jarvis-po.md']) {
+                   '.jarvis/scripts/jarvis.js', '.claude/settings.json', '.claude/agents/{{name}}-po.md']) {
     const r = hook(dir, 'pre', write(f));
     assert.equal(r.code, 2, `${f} should be blocked`);
     assert.match(r.stderr, /^G1 BLOCKED/);
@@ -63,8 +63,8 @@ test('G1 allows project-owned files', () => {
 test('G2 blocks every human-only CLI command', () => {
   const dir = H.makeRepo('g2');
   const cmds = [
-    'npm run -s jarvis -- approve FEAT-001 requirements',
-    'npm run jarvis -- force FEAT-001 review --reason "x"',
+    'npm run -s {{name}} -- approve FEAT-001 requirements',
+    'npm run {{name}} -- force FEAT-001 review --reason "x"',
     'node .jarvis/scripts/jarvis.js skip FEAT-001 ux --reason "x"',
     'node .jarvis/scripts/jarvis.js reopen FEAT-001 plan',
     'node .jarvis/scripts/jarvis.js park FEAT-001 --reason "x"',
@@ -74,7 +74,7 @@ test('G2 blocks every human-only CLI command', () => {
     const r = hook(dir, 'pre', bash(c));
     assert.equal(r.code, 2, c);
     assert.match(r.stderr, /^G2 BLOCKED/);
-    assert.match(r.stderr, /! npm run -s jarvis --/, 'must show the user-facing command');
+    assert.match(r.stderr, /! npm run -s {{name}} --/, 'must show the user-facing command');
   }
 });
 

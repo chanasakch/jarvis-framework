@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.jarvis/scripts/jarvis.js\" status --brief 2>/dev/null || true",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|Bash|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.jarvis/scripts/guard.js\" pre",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.jarvis/scripts/guard.js\" post",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(node .jarvis/scripts/jarvis.js:*)",
+      "Bash(node .jarvis/scripts/audit.js:*)",
+      "Bash(npm run -s {{name}} -- status:*)",
+      "Bash(npm run -s {{name}} -- next:*)",
+      "Bash(npm run -s {{name}} -- validate:*)",
+      "Bash(npm run -s {{name}} -- lint:*)",
+      "Bash(npm run -s {{name}} -- check:*)",
+      "Bash(npm run -s {{name}} -- doctor:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git status:*)",
+      "Bash(git blame:*)",
+      "Bash(git merge-base:*)",
+      "Bash(cd apps/api && gofmt:*)",
+      "Bash(cd apps/api && golangci-lint run:*)",
+      "Bash(cd apps/api && go test:*)",
+      "Bash(cd apps/api && go build:*)",
+      "Bash(cd apps/api && govulncheck:*)",
+      "Bash(npm run -w apps/web lint:*)",
+      "Bash(npm run -w apps/web typecheck:*)",
+      "Bash(npm run -w apps/web test:*)",
+      "Bash(npm audit:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.key)",
+      "Read(./**/id_rsa*)",
+      "Read(./**/credentials.json)"
+    ]
+  }
+}
