@@ -32,3 +32,17 @@ Format: decision · options considered · reason.
 - **Decision:** `merge-review` treats a severity outside conventions.md §4 as blocking.
 - **Options:** (a) ignore it (it is not in `review.block_on`); (b) fail closed.
 - **Reason:** Principle 9, "strict by default". A typo such as `blocker` would otherwise silently let a critical finding through.
+
+## D-006 — Hook matcher drops `MultiEdit`; PostToolUse cannot block
+- **Decision:** The PreToolUse matcher is `Edit|Write|Bash|Read` (not the spec's `Edit|Write|MultiEdit|Bash|Read`), and the post hook is documented as advisory.
+- **Options:** (a) copy the spec verbatim; (b) match the current hooks contract.
+- **Reason:** Verified against the current Claude Code hooks reference: `MultiEdit` is no longer a distinct tool, and PostToolUse exit 2 shows stderr to Claude but cannot revert the edit. `guard.js` still recognises a `MultiEdit` tool name defensively. Spec §16.3's intent ("report violations to Claude so it fixes them") is preserved.
+
+## D-007 — `guard.js` fails open
+- **Decision:** Any internal error in the guard exits 0 (allow) with a note on stderr.
+- **Options:** (a) fail closed; (b) fail open.
+- **Reason:** A crash in the guard would otherwise block every tool call in the session with no way to fix it from inside Claude Code. The deterministic gates (`validate`, `lint`, `ci`) remain fail-closed, so a guard outage cannot let bad work through a gate.
+
+## D-008 — `.claude/settings.json` is written last
+- **Decision:** Hooks are installed only after every other framework file exists (operator instruction).
+- **Reason:** G1 blocks writes under `.claude/` and `.jarvis/core|scripts`, which would block the rest of the build. `JARVIS_DEV=1` is the documented bypass for framework development.
