@@ -9,10 +9,12 @@ Source of truth: JARVIS_SPEC.md · Build order: JARVIS_BUILD_PROMPTS.md (0–15,
 - Step 3 — Standards B
 - Step 4 — Standards C + lint-rules.yaml + error registry
 - Step 5 — Templates (20 files)
-- Step 6 — Checklists (14 files, 162 items, IDs unique)
+- Step 6 — Checklists (14 files)
+- Step 7 — Workflows (10 types + README)
+- Step 8 — Scripts: jarvis.js + lib/{state,workflow,validate,lint,check,review}.js + 46 passing tests
 
 ## Current
-- Step 7 — Workflows (.jarvis/core/workflows/)
+- Step 9 — guard.js + .claude/settings.json hooks
 
 ## Next
-- Step 8 — Scripts (CLI + validation + tests)
+- Step 10 — Agents batch 1

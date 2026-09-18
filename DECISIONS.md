@@ -17,3 +17,18 @@ Format: decision · options considered · reason.
 - **Decision:** Added `DB-09 — Bounded context on every query [ADDED]` so MySQL rules fill DB-01..DB-09 and MongoDB starts at the spec-pinned DB-10 (`$lookup`).
 - **Options:** (a) leave a numbering gap; (b) add a real rule.
 - **Reason:** Gaps in rule IDs look like deleted rules and invite re-use; a genuine MUST rule is more useful than a hole.
+
+## D-003 — `check` reports a missing app directory as `skipped`, not `fail`
+- **Decision:** `jarvis.js check` marks a configured command as `skipped` when its working directory (e.g. `apps/api`) does not exist, or when the tool is not installed.
+- **Options:** (a) fail; (b) skip with a reason.
+- **Reason:** The framework must be installable in a repo before `apps/api` exists, and `doctor` already reports missing tools with install hints. Failing here would make every gate red for reasons unrelated to the work item.
+
+## D-004 — `gates.non_forceable` is matched per finding class, not per phase
+- **Decision:** A 3-part key (`review.security.critical`) requires `--accept-risk` only when a recorded issue matches that reviewer *and* severity; a 2-part key (`qa.acceptance_failed`) applies to the whole phase. When a phase has no recorded issues, the entry is treated as hit (fail closed).
+- **Options:** (a) any entry whose first segment matches the phase makes the whole phase non-forceable; (b) match the specific finding class.
+- **Reason:** (a) would make every review gate non-forceable, which contradicts §8.2 where force is the normal escape hatch and `--accept-risk` is reserved for the listed items.
+
+## D-005 — An unknown finding severity blocks the review gate
+- **Decision:** `merge-review` treats a severity outside conventions.md §4 as blocking.
+- **Options:** (a) ignore it (it is not in `review.block_on`); (b) fail closed.
+- **Reason:** Principle 9, "strict by default". A typo such as `blocker` would otherwise silently let a critical finding through.
