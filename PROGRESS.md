@@ -12,16 +12,17 @@ Source of truth: JARVIS_SPEC.md · Build order: JARVIS_BUILD_PROMPTS.md (0–15,
 - Step 6 — Checklists (14 files)
 - Step 7 — Workflows (10 types + README)
 - Step 8 — Scripts + 46 tests
-- Step 9 — guard.js (G1–G5 + post mode) + 16 guard tests · hook contract verified against current Claude Code docs
+- Step 9 — guard.js + 16 guard tests
+- Steps 10–13 — 17 agents in .claude/agents/
+- Step 14 — 9 slash commands in .claude/commands/
 
 ## Current
-- Step 10 — Agents batch 1 (gatekeeper, analyst, po, ba, ux)
+- Step 15 — Consistency audit
 
 ## Next
-- Step 11 — Agents batch 2 (investigator, architect, planner)
+- Step 17 — Team packaging (step 16 skipped: needs a real project)
+- Then: .claude/settings.json (deferred, must be last), then STOP for model switch before S0
 
 ## Deferred to the very end (operator instruction)
-- `.claude/settings.json` — hooks + permissions. Must be the LAST framework file written,
-  because G1 blocks writes under `.claude/` and `.jarvis/core|scripts`.
-  Content is specified in JARVIS_SPEC.md §17, with the matcher corrected to `Edit|Write|Bash|Read`
-  (see DECISIONS.md D-006) and `${CLAUDE_PROJECT_DIR}` used for path resolution.
+- `.claude/settings.json` — hooks + permissions per JARVIS_SPEC.md §17, matcher corrected to
+  `Edit|Write|Bash|Read` (DECISIONS D-006). Written last because G1 blocks writes under `.claude/`.

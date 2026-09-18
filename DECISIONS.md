@@ -50,3 +50,12 @@ Format: decision · options considered · reason.
 ## D-009 — `MultiEdit` removed from the dev agents' tool lists
 - **Decision:** `jarvis-dev-backend`, `jarvis-dev-frontend` and `jarvis-tester` declare `Read, Write, Edit, Glob, Grep, Bash` instead of the spec's list that includes `MultiEdit`.
 - **Reason:** `MultiEdit` is no longer a distinct Claude Code tool (same source as D-006); `Edit` covers it. Declaring a non-existent tool grants nothing and risks a load error.
+
+## D-010 — Commands keep `allowed-tools`/`model` but never depend on `@path` inlining
+- **Decision:** Each command file carries `description`, `argument-hint`, `allowed-tools` and `model`. The orchestrator does **not** rely on `@.jarvis/core/rules/orchestration.md` being inlined; it instructs Claude to read the file, and repeats the seven hard rules and the Status Report format inline.
+- **Options:** (a) follow the spec literally with `@path` includes; (b) drop `allowed-tools`/`model`; (c) keep them and make the body self-sufficient.
+- **Reason:** A docs check returned that `allowed-tools`, `model` and `@path` includes are absent from the current command reference, while also flagging its own uncertainty and citing a narrower page. An unknown frontmatter key is ignored at worst, so keeping them costs nothing and preserves tool pre-approval where it is supported. Depending on `@path` inlining, by contrast, would silently gut the orchestrator — so the body stands alone either way.
+
+## D-011 — Pre-execution bash in commands is failure-tolerant
+- **Decision:** Every `` !`...` `` block ends in `2>/dev/null || echo "<fallback>"`.
+- **Reason:** A failing pre-execution command aborts the whole slash command. `/jarvis` must still work in a repo where `yaml` is not installed yet — otherwise the user cannot even reach `/jarvis-init` to fix it.
