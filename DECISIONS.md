@@ -59,3 +59,12 @@ Format: decision · options considered · reason.
 ## D-011 — Pre-execution bash in commands is failure-tolerant
 - **Decision:** Every `` !`...` `` block ends in `2>/dev/null || echo "<fallback>"`.
 - **Reason:** A failing pre-execution command aborts the whole slash command. `/jarvis` must still work in a repo where `yaml` is not installed yet — otherwise the user cannot even reach `/jarvis-init` to fix it.
+
+## D-012 — The step-15 audit ships as `.jarvis/scripts/audit.js`
+- **Decision:** The consistency audit is a committed script, not a one-off, and is wired into the team README and `upgrade`.
+- **Options:** (a) run it once and discard; (b) keep it.
+- **Reason:** Every check it runs (dangling paths, agent tools drifting from the spec, duplicate checklist IDs, rule IDs cited but never defined, context budget) breaks silently as the team edits standards. A one-off audit only proves the framework was consistent on the day it was built.
+
+## D-013 — `docs/architecture/query-index-matrix.md` ships seeded
+- **Decision:** Commit the matrix with its header, evidence format and Active/Proposed/Retired sections rather than leaving `/jarvis-init` to scaffold it.
+- **Reason:** Four standards files, three agents and a checklist item reference this path. An absent file makes those references dead on day one, and the architect would invent its own column layout.
