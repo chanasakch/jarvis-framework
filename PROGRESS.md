@@ -16,27 +16,32 @@ See commits `jarvis: step 0` … `jarvis: step 17` and `jarvis: settings.json`.
 | S2 | Scaffold, tokens, base primitives, /dev/tokens | done |
 | S3 | Layout, i18n, ⌘K search | done |
 | S4 | Content generation pipeline + Thai translations | done |
-| S5 | Landing page (hero, interactive pipeline, feature grid, terminal replay) | done |
-| S6 | All docs pages (MDX, EN + TH) — replaces the S3 placeholder body in docs-page-content.tsx | **next** |
-| S7 | Quality pass (re-run + extend the a11y/Lighthouse/i18n/link checks already built) | not started |
+| S5 | Landing page | done |
+| S6 | All 12 docs pages, EN + TH (MDX pipeline + reference pages) | done |
+| S7 | Quality pass | **next** |
 | S8 | Deployment (GitHub Actions → Pages) | not started |
 
-### Site stack decisions of note (see DECISIONS.md D-017 to D-030)
+### Site stack decisions of note (see DECISIONS.md D-017 to D-035)
 - TypeScript 6.0.3, ESLint 9.39.5, Node 22, `yaml` (not `js-yaml`) — found/fixed by
   actually running the tools.
 - i18n: two independent root layouts for EN/TH (D-018/D-022); language switch is a full
-  page navigation, confirmed unavoidable under static export + GitHub Pages while
-  keeping English unprefixed (D-025).
+  page navigation (D-025, confirmed unavoidable under static export + GitHub Pages).
+  MDX internal links are locale-relative in source (`/docs/gates` in both EN and TH
+  files); a locale-aware Anchor component prefixes them at render time (D-031).
 - StatusBadge uses a fixed neutral background, not a color-derived tint (D-026).
 - `/dev/tokens` is its own third root layout, outside both locale trees (D-027).
-- All `content/generated/*.json` is parsed from real framework source at build time,
-  including per-phase outputs and a real checklist-prefix read from each checklist
-  file's own first item (not a guessed mapping) — see `site/scripts/generate/`.
-- Real Lighthouse mobile runs (not estimated) caught two accessibility/best-practices
-  bugs on the landing page — a missing accessible name on the header logo link below
-  the `sm` breakpoint, and a missing `favicon.ico` (D-028, D-029). Both fixed and
-  reverified: Accessibility 100, Best Practices 100, SEO 100, Performance 90-93 on
-  `/`, `/th`, `/docs/getting-started`.
+- All `content/generated/*.json` is parsed from real framework source at build time —
+  see `site/scripts/generate/`.
+- **D-032**: delegating translation work to subagents surfaced two failure modes worth
+  knowing about for S7/S8 delegation — (1) a subagent can misapply this repo's own
+  `CLAUDE.md` ("all work starts with /jarvis") to meta-work it doesn't govern; give
+  future subagents explicit context that site/framework construction is outside any
+  Jarvis phase by the operator's own standing instruction. (2) subagents can leak a
+  stray `</content>` artifact into file output — always rebuild for real after any
+  subagent content delegation, never trust a self-report alone.
+- **D-033/D-034/D-035**: a real, full-coverage a11y pass (every page, not a sample)
+  found link-contrast and keyboard-scroll-region bugs that a 5-page sample missed
+  entirely. The e2e suite now covers all 30 real pages.
 
 ### Verified so far (site) — re-run these after every step, they must stay green
 ```
@@ -44,37 +49,26 @@ cd site
 npx tsc --noEmit
 npx eslint .
 npx vitest run                # parser unit tests with fixtures
-npm run build                 # generate -> search-index -> i18n check -> route-parity -> next build
+npm run build                 # generate -> search-index -> i18n parity -> route parity -> next build
 npx tsx scripts/check-links.ts
-npx playwright test           # tests/e2e/*.spec.ts — 13 tests, full axe pass required
+npx playwright test           # 37 tests: full axe WCAG 2A+2AA on all 30 real pages + interactions
 ```
-For a real Lighthouse check (not part of the above, but done at S5 and worth repeating
-after major content changes): `npx serve out -l 3000` in one terminal, then
-`npx lighthouse http://127.0.0.1:3000/<path> --preset=perf --form-factor=mobile --screenEmulation.mobile --throttling-method=simulate --chrome-flags="--headless=new --no-sandbox"`.
+Current real state: all of the above pass, 37/37 e2e tests. 12 docs pages fully written
+in EN and TH (identical file trees, confirmed). 163 UI/landing dictionary strings +
+123 generated-content strings translated. 0 hard-coded hex/radius in components.
 
-Current real state: all of the above pass. 163 dictionary strings (UI chrome + landing
-copy) fully parallel EN/TH — a missing Thai key is a `tsc` compile error, not a runtime
-gap. 123/123 generated-content strings separately translated
-(`content/i18n/generated.th.json`). 0 hard-coded hex/radius in components (grepped).
-
-### What S6 inherits / must know
-- `components/layout/docs-page-content.tsx` currently renders a placeholder body per
-  slug (a Callout saying "content coming in step S6") — replace only that body;
-  DocsShell, routing, generateStaticParams, metadata, and the two thin route wrappers
-  stay as built.
-- MDX rendering pipeline (next-mdx-remote/rsc, remark-gfm, rehype-pretty-code or direct
-  Shiki via lib/shiki.ts, Callout/CodeBlock/StatusBadge/PhasePipeline components) is
-  designed in SITE_PLAN.md §5 but not yet wired — S6 is where MDX loading gets built.
-  `components/landing/sdlc-pipeline.tsx`'s WorkflowPipeline is a ready-made
-  PhasePipeline-equivalent for the /docs/workflows reference page — reuse its shape.
-- `scripts/check-i18n-parity.ts`'s MDX parity check will start actually checking real
-  files once `content/en/docs/**` and `content/th/docs/**` exist — currently passes
-  trivially because both are empty.
-- Reference pages (commands, agents, workflows, configuration, requirements) render
-  from `lib/generated/loaders.ts` + generated JSON via components — S6 must not
-  hand-copy any table from the generated data.
-- `site/CONTENT_TODO.md` should be created in S6 to list anything that couldn't be
-  verified from framework source, per JARVIS_SITE_PROMPTS.md's S6 instructions.
+### What S7 inherits / must know
+- Lighthouse was already run once at S5 (landing page: 90-93/100/100/100) — S7 should
+  re-run it across the docs pages too (getting-started was checked; the other 11 were
+  not) and treat any regression as a real finding, not a formality.
+- The a11y e2e suite (37 tests) already covers every page's static WCAG 2A/2AA state;
+  S7's remaining scope per SITE_SPEC.md: a full keyboard walkthrough across pages (not
+  just the isolated interaction tests that exist), dark-mode axe passes (everything so
+  far has run in the default/light theme), a raw grep for any hard-coded value that
+  slipped through, and confirming reduced-motion/no-JS behavior beyond the terminal
+  replay (e.g. the SDLC pipeline's Tabs, the mobile nav sheet).
+- `site/CONTENT_TODO.md` does not exist — nothing was left unverifiable in S6. If S7
+  finds a real content gap, that's the file to create.
 
 ## Manual steps for the operator (unchanged from before)
 1. Restart Claude Code after any `.claude/**` or `.jarvis/core|scripts` change (hooks/agents/commands
@@ -82,4 +76,4 @@ gap. 123/123 generated-content strings separately translated
 2. Run the Prompt 16 dry run inside a real monorepo.
 3. GitHub Pages settings + real org/repo values in `site/site.config.ts` (S8) once the site is ready to deploy.
 4. Optional, not blocking: restart with `JARVIS_DEV=1 claude` at some point to add
-   `jarvis.js doctor --list --json` to the framework CLI (see S4 notes/D-027 context).
+   `jarvis.js doctor --list --json` to the framework CLI (see S4 notes).
