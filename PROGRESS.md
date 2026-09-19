@@ -4,7 +4,7 @@ Source of truth: JARVIS_SPEC.md · Build order: JARVIS_BUILD_PROMPTS.md (0–15,
 
 ## Framework — COMPLETE (steps 0–15, 17; 16 skipped — needs a real project)
 
-See earlier commits `jarvis: step 0` … `jarvis: step 17` and `jarvis: settings.json`.
+See commits `jarvis: step 0` … `jarvis: step 17` and `jarvis: settings.json`.
 63 script tests pass, audit 9/9, installer verified end-to-end (default + renamed install).
 
 ## Website (JARVIS_SITE_PROMPTS.md) — IN PROGRESS
@@ -12,27 +12,54 @@ See earlier commits `jarvis: step 0` … `jarvis: step 17` and `jarvis: settings
 | Step | What | Status |
 |---|---|---|
 | S0 | site/SITE_SPEC.md | done |
-| S1 | site/SITE_PLAN.md — versions (verified live vs npm), i18n approach, tokens, components, content pipeline, folder structure, risks | done |
-| S2 | Scaffold: Next.js 16 static export, two independent root layouts (D-018/D-022), Tailwind v4 token layer, base primitives, StatusBadge, Callout, Shiki CodeBlock, /dev/tokens QA page | done |
-| S3 | Layout (header/footer/mobile nav), docs layout (sidebar/TOC/breadcrumbs/prev-next), i18n (dictionaries, language switch, hreflang), ⌘K palette, theme toggle wiring | **next** |
-| S4 | Content generation (commands/cli/agents/workflows/config/requirements/meta JSON + Thai translations); adds `jarvis.js doctor --list --json` | not started |
+| S1 | site/SITE_PLAN.md | done |
+| S2 | Scaffold, tokens, base primitives, /dev/tokens | done |
+| S3 | Layout, i18n, ⌘K search | done |
+| S4 | Content generation (commands/cli/agents/workflows/config/requirements/meta JSON + Thai translations); adds `jarvis.js doctor --list --json` | **next** |
 | S5 | Landing page (hero, interactive SDLC pipeline, feature grid, terminal replay) | not started |
-| S6 | All docs pages (MDX, EN + TH) | not started |
+| S6 | All docs pages (MDX, EN + TH) — replaces the S3 placeholder body in docs-page-content.tsx | not started |
 | S7 | Quality pass (a11y, Lighthouse, i18n parity, link check) | not started |
 | S8 | Deployment (GitHub Actions → Pages) | not started |
 
-### Site stack decisions of note (see DECISIONS.md D-017 to D-024)
-- TypeScript pinned to 6.0.3 (not 7.0.2 — typescript-eslint doesn't support it yet)
-- ESLint pinned to 9.39.5 (not 10.x — eslint-plugin-react inside eslint-config-next doesn't support it yet)
-- Node pinned to 22 (not 20 — 20 is EOL; also required by vitest's peer range)
-- i18n: two independent root layouts (`app/(en)/layout.tsx`, `app/th/layout.tsx`), not a `[locale]` + postbuild move
-- All versions in `site/package.json` were checked live against the npm registry, not assumed
+### Site stack decisions of note (see DECISIONS.md D-017 to D-026)
+- TypeScript pinned to 6.0.3, ESLint pinned to 9.39.5, Node pinned to 22 — all found by
+  actually running `npm install`/`tsc`/`eslint`, not assumed (D-017, D-020, D-021, D-023)
+- i18n: two independent root layouts (`app/(en)/layout.tsx`, `app/th/layout.tsx`) for a
+  correct static `<html lang>` per locale (D-018/D-022)
+- **D-025 (important for S4+):** switching language is a full page navigation, not a
+  soft transition — confirmed impossible to avoid under static export + GitHub Pages
+  while keeping English unprefixed. Disclosed deviation from SITE_SPEC.md.
+- **D-026:** StatusBadge (phase/severity/approval icon+label+color) uses a fixed
+  `bg-muted` background, not a color-derived tint — the derived version made contrast
+  math circular and several tokens failed WCAG AA even after darkening.
+- All npm package versions were checked live against the registry, not assumed.
 
-### Verified so far (site)
-`npm install` clean (0 vulnerabilities) · `tsc --noEmit` clean · `eslint .` clean ·
-`vitest run` passes · `next build` (static export) produces `/`, `/th`, `/dev/tokens`, `_not-found`
-with correct per-locale `<html lang>` · zero hard-coded hex/radius in components (grep) ·
-WCAG AA contrast computed for every status/severity/phase token pair in both themes.
+### Verified so far (site) — re-run these after every step, they must stay green
+```
+cd site
+npx tsc --noEmit
+npx eslint .
+npx vitest run
+rm -rf .next out && npx next build
+npx playwright test          # tests/e2e/a11y.spec.ts — full axe pass required
+```
+Current real state: all of the above pass. 0 hard-coded hex/radius in components (grepped).
+No horizontal overflow at 360/768/1280px.
+
+### What S4 inherits / must know
+- `docs-page-content.tsx` currently renders a placeholder body per slug — S4/S6 replace
+  only that body; DocsShell, routing, generateStaticParams, metadata stay as built.
+- `lib/search/static-index.ts` is the ⌘K fallback; S4 adds
+  `content/generated/search-index.<locale>.json`, fetched client-side and merged
+  (see `components/search/command-palette.tsx`) — if that fetch 404s, the palette
+  still works from the static index, by design.
+- `jarvis.js help --json` already exists and works — confirmed, no CLI change needed.
+- `jarvis.js doctor --list --json` does **not** exist — must be added to the framework
+  CLI (`.jarvis/scripts/jarvis.js`, under `JARVIS_DEV=1`) with tests, split into
+  "Always required" / "Required for the Go + React profile", per SITE_SPEC.md.
+- Config key descriptions for `/docs/configuration` come from a hand-written
+  `config-descriptions.ts` map, drift-checked against real keys (D-019) — not from YAML
+  comments (the `yaml` package doesn't expose those as data).
 
 ## Manual steps for the operator (unchanged from before)
 1. Restart Claude Code after any `.claude/**` or `.jarvis/core|scripts` change (hooks/agents/commands
