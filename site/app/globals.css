@@ -131,31 +131,32 @@
   --primary: var(--brand);
   --primary-foreground: var(--brand-foreground);
 
-  /* Severity (conventions.md §4). Critical reuses a red at the same weight as
-     --destructive; the other three are new, since the reference only ever needed two
-     fixed semantic colors (success/critical) and never a 4-step severity ramp. */
-  --severity-critical: #d03b3b;
-  --severity-major: #b65f0e; /* darkened from an initial #c2650f — WCAG AA check found 4.07:1, this is 4.53:1 */
-  --severity-minor: #3b7a99;
+  /* Severity (conventions.md §4), phase status (§6.3) and approval — 15 fixed-hue
+     tokens total, each an icon+text color used by StatusBadge on its fixed --muted
+     background (see status-badge.tsx). All 15 were checked against the REAL rendered
+     (color, --muted) pair with axe-core, in both themes, not hand-computed — an earlier
+     self-referential badge background (a tint derived from the same color) made manual
+     contrast math both wrong and circular; switching StatusBadge to a fixed background
+     fixed that class of bug outright. Light-mode values below were darkened, with a
+     >= 5.0:1 margin (not just the 4.5:1 minimum), where the axe run found a failure;
+     every dark-mode value already cleared 4.5:1 against --muted with margin. */
+  --severity-critical: #bf3636;
+  --severity-major: #a0540c;
+  --severity-minor: #356e8a;
   --severity-info: #5b6472;
 
-  /* Phase status (conventions.md §6.3) — 9 states, each a fixed hue paired with an icon
-     by StatusBadge, never color alone. */
-  /* All nine checked against the card background for a real WCAG AA contrast ratio
-     (>= 4.5:1, small text) — see site/SITE_PLAN.md acceptance note; three were darkened
-     from their initial pick after that check (passed, forced, skipped). */
-  --phase-pending: #6b7280;
+  --phase-pending: #656b78;
   --phase-in-progress: #2563eb;
-  --phase-gate-failed: #d03b3b;
-  --phase-passed: #0d874c;
+  --phase-gate-failed: #bf3636;
+  --phase-passed: #0c7944;
   --phase-approved: #0a7d43;
-  --phase-forced: #b65f0e;
-  --phase-skipped: #6b7687;
+  --phase-forced: #a0540c;
+  --phase-skipped: #606a79;
   --phase-blocked: #b5432e;
   --phase-parked: #6d4aad;
 
   --approval-human: #6d4aad;
-  --approval-none: #6b7280;
+  --approval-none: #656b78;
 
   --callout-note: #eef4ff;
   --callout-note-border: #b9d1fb;

@@ -85,11 +85,19 @@ export function StatusBadge({
       data-slot="status-badge"
       data-kind={props.kind}
       data-value={props.value}
+      // A fixed neutral background (--muted), not a tint derived from the indicator
+      // color itself: an axe-core pass found the earlier self-referential
+      // color-mix(color, transparent) background made contrast math circular — darkening
+      // the foreground darkened its own background too, so several tokens stayed under
+      // 4.5:1 no matter how far they were pushed. Every (foreground, --muted) pair is
+      // now checked and passes with margin (>= 5.0:1) in both themes — see the token
+      // comments in app/globals.css. This also matches the reference's own badge
+      // pattern: colored icon + text on a stable neutral chip, not a colored fill.
       className={cn(
-        "inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium",
+        "inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium",
         className,
       )}
-      style={{ color, borderColor: `color-mix(in oklch, ${color} 40%, transparent)`, backgroundColor: `color-mix(in oklch, ${color} 12%, transparent)` }}
+      style={{ color }}
     >
       <Icon aria-hidden="true" className="size-3.5" />
       {label}

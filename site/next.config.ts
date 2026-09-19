@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
   basePath: basePath || undefined,
   // Next asks for this to also apply to non-HTML assets when basePath is set.
   assetPrefix: basePath ? `${basePath}/` : undefined,
+  // Exposed so client components (e.g. the search palette) can build a correct fetch
+  // URL for a public/ asset — `next/config`'s runtime config doesn't exist in App Router.
+  env: { NEXT_PUBLIC_BASE_PATH: basePath },
   trailingSlash: true,
   images: {
     // No image optimization server exists on static hosting.
