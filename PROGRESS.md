@@ -7,7 +7,7 @@ Source of truth: JARVIS_SPEC.md · Build order: JARVIS_BUILD_PROMPTS.md (0–15,
 See commits `jarvis: step 0` … `jarvis: step 17` and `jarvis: settings.json`.
 63 script tests pass, audit 9/9, installer verified end-to-end (default + renamed install).
 
-## Website (JARVIS_SITE_PROMPTS.md) — IN PROGRESS
+## Website (JARVIS_SITE_PROMPTS.md) — COMPLETE (S0–S8)
 
 | Step | What | Status |
 |---|---|---|
@@ -19,9 +19,9 @@ See commits `jarvis: step 0` … `jarvis: step 17` and `jarvis: settings.json`.
 | S5 | Landing page | done |
 | S6 | All 12 docs pages, EN + TH (MDX pipeline + reference pages) | done |
 | S7 | Quality pass | done |
-| S8 | Deployment (GitHub Actions → Pages) | **next** |
+| S8 | Deployment (GitHub Actions → Pages) | done |
 
-### Site stack decisions of note (see DECISIONS.md D-017 to D-039)
+### Site stack decisions of note (see DECISIONS.md D-017 to D-042)
 - TypeScript 6.0.3, ESLint 9.39.5, Node 22, `yaml` (not `js-yaml`) — found/fixed by
   actually running the tools.
 - i18n: two independent root layouts for EN/TH (D-018/D-022); language switch is a full
@@ -84,20 +84,58 @@ accessibility 100, best-practices 100, SEO 100 (thresholds: ≥90/≥95/≥95/�
 | 6. Visual consistency audit (raw values vs token layer) | 1 real bug found and fixed; 3 defensible exceptions logged | `docs-toc.tsx` inline-style rem values → Tailwind classes (D-039) |
 | 7. Reduced-motion + no-JS behavior | Pass | Verified (no code change needed): global CSS `prefers-reduced-motion` rule already collapses Sheet/Tabs transitions to ~0ms; no-JS content (headings, article text, nav links, default SDLC pipeline tab) renders and is readable via SSR — only palette/replay *controls* require JS, as scoped by SITE_SPEC.md |
 
-### What S8 inherits / must know
-- Deployment target: GitHub Actions → GitHub Pages, per JARVIS_SITE_PROMPTS.md S8. Needs
-  a workflow file, `SITE_BASE_PATH`/`NEXT_PUBLIC_BASE_PATH` wiring for a project-page
-  deploy (already supported by `next.config.ts`, verified working in S7's link-check
-  basePath test), version display sourced from the framework's real `VERSION` file,
-  `site/README.md`, and a root `README.md` badge.
-- Operator must still: enable GitHub Pages (source = GitHub Actions) and check
-  Actions/Pages permissions in repo settings before the first real deploy — this cannot
-  be done from here.
+### S8 Deployment — results
 
-## Manual steps for the operator (unchanged from before)
-1. Restart Claude Code after any `.claude/**` or `.jarvis/core|scripts` change (hooks/agents/commands
+| Item | Result |
+|---|---|
+| 1. `.github/workflows/site.yml` | Created: push-to-main (path-filtered) + `release: published` + manual dispatch; typecheck → lint → build → link-check → deploy |
+| 2. basePath / custom domain configurable via env | `SITE_BASE_PATH` and `SITE_CNAME` repo variables (already supported by `next.config.ts`, no change needed there) |
+| 3. Version + changelog | `v{meta.version}` already shown on landing page from `.jarvis/VERSION` (S4); `/changelog` and `/th/changelog` now render real content parsed from root `CHANGELOG.md` (D-040), replacing the S3 placeholder |
+| 4. `site/README.md` | Created: local dev, content editing (EN+TH), generated-content pipeline, adding a page, deploying |
+| 5. Root `README.md` + badge | Created (didn't exist before) — workflow-status badge + docs-site link, using the `your-org` placeholder already established in `site.config.ts` (D-041) |
+
+Full test suite reverified after all S8 changes: `tsc --noEmit`, `eslint`, `next build`,
+`check:links`, 10/10 vitest, 82/82 playwright — all pass (see D-040/D-041/D-042 for the
+real issues found and fixed: workflow trigger design, `.nojekyll` requirement, changelog
+architecture).
+
+**Website — COMPLETE (S0–S8). Framework — COMPLETE (steps 0–15, 17; 16 deferred).**
+
+## Manual steps for the operator
+
+### Before the first deploy (required)
+1. Push this repo to a real GitHub org/repo, then replace the `your-org` placeholder in:
+   - `site/site.config.ts` (`githubOrg`, `githubRepo`)
+   - Root `README.md` (badge URL + docs link)
+   - `CHANGELOG.md` (docs link in the header)
+2. GitHub repo Settings → **Pages** → Source: set to **"GitHub Actions"** (not "Deploy from a branch").
+3. GitHub repo Settings → **Actions → General** → Workflow permissions: ensure
+   "Read and write permissions" is not required (this workflow uses the `pages`/`id-token`
+   permissions declared in the workflow file itself, which is the modern/recommended
+   approach — no repo-wide permission change needed beyond Pages being enabled).
+4. If deploying to a **project page** (`https://<org>.github.io/jarvis-framework/`):
+   Settings → Secrets and variables → **Actions → Variables** → New repository variable
+   `SITE_BASE_PATH` = `/jarvis-framework`.
+   If deploying to a **user/org page or custom domain** (served from `/`): leave
+   `SITE_BASE_PATH` unset.
+5. Optional, custom domain only: add repository variable `SITE_CNAME` = your domain, and
+   point its DNS at GitHub Pages per GitHub's custom-domain docs.
+
+### First deploy
+1. Push to `main` (workflow triggers automatically on `site/**`/`.claude/**`/`.jarvis/**`/`CHANGELOG.md` changes), **or** trigger manually: repo → Actions tab → "Deploy site" → Run workflow.
+2. Watch the `build` then `deploy` job in the Actions tab. On success it prints the live Pages URL.
+3. Verify the deployed site loads at that URL with working nav, assets and language switch (a first-deploy `.nojekyll`/basePath misconfiguration would show as broken `_next/` assets or 404s on non-root pages — both are already handled in the workflow, see D-042, but worth an eyeball check once real).
+
+### Other outstanding items (unchanged from before)
+4. Restart Claude Code after any `.claude/**` or `.jarvis/core|scripts` change (hooks/agents/commands
    are read at session start).
-2. Run the Prompt 16 dry run inside a real monorepo.
-3. GitHub Pages settings + real org/repo values in `site/site.config.ts` (S8) once the site is ready to deploy.
-4. Optional, not blocking: restart with `JARVIS_DEV=1 claude` at some point to add
+5. Run the Prompt 16 dry run inside a real monorepo.
+6. Optional, not blocking: restart with `JARVIS_DEV=1 claude` at some point to add
    `jarvis.js doctor --list --json` to the framework CLI (see S4 notes).
+
+## Deferred
+- Prompt 16 (dry run inside a real monorepo) — explicitly skipped per the original build
+  instructions; needs a real Go+React monorepo to test against, not this repo.
+- `jarvis.js doctor --list --json` — blocked by this repo's own `guard.js` hooks
+  protecting `.jarvis/scripts/**` outside `JARVIS_DEV=1`; non-blocking, worked around in
+  the site by parsing `doctor()`'s source directly (`parse-requirements.ts`).
