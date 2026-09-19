@@ -2,7 +2,7 @@
 
 All notable changes to the Jarvis framework are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow semver.
-Rendered on the docs site's [Changelog](https://your-org.github.io/jarvis-framework/changelog)
+Rendered on the docs site's [Changelog](https://chanasakch.github.io/jarvis-framework/changelog)
 page — see `site/lib/generated/loaders.ts`'s `getChangelog()` for how.
 
 ## [1.0.0] - 2026-09-19

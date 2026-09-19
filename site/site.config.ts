@@ -1,12 +1,10 @@
 /**
- * The one place org/repo and the framework's display name are named. This repo has no
- * git remote configured yet (checked at S1 planning time), so these are documented
- * placeholders — update them once the framework repo is pushed, and every generated
- * link (install command, edit-on-GitHub, footer, header) follows automatically.
+ * The one place org/repo and the framework's display name are named. Every generated
+ * link (install command, edit-on-GitHub, footer, header) follows from these two values.
  * See SITE_PLAN.md §7 risk 7.
  */
 export const siteConfig = {
-  githubOrg: "your-org",
+  githubOrg: "chanasakch",
   githubRepo: "jarvis-framework",
   get githubUrl() {
     return `https://github.com/${this.githubOrg}/${this.githubRepo}`;

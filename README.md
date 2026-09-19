@@ -1,17 +1,12 @@
 # Jarvis
 
-[![Deploy site](https://github.com/your-org/jarvis-framework/actions/workflows/site.yml/badge.svg)](https://github.com/your-org/jarvis-framework/actions/workflows/site.yml)
+[![Deploy site](https://github.com/chanasakch/jarvis-framework/actions/workflows/site.yml/badge.svg)](https://github.com/chanasakch/jarvis-framework/actions/workflows/site.yml)
 
 An AI-driven SDLC framework for Claude Code: work is routed to specialist subagents,
 every output is checked against your team's standards by a script, a reviewer agent and
 a human, and nothing moves to the next phase until it passes.
 
-**[Read the docs →](https://your-org.github.io/jarvis-framework/)**
-
-> The badge and docs link above use a placeholder GitHub org (`your-org`) — this repo has
-> no git remote configured yet. Update both, and `site/site.config.ts`, once it's pushed
-> to a real org/repo (see `site/README.md`'s Deployment section and the note left in
-> `site.config.ts`).
+**[Read the docs →](https://chanasakch.github.io/jarvis-framework/)**
 
 ## Repo layout
 
