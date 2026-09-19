@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/mdx/status-badge";
 import { Callout } from "@/components/mdx/callout";
 import { File, Folder, FileTree } from "@/components/mdx/file-tree";
 import { Step, Steps } from "@/components/mdx/steps";
+import { StandardsIndex } from "@/components/reference/standards-index";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { localizeHref, type Locale } from "@/lib/i18n";
 
@@ -82,5 +83,6 @@ export function getMdxComponents(locale: Locale) {
   TabsList,
   TabsTrigger,
   TabsContent,
+  StandardsIndex: () => <StandardsIndex locale={locale} />,
   };
 }

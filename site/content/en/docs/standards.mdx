@@ -1,6 +1,6 @@
 ---
 title: Standards
-description: The 14 standards files, their rule-ID prefixes, and how to propose a change or a one-off exception.
+description: The standards files, their rule-ID prefixes, and how to propose a change or a one-off exception.
 ---
 
 ## Standards are project-owned
@@ -15,27 +15,16 @@ an ADR exception can cite exactly which rule fired. A rule's severity when it's 
 major, minor, info) is defined once, in `.jarvis/core/rules/conventions.md` §4, and referenced
 everywhere — see [Gates](/docs/gates) for the full severity table.
 
-## The 14 files
+## The standards files
 
-Each file is read by the Jarvis agents that touch its area, by one of the four review agents
-(`STD`, `PERF`, `SEC`, `DB`), and by the `lint` script for the rules that are machine-checkable.
+Each file is read by the agents that work in its area, by the review agent that owns that
+area, and by the `lint` script for rules a machine can check. This list is generated from
+`.jarvis/standards/`, so it always matches the installed files.
 
-| File | ID prefix | Covers |
-|---|---|---|
-| `structure.md` | `STR-` | Monorepo layout, dependency direction (handler → service → repository), what belongs in a Go domain package or a frontend feature folder |
-| `coding-go.md` | `GO-` | Go backend rules — `gofmt`/`golangci-lint` clean, `context.Context` propagation with a configured timeout |
-| `coding-react.md` | `RX-` | React/TypeScript rules — no `any`, feature-folder structure, TanStack Query for server state |
-| `api.md` | `API-` | REST conventions — response envelopes, cursor pagination, idempotency, status codes |
-| `database.md` | `DB-` | MySQL and MongoDB access — no `JOIN`/`$lookup`, index coverage, transaction scope, query safety |
-| `caching.md` | `CACHE-` | Cache-aside pattern, `<service>:<domain>:<entity>:<id>:v<n>` key format, mandatory jittered TTL |
-| `performance.md` | `PERF-` | Algorithmic complexity comments, N+1 prevention, batching, concurrency, latency budgets |
-| `security.md` | `SEC-` | Backend-boundary input validation, parameterized SQL, injection/XSS, authn/authz, PII |
-| `error-handling.md` | `ERR-` | `packages/errors/registry.yaml` as the single source of client-facing error codes |
-| `logging.md` | `LOG-` | Structured `slog` logging, required fields, mandatory log points, log-once-at-the-boundary |
-| `testing.md` | `TEST-` | Test pyramid shape, coverage minimums from `jarvis.config.yaml`, per-test-type speed budgets |
-| `documentation.md` | `DOC-` | Artifact writing rules — English only, tables over prose, Mermaid for every diagram |
-| `git.md` | `GIT-` | Branch naming, Conventional Commits with work-item and task IDs, no commits directly on `main` |
-| `lint-rules.yaml` | *(none — cites the 13 above)* | The machine-checkable subset of MUST rules, run by `jarvis.js lint` as a regex per line |
+<StandardsIndex />
+
+`lint-rules.yaml` sits next to them. It has no rules of its own: it is the machine-checkable
+subset of the MUST rules above, run by `jarvis.js lint` as one regex per line.
 
 <Callout kind="note" title="Not locked to this stack">
 Only the files themselves are stack-specific. The mechanism — a rule with an ID, checked by a

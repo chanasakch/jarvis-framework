@@ -15,7 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { extractTranslatable } from "../lib/generated/translatable";
-import type { Agent, CliCommand, ConfigKey, Requirement, SlashCommand, Workflow } from "../lib/generated/schemas";
+import type { Agent, CliCommand, ConfigKey, Requirement, SlashCommand, Standard, Workflow } from "../lib/generated/schemas";
 
 const SITE_ROOT = path.resolve(import.meta.dirname, "..");
 const GENERATED = path.join(SITE_ROOT, "content", "generated");
@@ -33,6 +33,7 @@ function checkGeneratedTranslations(): { missing: string[]; stale: string[]; tot
     workflows: readJson<Workflow[]>(path.join(GENERATED, "workflows.json"), []),
     config: readJson<ConfigKey[]>(path.join(GENERATED, "config.json"), []),
     requirements: readJson<Requirement[]>(path.join(GENERATED, "requirements.json"), []),
+    standards: readJson<Standard[]>(path.join(GENERATED, "standards.json"), []),
   };
   const expected = extractTranslatable(data);
   const th = readJson<Record<string, string>>(path.join(I18N, "generated.th.json"), {});

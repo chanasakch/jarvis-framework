@@ -46,6 +46,10 @@ export const workflowPhaseSchema = z.object({
   approval: z.enum(["human", "none"]).optional(),
   optionalIfFalse: z.string().optional(),
   outputs: z.array(z.string()).optional(),
+  /** `flag -> agents` that join this phase only when the work item's flag is true. */
+  conditionalAgents: z.record(z.string(), z.array(z.string())).optional(),
+  /** `flag -> files` this phase additionally produces when the flag is true. */
+  conditionalOutputs: z.record(z.string(), z.array(z.string())).optional(),
   /** The checklist item ID prefix used inside this phase's checklist file (e.g. "REQ"
    *  for requirements.md) — read from the checklist's own first item, not invented. */
   checklistPrefix: z.string().optional(),
@@ -82,6 +86,16 @@ export const metaSchema = z.object({
   frameworkName: z.string(),
 });
 export type Meta = z.infer<typeof metaSchema>;
+
+export const standardSchema = z.object({
+  id: z.string(), // "security"
+  file: z.string(), // "security.md"
+  title: z.string(), // "Security Standards"
+  area: z.string(), // "SEC"
+  summary: z.string(),
+  rules: z.array(z.object({ id: z.string(), title: z.string(), level: z.enum(["MUST", "SHOULD", "MAY"]) })),
+});
+export type Standard = z.infer<typeof standardSchema>;
 
 export const changelogSectionSchema = z.object({
   heading: z.string(), // "Added", "Changed", "Fixed", ...

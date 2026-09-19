@@ -28,6 +28,11 @@ function PhaseDetail({ phase, dict }: { phase: WorkflowPhase; dict: Dictionary }
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{pipeline.agentLabel}</p>
         <p className="mt-1 font-mono text-sm">{agentLine(phase, dict)}</p>
         {phase.mode && <p className="mt-1 text-xs text-muted-foreground">mode: {phase.mode}</p>}
+        {Object.entries(phase.conditionalAgents ?? {}).map(([flag, agents]) => (
+          <p key={flag} className="mt-1 text-xs text-muted-foreground">
+            {pipeline.conditionalLabel} <code className="font-mono">{flag}</code>: <span className="font-mono">{agents.join(", ")}</span>
+          </p>
+        ))}
       </div>
       <div>
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{pipeline.approvalLabel}</p>

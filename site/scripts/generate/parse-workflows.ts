@@ -26,6 +26,16 @@ function checklistPrefix(checklistsDir: string, checklistFile: string | undefine
   return m?.[1];
 }
 
+/** `{ flag: [a, b] }` → same shape with string arrays only; anything else → undefined. */
+function flagMap(value: unknown): Record<string, string[]> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const out: Record<string, string[]> = {};
+  for (const [flag, list] of Object.entries(value)) {
+    if (Array.isArray(list)) out[flag] = list.map(String);
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 export function parseWorkflows(
   workflowsDir: string,
   frameworkWorkflowLibPath: string,
@@ -70,6 +80,8 @@ export function parseWorkflows(
       approval: approvalRequired(config, p) ? "human" : "none",
       optionalIfFalse: typeof p.optional_if_false === "string" ? p.optional_if_false : undefined,
       outputs: Array.isArray(p.outputs) ? (p.outputs as string[]) : undefined,
+      conditionalAgents: flagMap(p.conditional_agents),
+      conditionalOutputs: flagMap(p.conditional_outputs),
       checklistPrefix: checklistsDir ? checklistPrefix(checklistsDir, p.checklist as string | undefined) : undefined,
     }));
 

@@ -35,31 +35,54 @@ function walk(obj: Record<string, unknown>, prefix: string, out: ConfigKey[]): v
   }
 }
 
+export const UNDOCUMENTED_CONFIG_DESCRIPTION = "No description yet — see the comments in jarvis.config.yaml.";
+
+/** Inline `# comment` on each scalar/sequence key, keyed by dotted path. */
+function inlineComments(text: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const visit = (node: unknown, prefix: string) => {
+    if (!YAML.isMap(node)) return;
+    for (const pair of node.items) {
+      const key = YAML.isScalar(pair.key) ? String(pair.key.value) : String(pair.key);
+      const p = prefix ? `${prefix}.${key}` : key;
+      const value = pair.value;
+      if (YAML.isMap(value)) {
+        visit(value, p);
+      } else if ((YAML.isScalar(value) || YAML.isSeq(value)) && value.comment) {
+        out.set(p, value.comment.trim());
+      }
+    }
+  };
+  visit(YAML.parseDocument(text).contents, "");
+  return out;
+}
+
 /**
- * Walks jarvis-framework/project-templates/jarvis.config.yaml (the project-owned
- * template, not this repo's own already-customized jarvis.config.yaml — the template is
- * what every new install actually starts from) and cross-references every key against
- * config-descriptions.ts. A key with no description, or a description for a key that no
- * longer exists, is reported and excluded — see DECISIONS.md D-019.
+ * Walks jarvis-framework/project-templates/jarvis.config.yaml (the template every new
+ * install starts from). Description priority: config-descriptions.ts, then the key's own
+ * inline `# comment` in the template, then a generic placeholder. A key added to the
+ * framework later therefore appears on the site without a site edit; `undocumented`
+ * (placeholder used) and `stale` (description for a removed key) are reported, not fatal.
  */
 export function parseConfig(configPath: string): { keys: ConfigKey[]; undocumented: string[]; stale: string[] } {
-  const raw = fs.readFileSync(configPath, "utf8");
   // The shipped template has {{name}} placeholders (substituted by `init` at install
   // time) in positions — like a bare YAML key — that aren't valid YAML on their own.
-  // Substitute a real value purely so this parses; the actual installer does the same
-  // kind of substitution for real, just with the user's chosen name.
-  const doc = YAML.parse(raw.replace(/\{\{name\}\}/g, "jarvis")) as Record<string, unknown>;
+  const text = fs.readFileSync(configPath, "utf8").replace(/\{\{name\}\}/g, "jarvis");
+  const doc = YAML.parse(text) as Record<string, unknown>;
+  const comments = inlineComments(text);
 
   const found: ConfigKey[] = [];
   walk(doc, "", found);
 
   const foundPaths = new Set(found.map((k) => k.path));
-  const undocumented = found.filter((k) => !configDescriptions[k.path]).map((k) => k.path);
+  const undocumented: string[] = [];
   const stale = Object.keys(configDescriptions).filter((p) => !foundPaths.has(p));
 
-  const keys: ConfigKey[] = found
-    .filter((k) => configDescriptions[k.path])
-    .map((k) => ({ ...k, description: configDescriptions[k.path] as string }));
+  const keys: ConfigKey[] = found.map((k) => {
+    const description = configDescriptions[k.path] ?? comments.get(k.path);
+    if (!description) undocumented.push(k.path);
+    return { ...k, description: description ?? UNDOCUMENTED_CONFIG_DESCRIPTION };
+  });
 
   return { keys, undocumented, stale };
 }

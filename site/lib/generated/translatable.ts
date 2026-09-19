@@ -1,4 +1,4 @@
-import type { Agent, CliCommand, ConfigKey, Requirement, SlashCommand, Workflow } from "./schemas";
+import type { Agent, CliCommand, ConfigKey, Requirement, SlashCommand, Standard, Workflow } from "./schemas";
 
 /**
  * One flat {key, en} pair per translatable string across all generated content.
@@ -19,6 +19,7 @@ export function extractTranslatable(data: {
   workflows: Workflow[];
   config: ConfigKey[];
   requirements: Requirement[];
+  standards?: Standard[];
 }): TranslatableItem[] {
   const items: TranslatableItem[] = [];
 
@@ -41,6 +42,9 @@ export function extractTranslatable(data: {
   }
   for (const r of data.requirements) {
     items.push({ key: `requirement:${r.id}.label`, en: r.label });
+  }
+  for (const s of data.standards ?? []) {
+    items.push({ key: `standard:${s.id}.summary`, en: s.summary });
   }
 
   return items;

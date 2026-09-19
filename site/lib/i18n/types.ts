@@ -130,6 +130,7 @@ export interface Dictionary {
       approvalHuman: string;
       approvalNone: string;
       optionalLabel: string;
+      conditionalLabel: string;
     };
     features: {
       heading: string;
@@ -190,6 +191,14 @@ export interface Dictionary {
       modesLabel: string;
       inputsLabel: string;
       outputsLabel: string;
+    };
+    standards: {
+      fileHeader: string;
+      coversHeader: string;
+      rulesHeader: string;
+      mustCount: string;
+      shouldCount: string;
+      showRules: string;
     };
     config: {
       pathHeader: string;

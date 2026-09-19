@@ -116,6 +116,7 @@ export const th: Dictionary = {
       approvalHuman: "ต้องมีการอนุมัติจากคน",
       approvalNone: "ไม่ต้องมีการอนุมัติ",
       optionalLabel: "ทางเลือก — ข้ามได้ ยกเว้น",
+      conditionalLabel: "เฉพาะเมื่อ",
     },
     features: {
       heading: "สิ่งที่บังคับใช้จริง",
@@ -194,6 +195,14 @@ export const th: Dictionary = {
       modesLabel: "Modes",
       inputsLabel: "Inputs",
       outputsLabel: "Outputs",
+    },
+    standards: {
+      fileHeader: "ไฟล์",
+      coversHeader: "ครอบคลุม",
+      rulesHeader: "จำนวน rule",
+      mustCount: "MUST",
+      shouldCount: "SHOULD",
+      showRules: "รายการ rule",
     },
     config: {
       pathHeader: "คีย์",

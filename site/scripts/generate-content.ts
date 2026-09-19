@@ -20,6 +20,7 @@ import {
   metaSchema,
   requirementSchema,
   slashCommandSchema,
+  standardSchema,
   workflowSchema,
 } from "../lib/generated/schemas";
 import { parseAgents } from "./generate/parse-agents";
@@ -29,10 +30,13 @@ import { parseCommands } from "./generate/parse-commands";
 import { parseConfig } from "./generate/parse-config";
 import { parseMeta } from "./generate/parse-meta";
 import { parseRequirements } from "./generate/parse-requirements";
+import { parseStandards } from "./generate/parse-standards";
 import { parseWorkflows } from "./generate/parse-workflows";
 
 const SITE_ROOT = path.resolve(import.meta.dirname, "..");
-const REPO_ROOT = path.resolve(SITE_ROOT, "..");
+// Overridable so a fixture copy of the framework can be generated from (tests, and
+// proving that newly added agents/workflows/standards surface with no site edit).
+const REPO_ROOT = process.env.JARVIS_REPO_ROOT ? path.resolve(process.env.JARVIS_REPO_ROOT) : path.resolve(SITE_ROOT, "..");
 const OUT_DIR = path.join(SITE_ROOT, "content", "generated");
 
 function writeJson(name: string, data: unknown) {
@@ -53,7 +57,7 @@ function main() {
   const { commands: rawCli, skipped: skippedCli } = parseCli(path.join(REPO_ROOT, ".jarvis/scripts/jarvis.js"), REPO_ROOT);
   const cli = rawCli.map((c) => cliCommandSchema.parse(c));
   writeJson("cli.json", cli);
-  if (skippedCli.length) report.push(`cli: could not parse a usage line for ${skippedCli.join(", ")}`);
+  if (skippedCli.length) report.push(`cli: no description for ${skippedCli.join(", ")} (placeholder used)`);
 
   // Agents
   const { agents: rawAgents, skipped: skippedAgents } = parseAgents(path.join(REPO_ROOT, ".claude/agents"));
@@ -77,12 +81,8 @@ function main() {
   const { keys: rawConfig, undocumented, stale } = parseConfig(
     path.join(REPO_ROOT, "jarvis-framework/project-templates/jarvis.config.yaml"),
   );
-  if (undocumented.length) {
-    throw new Error(`config-descriptions.ts is missing an entry for: ${undocumented.join(", ")}`);
-  }
-  if (stale.length) {
-    throw new Error(`config-descriptions.ts documents keys that no longer exist: ${stale.join(", ")}`);
-  }
+  if (undocumented.length) report.push(`config: no description for ${undocumented.join(", ")} (placeholder used)`);
+  if (stale.length) report.push(`config: config-descriptions.ts documents removed keys: ${stale.join(", ")}`);
   const configKeys = rawConfig.map((k) => configKeySchema.parse(k));
   writeJson("config.json", configKeys);
 
@@ -93,6 +93,13 @@ function main() {
     REPO_ROOT,
   ).map((r) => requirementSchema.parse(r));
   writeJson("requirements.json", requirements);
+
+  // Standards
+  const { standards: rawStandards, skipped: skippedStandards, unparsedRules } = parseStandards(path.join(REPO_ROOT, ".jarvis/standards"));
+  const standards = rawStandards.map((s) => standardSchema.parse(s));
+  writeJson("standards.json", standards);
+  if (skippedStandards.length) report.push(`standards: skipped ${skippedStandards.join(", ")} (no title or no rule headings)`);
+  if (unparsedRules.length) report.push(`standards: rule headings in an unrecognized format: ${unparsedRules.join("; ")}`);
 
   // Meta
   const meta = metaSchema.parse(parseMeta(path.join(REPO_ROOT, ".jarvis/VERSION")));
@@ -109,6 +116,7 @@ function main() {
   console.log(`  workflows.json     ${workflows.length} entries`);
   console.log(`  config.json        ${configKeys.length} entries`);
   console.log(`  requirements.json  ${requirements.length} entries`);
+  console.log(`  standards.json     ${standards.length} entries`);
   console.log(`  meta.json          version ${meta.version}`);
   console.log(`  changelog.json     ${changelog.length} entries`);
   if (report.length) {

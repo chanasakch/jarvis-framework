@@ -1,9 +1,9 @@
 /**
- * jarvis.config.yaml's own comments aren't structured data (the `yaml` package the CLI
- * uses doesn't expose them), so descriptions live here instead — one entry per key path
- * that `parse-config.ts` walks. `scripts/generate-content.ts` fails the build if a real
- * key has no entry here, or an entry here names a key that no longer exists (DECISIONS.md
- * D-019), so this can't silently drift from `jarvis-framework/project-templates/jarvis.config.yaml`.
+ * Curated, reader-facing descriptions for jarvis.config.yaml keys — one entry per key path
+ * that `parse-config.ts` walks. A key missing here falls back to its inline comment in the
+ * template, then to a placeholder; both are reported by `generate-content.ts` but never
+ * fail the build, so framework additions appear on the site without a site edit
+ * (DECISIONS.md D-045, relaxing D-019).
  *
  * A handful of object-valued keys (commands.backend, commands.frontend,
  * quality.coverage_min, quality.perf_budget, models.overrides) are documented as one

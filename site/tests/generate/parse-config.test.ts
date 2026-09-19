@@ -37,4 +37,13 @@ describe("parseConfig", () => {
     expect(keys.some((k) => k.path === "commands.backend")).toBe(true);
     expect(keys.some((k) => k.path === "commands.backend.format")).toBe(false);
   });
+
+  it("falls back to the key's inline comment, then a placeholder, instead of failing", () => {
+    const file = writeTmpConfig("new_section:\n  commented: 3   # retries before giving up\n  bare: true\n");
+    const { keys, undocumented } = parseConfig(file);
+    const byPath = Object.fromEntries(keys.map((k) => [k.path, k.description]));
+    expect(byPath["new_section.commented"]).toBe("retries before giving up");
+    expect(byPath["new_section.bare"]).toMatch(/No description yet/);
+    expect(undocumented).toEqual(["new_section.bare"]);
+  });
 });

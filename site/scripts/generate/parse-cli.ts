@@ -21,6 +21,9 @@ export function parseCli(jarvisJsPath: string, cwd: string): { commands: CliComm
   return parseCliFromHelpJson(data);
 }
 
+const undescribed = (id: string) => `See \`jarvis.js help\` for \`${id}\`.`;
+
+/** `skipped` now means "no description found, placeholder used" — every command gets a row. */
 export function parseCliFromHelpJson(data: HelpJson): { commands: CliCommand[]; skipped: string[] } {
   const humanOnly = new Set(data.human_only);
   const byId = new Map<string, CliCommand>();
@@ -44,19 +47,18 @@ export function parseCliFromHelpJson(data: HelpJson): { commands: CliCommand[]; 
         const id = usage.split(/\s+/)[0];
         if (!id) continue;
 
-        const description = m?.[2]?.trim() ?? humanOnlyDescriptions[id];
-        if (!description) {
-          skipped.push(id);
-          continue;
-        }
-        byId.set(id, { id, humanOnly: humanOnly.has(id), usage, description });
+        const known = m?.[2]?.trim() ?? humanOnlyDescriptions[id];
+        if (!known) skipped.push(id);
+        byId.set(id, { id, humanOnly: humanOnly.has(id), usage, description: known ?? undescribed(id) });
       }
     }
   }
 
+  // A command registered in the CLI but absent from the usage text still gets a row.
   for (const id of data.commands) {
-    if (id === "help") continue; // self-referential, not worth a reference row
-    if (!byId.has(id)) skipped.push(id);
+    if (id === "help" || byId.has(id)) continue;
+    skipped.push(id);
+    byId.set(id, { id, humanOnly: humanOnly.has(id), usage: id, description: undescribed(id) });
   }
 
   return { commands: [...byId.values()], skipped };

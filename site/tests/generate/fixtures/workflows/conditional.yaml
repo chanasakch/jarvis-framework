@@ -1,0 +1,11 @@
+name: conditional
+id_prefix: CND
+description: Fixture workflow with flag-conditional agents and outputs.
+
+phases:
+  - id: review
+    agents: [jarvis-review-standards]
+    conditional_agents:
+      has_infra_change: [jarvis-review-devops]
+    conditional_outputs:
+      has_infra_change: [review/devops.md]

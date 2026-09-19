@@ -47,4 +47,16 @@ describe("parseCliFromHelpJson", () => {
     const { commands } = parseCliFromHelpJson(HELP_JSON);
     expect(commands.find((c) => c.id === "help")).toBeUndefined();
   });
+
+  it("keeps a new command with no description as a row with a placeholder", () => {
+    const { commands, skipped } = parseCliFromHelpJson({
+      ...HELP_JSON,
+      commands: [...HELP_JSON.commands, "portfolio"],
+      human_only: [...HELP_JSON.human_only, "archive"],
+      usage: HELP_JSON.usage + "\n  archive <ID>",
+    });
+    expect(commands.find((c) => c.id === "portfolio")?.description).toMatch(/jarvis\.js help/);
+    expect(commands.find((c) => c.id === "archive")?.humanOnly).toBe(true);
+    expect(skipped).toEqual(expect.arrayContaining(["portfolio", "archive"]));
+  });
 });

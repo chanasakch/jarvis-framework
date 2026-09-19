@@ -117,6 +117,7 @@ export const en: Dictionary = {
       approvalHuman: "Human approval required",
       approvalNone: "No approval required",
       optionalLabel: "Optional — skipped unless",
+      conditionalLabel: "Only when",
     },
     features: {
       heading: "What's actually enforced",
@@ -195,6 +196,14 @@ export const en: Dictionary = {
       modesLabel: "Modes",
       inputsLabel: "Inputs",
       outputsLabel: "Outputs",
+    },
+    standards: {
+      fileHeader: "File",
+      coversHeader: "Covers",
+      rulesHeader: "Rules",
+      mustCount: "MUST",
+      shouldCount: "SHOULD",
+      showRules: "Rule list",
     },
     config: {
       pathHeader: "Key",
