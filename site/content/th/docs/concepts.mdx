@@ -1,0 +1,173 @@
+---
+title: แนวคิดหลัก
+description: ออร์เคสเตรเตอร์ เอเจนต์ คำสั่ง กฎ เกต state, hooks และการส่งต่องานแบบ file-based ที่ประกอบกันเป็น Jarvis
+---
+
+## ออร์เคสเตรเตอร์
+
+`/jarvis` ทำงานอยู่ใน session หลักของ Claude Code ของคุณเสมอ ไม่เคยรันอยู่ภายใน subagent —
+เพราะ subagent ไม่สามารถ spawn subagent ต่อได้ ทุกการมอบหมายงานจึงต้องผ่านออร์เคสเตรเตอร์
+ตัวมันเองไม่ทำงานของ phase ใด ๆ เลย ยกเว้น intake (การจำแนกประเภทงานและถามคำถามเกี่ยวกับ flag)
+ซึ่งเป็นข้อยกเว้นเดียว
+
+สำหรับ phase อื่น ๆ ทุก phase ออร์เคสเตรเตอร์จะอ่านผลจาก `jarvis.js next <ID> --json`
+แล้วแปลงผลลัพธ์นั้นเป็น **Handoff Brief** — สิ่งเดียวที่ phase agent จะได้รับ:
+
+```text
+HANDOFF
+work_item: FEAT-012 (feature) "OTP login"
+phase: architecture | mode: full
+flags: has_ui=true has_db_change=true has_mysql=true has_mongo=false
+read:
+  - docs/work/FEAT-012-otp-login/prd.md
+  - docs/work/FEAT-012-otp-login/stories.md
+  - .jarvis/project/context.md
+standards: [.jarvis/standards/api.md, .jarvis/standards/database.md]
+template: .jarvis/core/templates/tech-spec.md
+checklist: .jarvis/core/checklists/architecture.md
+write:
+  - docs/work/FEAT-012-otp-login/tech-spec.md
+task: (implement only) T-003
+previous_gate_issues: none | [list]
+user_answers: none | [list]
+```
+
+`read`, `standards`, `template`, `checklist` และ `write` มาจาก `jarvis.js next` โดยตรง —
+ออร์เคสเตรเตอร์ไม่เติมอะไรเพิ่มเข้าไปเอง เอเจนต์ที่ต้องการไฟล์นอกเหนือจากรายการนี้
+ต้องขอผ่าน `open_questions` แทนที่จะอ่านไฟล์นั้นโดยตรง
+
+<Callout kind="note" title="ทำไม brief ถึงไม่พกเนื้อหา artifact ไปด้วย">
+มีเพียง path ของไฟล์เท่านั้นที่ข้ามผ่านขอบเขตนี้ ไม่ใช่ข้อความที่วางไว้ ดูหัวข้อ "การส่งต่องานแบบ file-based" ด้านล่าง
+</Callout>
+
+## เอเจนต์
+
+เอเจนต์ทุกตัวอยู่ใน `.claude/agents/jarvis-*.md` โดยมีโครงสร้างเดียวกัน: YAML frontmatter
+(`name`, `description`, `tools`, `model`) ตามด้วยหัวข้อคงที่ — `Role`, `Modes` (เมื่อ phase
+มีมากกว่าหนึ่งโหมด), `Inputs`, `Outputs`, `Process`, `Must`, `Must Not`, `Self-Check`,
+`Return Format` ตัวอย่างเช่น `jarvis-po` ประกาศ `tools: Read, Write, Glob, Grep` และ
+`model: inherit` และในส่วน `Must Not` ห้ามออกแบบโซลูชันหรือระบุรหัส error ภายในไว้ใน
+acceptance criterion ที่ผู้ใช้เห็น `jarvis-architect` รันด้วย `model: opus` และ `Modes`
+ของมันคือ `full`, `lite` และ `migration`
+
+เอเจนต์ทุกตัวจะรัน `Self-Check` ของตัวเองเทียบกับ checklist ของ phase ก่อน return และ
+ทุกเอเจนต์ — ไม่ว่าจะ phase ไหน — จะ return บล็อกนี้เสมอ:
+
+```text
+RESULT
+status: DONE | BLOCKED
+artifacts: [paths]
+summary: <≤5 lines>
+open_questions: [Q-001: ...] | none
+self_check: pass | [failed item IDs]
+```
+
+`DONE` คือการคืนการควบคุมกลับไปที่ออร์เคสเตรเตอร์เพื่อเข้าสู่ Gate Protocol ส่วน `BLOCKED`
+หมายความว่าเอเจนต์ต้องการสิ่งที่มีเพียงมนุษย์เท่านั้นที่ตอบได้ — มันจะไม่เดาเอาเอง
+
+## คำสั่ง
+
+Jarvis แบ่งคำสั่งออกเป็นสองกลุ่มโดยตั้งใจ Slash command (`/jarvis`, `/jarvis-status`,
+`/jarvis-new`, `/jarvis-run`, `/jarvis-review`, `/jarvis-init`) คือคำสั่งที่ Claude เป็นผู้รัน —
+ใช้ขับเคลื่อน intake, กลับมาทำงานต่อ และรัน phase ต่าง ๆ ส่วนคำสั่ง CLI verb อย่าง
+`approve`, `force`, `skip`, `reopen`, `park` และ `unpark` เป็นคำสั่งสำหรับมนุษย์เท่านั้น:
+`guard.js` จะบล็อกไม่ให้ Claude รันคำสั่งเหล่านี้ (ดูหัวข้อ "Hooks") ดังนั้นออร์เคสเตรเตอร์
+จะพิมพ์คำสั่งให้คุณรันเองเท่านั้น
+
+การแบ่งนี้มีเหตุผลเพราะ subagent ไม่สามารถคุยกับคุณได้โดยตรง เมื่อ phase agent ต้องการ
+การตัดสินใจที่มีเพียงมนุษย์เท่านั้นที่ทำได้ มันจะ return `BLOCKED` พร้อม `open_questions`
+แล้วออร์เคสเตรเตอร์จะถามคุณใน session หลัก — เหตุผลเดียวกับที่การอนุมัติงานของตัวเองเป็น
+คำสั่ง CLI ไม่ใช่สิ่งที่เอเจนต์ตัดสินใจแทนคุณได้ ดู
+[คำสั่ง](/docs/commands) สำหรับรายการคำสั่งทั้งหมดพร้อมตัวอย่าง
+
+## กฎและมาตรฐาน
+
+มีสองไดเรกทอรีที่เก็บกฎซึ่งเอเจนต์อ่าน และเป็นเจ้าของโดยคนละฝ่าย:
+
+| ไดเรกทอรี | เจ้าของ | มีอะไรอยู่บ้าง |
+|---|---|---|
+| `.jarvis/core/rules/` | Framework | `orchestration.md` (โปรโตคอลด้านบน), `conventions.md` (ID, front matter, phase status, severity) |
+| `.jarvis/standards/` | ทีมของคุณ | `structure.md`, `coding-go.md`, `coding-react.md`, `api.md`, `database.md` และอื่น ๆ — แต่ละกฎมี ID prefix เช่น `DB-01` หรือ `SEC-07` |
+
+`.jarvis/core/` จะถูกแทนที่ทุกครั้งที่อัปเกรด ทีมจึงไม่แก้ไขมันเอง ส่วน `.jarvis/standards/`
+เป็นของคุณเอง: ทุกกฎ MUST ในนั้นคือสิ่งที่ reviewer, gatekeeper และ `jarvis.js lint`
+ใช้ตรวจสอบจริง ดู [มาตรฐาน](/docs/standards) สำหรับรายการกฎทั้งหมด
+
+## เกต
+
+ทุก phase ต้องผ่านสามชั้นเดียวกันก่อนที่ phase ถัดไปจะปลดล็อก: **script gate** ที่เป็น
+deterministic (`jarvis.js validate`), **agent gate** (`jarvis-gatekeeper` ที่ตรวจ checklist
+ของ phase เทียบกับ artifact พร้อมหลักฐาน) และ — สำหรับ phase ที่อยู่ใน
+`gates.human_approval` — **การอนุมัติจากมนุษย์** เกตที่ล้มเหลวจะถูกส่งกลับไปยังเอเจนต์เดิม
+พร้อมแนบปัญหาที่พบ หลังจาก `gates.max_retries` ออร์เคสเตรเตอร์จะหยุดและพิมพ์ Gate Failure
+Menu แทนที่จะลองใหม่อีกครั้ง โปรโตคอลแบบเต็ม รูปแบบเมนูที่แน่นอน และกฎการ force
+อยู่ใน [เกต](/docs/gates)
+
+## State
+
+state ของแต่ละ work item อยู่ในไฟล์ที่ถูก commit ไฟล์เดียว `.jarvis/state/<ID>.json`
+บวกกับ `.jarvis/state/<ID>.audit.jsonl` แบบ append-only — หนึ่งบรรทัด JSON ต่อหนึ่งการเปลี่ยนสถานะ
+(`{ts, actor, action, phase, from, to, detail}`) การมีไฟล์เดียวต่อหนึ่ง item หมายความว่า
+คนสองคนที่ทำงานคนละ item จะไม่มีวัน conflict กันใน git และเพราะ state ถูก commit ไว้
+ใครก็ตามสามารถเห็นได้ทันทีว่า item นั้นอยู่ตรงไหนโดยไม่ต้องถามใคร
+
+phase status จะเป็นหนึ่งในค่าต่อไปนี้เสมอ:
+
+<div className="not-prose flex flex-wrap gap-2 my-4">
+<StatusBadge kind="phase" value="pending" label="pending" />
+<StatusBadge kind="phase" value="in_progress" label="in_progress" />
+<StatusBadge kind="phase" value="gate_failed" label="gate_failed" />
+<StatusBadge kind="phase" value="passed" label="passed" />
+<StatusBadge kind="phase" value="approved" label="approved" />
+<StatusBadge kind="phase" value="forced" label="forced" />
+<StatusBadge kind="phase" value="skipped" label="skipped" />
+<StatusBadge kind="phase" value="blocked" label="blocked" />
+<StatusBadge kind="phase" value="parked" label="parked" />
+</div>
+
+มีเพียง CLI เท่านั้นที่เขียน `.jarvis/state/**` — Claude ย้าย phase ไปเป็น
+<StatusBadge kind="phase" value="in_progress" label="in_progress" /> หรือ
+<StatusBadge kind="phase" value="passed" label="passed" /> ผ่าน `jarvis.js set` แต่
+<StatusBadge kind="phase" value="approved" label="approved" /> และ
+<StatusBadge kind="phase" value="forced" label="forced" /> จะมาจากมนุษย์ที่รัน
+`approve` หรือ `force` เท่านั้น
+
+## Hooks
+
+`guard.js` ทำงานเป็น `PreToolUse`/`PostToolUse` hook ในทุกการเรียกใช้ tool
+เพื่อบังคับใช้กฎข้างต้นในระดับ tool แทนที่จะเชื่อว่าคำสั่งของเอเจนต์จะทำตามเสมอ:
+
+- **G1** บล็อก `Write`/`Edit` ภายใต้ `.jarvis/state/**`, `.jarvis/core/**`, `.jarvis/scripts/**`
+  และ `.claude/**` — ไฟล์ที่ framework เป็นเจ้าของ
+- **G2** บล็อกการเรียก Bash ใด ๆ ที่เป็นคำสั่ง CLI verb สำหรับมนุษย์เท่านั้น (`approve`, `force`, `skip`,
+  `reopen`, `park`, `unpark`)
+- **G3** (source guard) บล็อกการแก้ไขภายใต้ `apps/**`/`packages/**` เว้นแต่ item ที่กำลังทำงานอยู่
+  จะอยู่ใน `implement` (ไฟล์ใดก็ได้) หรือ `test` (เฉพาะไฟล์ทดสอบ)
+- **G4** บล็อกการแก้ไขโฟลเดอร์ migration เว้นแต่ item ที่กำลังทำงานอยู่จะมี `has_db_change=true`
+- **G5** บล็อกการอ่านหรือเขียนไฟล์ `.env*` และไฟล์ secret อื่น ๆ
+
+บั๊กภายใน `guard.js` เองจะ fail open — คือปล่อยให้การเรียกนั้นผ่านแทนที่จะทำให้ session
+ใช้งานไม่ได้ ดังนั้น guard ที่ error จะไม่กลายเป็นตัวที่หยุดคุณจากการทำงาน
+
+## การส่งต่องานแบบ file-based
+
+เอเจนต์จะไม่แลกเปลี่ยนเนื้อหาที่วางไว้กันเลย — มีแต่ path ของไฟล์เท่านั้น artifact ทุกชิ้นที่
+phase หนึ่งสร้างขึ้นจะอยู่ใต้ `docs/work/<ID>-<slug>/` (review อยู่ใต้ subfolder `review/`)
+และเอเจนต์ตัวถัดไปในลำดับจะได้รับ path เหล่านั้นใน `read` list ของ Handoff Brief ของมัน
+ไม่ใช่ตัวข้อความเอง สิ่งนี้ทำให้ context มีขนาดเล็ก ทำให้ artifact ทุกชิ้นสามารถ review ได้
+อย่างอิสระใน git และเป็นสิ่งที่ทำให้ออร์เคสเตรเตอร์ส่งงานต่อให้เอเจนต์ตัวใหม่ในทุก phase —
+และในทุก task ระหว่าง implement — ได้โดยไม่สูญเสียอะไรไป
+
+## ขั้นตอนถัดไป
+
+<Steps>
+<Step title="รันงานชิ้นแรกของคุณ">
+ดู [เริ่มต้นใช้งาน](/docs/getting-started) สำหรับการติดตั้งและการเรียก `/jarvis` ครั้งแรก
+</Step>
+<Step title="อ่านโปรโตคอลเกตแบบเต็ม">
+ชั้น script, agent และ human, รูปแบบของ Gate Failure Menu และกฎการ force — ดู [เกต](/docs/gates)
+</Step>
+<Step title="ค้นหาคำสั่ง">
+Slash command และคำสั่ง CLI สำหรับมนุษย์เท่านั้นทุกคำสั่งพร้อมตัวอย่าง — ดู [คำสั่ง](/docs/commands)
+</Step>
+</Steps>

@@ -1,11 +1,19 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-// Smoke-level a11y check on the pages that exist as of S3 (layout, i18n, search).
-// The full-site pass with every page, both themes and a keyboard walkthrough is S7 —
-// this exists now so regressions in the shared chrome are caught immediately, not six
-// steps later once every content page also depends on it.
-const PAGES = ["/", "/docs/getting-started", "/th", "/th/docs/getting-started", "/dev/tokens"];
+import { DOCS_SLUGS } from "../../lib/content/nav";
+
+// Every real docs page, both locales, plus the shared chrome pages — not a sample.
+// A full Lighthouse + keyboard walkthrough pass (both themes) is S7's job; this is the
+// per-page axe floor that must hold from here on as content keeps changing.
+const PAGES = [
+  "/",
+  "/th",
+  "/dev/tokens",
+  "/changelog",
+  "/th/changelog",
+  ...DOCS_SLUGS.flatMap((slug) => [`/docs/${slug}`, `/th/docs/${slug}`]),
+];
 
 for (const path of PAGES) {
   test(`no axe violations on ${path}`, async ({ page }) => {

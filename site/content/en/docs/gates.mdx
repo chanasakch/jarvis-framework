@@ -1,0 +1,127 @@
+---
+title: Gates
+description: The gate protocol, phase statuses, severity levels, and the human-only commands that move a phase forward.
+---
+
+## The gate protocol
+
+Every phase passes through the same sequence before it can unlock the next one:
+
+<Steps>
+<Step title="Script gate">
+`jarvis.js validate <ID> <phase>` checks the deterministic parts — front matter, required
+headings, ID formats, upstream references, coverage counts, and (for implement) the
+configured check commands and lint rules.
+</Step>
+<Step title="Agent gate">
+The `jarvis-gatekeeper` agent reads the phase's checklist and the upstream artifacts, and
+verifies every Blocking item with evidence — a line, an ID, a table row. It never accepts
+"almost complete."
+</Step>
+<Step title="Human approval">
+Only for the phases listed in `gates.human_approval` (by default: requirements, ux,
+architecture, release) — a workflow can override this per phase. See
+[Configuration](/docs/configuration).
+</Step>
+</Steps>
+
+A failed script or agent gate sends the issues back to the same agent and increments an
+attempt counter. At `gates.max_retries` (default 3), the orchestrator stops and prints the
+Gate Failure Menu instead of retrying again.
+
+## The Gate Failure Menu
+
+This is the exact shape the orchestrator prints — copied here verbatim, not paraphrased:
+
+```text
+⚠️  GATE FAILED: FEAT-012 / review (attempt 3/3)
+Blocking issues:
+  - [F-SEC-001][critical] Raw DB error returned in POST /v1/otp response
+  - [F-PERF-002][major] Query inside loop in otp/service.go:88
+Risk if forced: <one or two lines>
+Options:
+  1) Retry — send issues back to the agent (resets attempts)
+  2) Fix manually, then run: /jarvis FEAT-012
+  3) Force pass (human only, audited):
+     ! npm run -s jarvis -- force FEAT-012 review --reason "<why>"
+  4) Park work item:
+     ! npm run -s jarvis -- park FEAT-012 --reason "<why>"
+```
+
+If you ask Claude to force a gate at any other point, it prints this same menu with the
+current issues — it never runs `force` itself.
+
+## Phase statuses
+
+| Status | Meaning | Set by |
+|---|---|---|
+| `pending` | Not started | CLI (default) |
+| `in_progress` | Agent is working | Claude, via `set` |
+| `gate_failed` | Script or gatekeeper gate failed | Claude, via `set` |
+| `passed` | Both gates passed | Claude, via `set` |
+| `approved` | Human approved a `passed` phase | Human, via `approve` |
+| `forced` | Human forced past a failed gate | Human, via `force` |
+| `skipped` | Optional phase skipped | CLI (flag false) or human, via `skip` |
+| `blocked` | Waiting on an open question or external dependency | Claude, via `set` |
+| `parked` | Whole item paused | Human, via `park` |
+
+A phase unlocks the next one when it's `approved` (if approval is required), `passed` (if
+it isn't), `forced`, or `skipped` (optional phases only).
+
+## Severity
+
+Defined once, referenced everywhere else — a reviewer, the gatekeeper, and `qa` all use
+exactly this scale:
+
+<div className="not-prose flex flex-wrap gap-2 my-4">
+<StatusBadge kind="severity" value="critical" label="critical" />
+<StatusBadge kind="severity" value="major" label="major" />
+<StatusBadge kind="severity" value="minor" label="minor" />
+<StatusBadge kind="severity" value="info" label="info" />
+</div>
+
+- **critical** — a security vulnerability; data loss or corruption; an acceptance
+  criterion not met; internal error details returned to the client; external input used
+  without validation or sanitization.
+- **major** — any MUST rule violated; a SQL `JOIN` or Mongo `$lookup` with no ADR; a query
+  not covered by an index; a query, HTTP or cache call inside a loop; a missing log at an
+  error boundary; an error code not in the registry; an acceptance criterion with no test.
+- **minor** — a SHOULD violation, naming, readability, small duplication.
+- **info** — a suggestion, no action required.
+
+`review.block_on` in `jarvis.config.yaml` decides which severities make a reviewer's
+verdict `fail` — critical and major by default; minor and info are always advisory.
+
+## Force: human-only, audited, never silent
+
+Forcing is the escape hatch, not a way around the standards. Only a human can run it —
+`guard.js` blocks Claude from running any human-only command, including this one.
+
+```text
+! npm run -s jarvis -- force FEAT-012 review --reason "hotfix window closes in 10 min"
+```
+
+- `--reason` is mandatory.
+- Anything listed in `gates.non_forceable` — by default a critical security finding, or a
+  failed acceptance criterion in `qa` — additionally needs `--accept-risk`.
+- The reason, your git `user.name`, the timestamp and the unresolved finding IDs are
+  recorded in the work item's audit log.
+- A follow-up `chore` work item is created automatically, listing the unresolved findings.
+- Every later status report shows `⚠️ <ID> has N forced gate(s): <phases>`, and both
+  `qa-report.md` and `release-notes.md` carry a **Forced Gates** section.
+
+## Skip, reopen, park
+
+Also human-only, also blocked for Claude by `guard.js`:
+
+| Command | Effect |
+|---|---|
+| `skip <ID> <phase> --reason "<why>"` | Skip an optional phase (one with `optional_if_false` in its workflow). |
+| `reopen <ID> <phase>` | Reset that phase and every phase after it back to `pending`. |
+| `park <ID> --reason "<why>"` / `unpark <ID>` | Pause and resume a whole work item. |
+
+<Callout kind="warning" title="Why these are human-only">
+Approving your own work removes the point of an approval. Jarvis enforces this at the
+hook level (`guard.js`'s G2 rule) rather than trusting an agent's instructions to hold —
+the same principle as [Concepts](/docs/concepts)'s "hooks enforce hard rules."
+</Callout>

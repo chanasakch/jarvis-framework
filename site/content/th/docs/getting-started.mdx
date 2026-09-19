@@ -1,0 +1,145 @@
+---
+title: เริ่มต้นใช้งาน
+description: ติดตั้ง Jarvis ตรวจสอบการตั้งค่า แล้วรัน work item แรกของคุณ
+---
+
+## สิ่งที่ต้องมี
+
+มีสองอย่างที่ต้องมีเสมอ ส่วนที่เหลือจำเป็นก็ต่อเมื่อคุณใช้มาตรฐาน Go + React ที่มากับเฟรมเวิร์ก
+
+| สิ่งที่ต้องมี | Profile | หมายเหตุ |
+|---|---|---|
+| Node.js ≥18 | ต้องมีเสมอ | รัน `.jarvis/scripts` |
+| git | ต้องมีเสมอ | บันทึกผู้ทำ `approve`/`force` ผ่าน `user.name` |
+| Go | Go + React | `go version` |
+| golangci-lint | Go + React | [ติดตั้ง](https://go.dev/dl/) |
+| govulncheck | Go + React | `go install golang.org/x/vuln/cmd/govulncheck@latest` |
+| Docker | Go + React | จำเป็นสำหรับ integration test แบบ testcontainers |
+
+`jarvis.js doctor` ตรวจสอบทั้งหมดนี้เทียบกับ `PATH` จริงของคุณ — ดู
+[ตรวจสอบการตั้งค่า](#verify-the-setup) ด้านล่าง
+
+## ติดตั้ง
+
+```bash
+npx jarvis-framework init --name jarvis
+cd .jarvis && npm install
+```
+
+`init` จะไม่เขียนทับไฟล์ที่คุณเป็นเจ้าของอยู่แล้ว — รันซ้ำได้หลังอัปเกรดเฟรมเวิร์ก โดย
+`.jarvis/standards/`, `jarvis.config.yaml` และ `CLAUDE.md` ของคุณจะไม่ถูกแตะต้อง `--name`
+กำหนด prefix ให้ทุก slash command และ agent — `--name ops` จะให้คุณได้ `/ops`, `/ops-init`
+และ `ops-architect` แทน
+
+## ไฟล์ที่ถูกเพิ่มเข้ามาในรีโป
+
+<FileTree>
+<File name="jarvis.config.yaml" />
+<File name="CLAUDE.md" />
+<Folder name=".claude/">
+  <Folder name="agents/">
+    <File name="jarvis-po.md" />
+    <File name="jarvis-architect.md" />
+  </Folder>
+  <Folder name="commands/">
+    <File name="jarvis.md" />
+    <File name="jarvis-init.md" />
+  </Folder>
+  <File name="settings.json" />
+</Folder>
+<Folder name=".jarvis/">
+  <File name="VERSION" />
+  <Folder name="core/">
+    <Folder name="rules/" />
+    <Folder name="templates/" />
+    <Folder name="checklists/" />
+    <Folder name="workflows/" />
+  </Folder>
+  <Folder name="standards/" />
+  <Folder name="project/">
+    <File name="context.md" />
+  </Folder>
+  <Folder name="scripts/" />
+  <Folder name="state/" />
+</Folder>
+<Folder name="packages/errors/">
+  <File name="registry.yaml" />
+</Folder>
+<Folder name="docs/">
+  <Folder name="work/" />
+  <Folder name="adr/" />
+  <Folder name="architecture/" />
+</Folder>
+</FileTree>
+
+`.claude/`, `.jarvis/core/` และ `.jarvis/scripts/` เป็นของ framework — `upgrade` จะแทนที่
+ไฟล์เหล่านี้ ส่วน `jarvis.config.yaml`, `.jarvis/standards/`, `.jarvis/project/` และ
+`CLAUDE.md` เป็นของคุณ ไม่มีส่วนไหนของ framework เขียนทับไฟล์พวกนี้เลย
+
+## ตรวจสอบการตั้งค่า
+
+```bash
+node .jarvis/scripts/jarvis.js doctor
+```
+
+```text
+tools:    ✅ node  ✅ git  ❌ go  ❌ golangci-lint  ❌ govulncheck  ❌ docker
+paths:    ✅ docs  ✅ adr  · web  · api  ✅ packages  ✅ error_registry  · migrations_mysql  · migrations_mongo  · openapi
+registry: ✅ 7 codes
+no problems
+hint: go → https://go.dev/dl/
+hint: golangci-lint → brew install golangci-lint
+hint: govulncheck → go install golang.org/x/vuln/cmd/govulncheck@latest
+hint: docker → needed for testcontainers integration tests
+```
+
+เครื่องหมาย `·` ข้าง path ใดหมายความว่า path นั้นยังไม่มีอยู่ในรีโปนี้ — ซึ่งเป็นเรื่องปกติก่อนที่
+`apps/web`/`apps/api` จะถูกสร้างขึ้น เครื่องมือ Go ที่ขาดหายไปจะบล็อกเฉพาะงานที่ต้องใช้มันจริง ๆ
+เท่านั้น ขั้นต่อไปให้รัน `/jarvis-init` เพื่อสแกนรีโปแล้วเติมข้อมูลลงใน `.jarvis/project/context.md`
+
+## Work item แรกของคุณ
+
+<Steps>
+<Step title="สแกนรีโป">
+```text
+/jarvis-init
+```
+เขียน `.jarvis/project/context.md` (stack, repo map, domain, pattern ที่มีอยู่แล้ว,
+glossary) จากสิ่งที่มีอยู่จริงในโค้ดของคุณ
+</Step>
+<Step title="เริ่ม work item">
+```text
+/jarvis Add OTP login for returning customers
+```
+orchestrator จะจัดประเภทงาน ถามคำถาม intake flag สูงสุด 5 ข้อในข้อความเดียว แล้วรันลำดับ
+phase ต่อไปเอง — ดู [เวิร์กโฟลว์](/docs/workflows) ว่า work type แต่ละแบบรันอะไรบ้าง
+</Step>
+<Step title="อ่าน status report">
+ทุกรอบจบด้วย status report เสมอ ไม่ว่าผลลัพธ์จะเป็นอย่างไร:
+```text
+── JARVIS ─────────────────────────────
+Item:   FEAT-012 OTP login (feature)
+Phase:  architecture → passed (attempt 1) ✅
+Waiting: human approval
+Next:   ! npm run -s jarvis -- approve FEAT-012 architecture
+Warnings: none
+───────────────────────────────────────
+```
+</Step>
+<Step title="อนุมัติ phase">
+`approve` เป็นคำสั่งที่สงวนไว้สำหรับคนเท่านั้น — Claude ถูก `guard.js` บล็อกไม่ให้รันคำสั่งนี้
+รันคำสั่งตรงตามที่ status report บอกไว้:
+```text
+! npm run -s jarvis -- approve FEAT-012 architecture
+```
+เครื่องหมาย `!` คือการรันคำสั่งนั้นในเทอร์มินัลของคุณเองโดยตรง แทนที่จะให้ Claude เป็นคนรัน
+ดู [เกต](/docs/gates) ว่ายังมีคำสั่งไหนที่สงวนไว้สำหรับคนอีกและทำไม
+</Step>
+</Steps>
+
+## ขั้นต่อไป
+
+<Callout kind="tip">
+`/jarvis-status` แสดง work item ที่กำลังทำงานอยู่ทั้งหมดพร้อมคำเตือนได้ตลอดเวลา ส่วน
+`/jarvis-explain <ID>` อธิบายให้ชัดเจนว่าทำไม work item หนึ่งถึงถูกบล็อกและอะไรจะปลดล็อกมันได้
+</Callout>

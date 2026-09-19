@@ -1,0 +1,129 @@
+---
+title: เกต
+description: โปรโตคอลเกต, phase status, ระดับ severity และคำสั่งสำหรับมนุษย์เท่านั้นที่ใช้เลื่อน phase ไปข้างหน้า
+---
+
+## โปรโตคอลเกต
+
+ทุก phase ต้องผ่านลำดับเดียวกันนี้ก่อนที่จะปลดล็อก phase ถัดไปได้:
+
+<Steps>
+<Step title="Script gate">
+`jarvis.js validate <ID> <phase>` ตรวจสอบส่วนที่เป็น deterministic — front matter, heading
+ที่จำเป็น, รูปแบบของ ID, การอ้างอิงต้นทาง, จำนวน coverage และ (สำหรับ implement) check
+command ที่ตั้งค่าไว้และกฎ lint
+</Step>
+<Step title="Agent gate">
+เอเจนต์ `jarvis-gatekeeper` อ่าน checklist ของ phase และ artifact ต้นทาง แล้วตรวจสอบทุกรายการ
+Blocking พร้อมหลักฐาน — บรรทัดหนึ่ง, ID หนึ่ง, แถวตารางหนึ่ง มันไม่มีวันยอมรับคำว่า
+"เกือบเสร็จแล้ว"
+</Step>
+<Step title="Human approval">
+ใช้เฉพาะ phase ที่อยู่ใน `gates.human_approval` (ค่าเริ่มต้น: requirements, ux,
+architecture, release) — แต่ละ workflow สามารถ override ค่านี้ต่อ phase ได้ ดู
+[การตั้งค่า](/docs/configuration)
+</Step>
+</Steps>
+
+script gate หรือ agent gate ที่ล้มเหลวจะส่งปัญหาที่พบกลับไปยังเอเจนต์เดิม และเพิ่มตัวนับ
+จำนวนครั้งที่ลอง เมื่อถึง `gates.max_retries` (ค่าเริ่มต้น 3) ออร์เคสเตรเตอร์จะหยุดและพิมพ์
+Gate Failure Menu แทนที่จะลองใหม่อีกครั้ง
+
+## Gate Failure Menu
+
+นี่คือรูปแบบที่แน่นอนที่ออร์เคสเตรเตอร์พิมพ์ออกมา — คัดลอกมาไว้ตรงนี้แบบคำต่อคำ ไม่ใช่การถอดความ:
+
+```text
+⚠️  GATE FAILED: FEAT-012 / review (attempt 3/3)
+Blocking issues:
+  - [F-SEC-001][critical] Raw DB error returned in POST /v1/otp response
+  - [F-PERF-002][major] Query inside loop in otp/service.go:88
+Risk if forced: <one or two lines>
+Options:
+  1) Retry — send issues back to the agent (resets attempts)
+  2) Fix manually, then run: /jarvis FEAT-012
+  3) Force pass (human only, audited):
+     ! npm run -s jarvis -- force FEAT-012 review --reason "<why>"
+  4) Park work item:
+     ! npm run -s jarvis -- park FEAT-012 --reason "<why>"
+```
+
+หากคุณขอให้ Claude force เกตในจุดอื่นใด มันจะพิมพ์เมนูเดียวกันนี้พร้อมปัญหาปัจจุบัน —
+มันจะไม่มีวันรัน `force` เอง
+
+## สถานะของ Phase
+
+| Status | ความหมาย | ผู้กำหนดค่า |
+|---|---|---|
+| `pending` | ยังไม่ได้เริ่ม | CLI (ค่าเริ่มต้น) |
+| `in_progress` | เอเจนต์กำลังทำงานอยู่ | Claude ผ่าน `set` |
+| `gate_failed` | script gate หรือ gatekeeper gate ล้มเหลว | Claude ผ่าน `set` |
+| `passed` | ผ่านทั้งสองเกตแล้ว | Claude ผ่าน `set` |
+| `approved` | มนุษย์อนุมัติ phase ที่ `passed` แล้ว | มนุษย์ ผ่าน `approve` |
+| `forced` | มนุษย์ force ผ่านเกตที่ล้มเหลว | มนุษย์ ผ่าน `force` |
+| `skipped` | ข้าม phase ที่เป็น optional | CLI (flag เป็น false) หรือมนุษย์ ผ่าน `skip` |
+| `blocked` | รอคำตอบสำหรับ open question หรือ dependency ภายนอก | Claude ผ่าน `set` |
+| `parked` | work item ทั้งหมดถูกพักไว้ | มนุษย์ ผ่าน `park` |
+
+phase หนึ่งจะปลดล็อก phase ถัดไปเมื่อมันเป็น `approved` (ถ้าต้องการการอนุมัติ), `passed`
+(ถ้าไม่ต้องการ), `forced`, หรือ `skipped` (เฉพาะ phase ที่เป็น optional เท่านั้น)
+
+## ความรุนแรง
+
+กำหนดไว้ที่เดียว แล้วอ้างอิงใช้ทุกที่ — reviewer, gatekeeper และ `qa` ล้วนใช้สเกลนี้เหมือนกันทุกประการ:
+
+<div className="not-prose flex flex-wrap gap-2 my-4">
+<StatusBadge kind="severity" value="critical" label="critical" />
+<StatusBadge kind="severity" value="major" label="major" />
+<StatusBadge kind="severity" value="minor" label="minor" />
+<StatusBadge kind="severity" value="info" label="info" />
+</div>
+
+- **critical** — ช่องโหว่ด้านความปลอดภัย; ข้อมูลสูญหายหรือเสียหาย; acceptance
+  criterion ไม่ผ่านตามที่กำหนด; รายละเอียด error ภายในถูกส่งกลับไปยัง client; input
+  จากภายนอกถูกใช้งานโดยไม่มีการตรวจสอบหรือทำความสะอาดข้อมูล
+- **major** — มีการละเมิดกฎ MUST ข้อใดข้อหนึ่ง; SQL `JOIN` หรือ Mongo `$lookup` ที่ไม่มี ADR
+  รองรับ; query ที่ไม่มี index รองรับ; query, HTTP หรือ cache call ที่อยู่ภายใน loop;
+  ไม่มีการ log ที่จุด error boundary; error code ที่ไม่มีอยู่ใน registry; acceptance
+  criterion ที่ไม่มี test รองรับ
+- **minor** — การละเมิดกฎ SHOULD, การตั้งชื่อ, ความอ่านง่าย, การซ้ำซ้อนเล็กน้อย
+- **info** — ข้อเสนอแนะ ไม่จำเป็นต้องดำเนินการ
+
+`review.block_on` ใน `jarvis.config.yaml` เป็นตัวกำหนดว่า severity ระดับใดที่จะทำให้ verdict
+ของ reviewer เป็น `fail` — ค่าเริ่มต้นคือ critical และ major ส่วน minor และ info เป็นเพียง
+คำแนะนำเสมอ
+
+## Force: สำหรับมนุษย์เท่านั้น, มีการตรวจสอบย้อนหลัง, ไม่มีวันเงียบ
+
+การ force คือทางออกฉุกเฉิน ไม่ใช่วิธีการเลี่ยงมาตรฐาน มีเพียงมนุษย์เท่านั้นที่รันได้ —
+`guard.js` บล็อกไม่ให้ Claude รันคำสั่งสำหรับมนุษย์เท่านั้นใด ๆ รวมถึงคำสั่งนี้ด้วย
+
+```text
+! npm run -s jarvis -- force FEAT-012 review --reason "hotfix window closes in 10 min"
+```
+
+- `--reason` เป็นสิ่งที่ต้องระบุเสมอ
+- สิ่งใดก็ตามที่อยู่ใน `gates.non_forceable` — ค่าเริ่มต้นคือ security finding ระดับ critical
+  หรือ acceptance criterion ที่ไม่ผ่านใน `qa` — ต้องระบุ `--accept-risk` เพิ่มเติมด้วย
+- เหตุผล, `user.name` ของ git คุณ, timestamp และ ID ของ finding ที่ยังไม่ได้แก้ไข
+  จะถูกบันทึกไว้ใน audit log ของ work item
+- work item ประเภท `chore` ที่ตามมาจะถูกสร้างขึ้นโดยอัตโนมัติ พร้อมรายการ finding
+  ที่ยังไม่ได้แก้ไข
+- รายงานสถานะทุกครั้งหลังจากนี้จะแสดง `⚠️ <ID> has N forced gate(s): <phases>` และทั้ง
+  `qa-report.md` และ `release-notes.md` จะมีส่วน **Forced Gates** อยู่ด้วย
+
+## Skip, reopen, park
+
+เป็นคำสั่งสำหรับมนุษย์เท่านั้นเช่นกัน และถูกบล็อกสำหรับ Claude โดย `guard.js`:
+
+| คำสั่ง | ผลลัพธ์ |
+|---|---|
+| `skip <ID> <phase> --reason "<why>"` | ข้าม phase ที่เป็น optional (phase ที่มี `optional_if_false` ใน workflow ของมัน) |
+| `reopen <ID> <phase>` | รีเซ็ต phase นั้นและทุก phase ที่ตามมาให้กลับไปเป็น `pending` |
+| `park <ID> --reason "<why>"` / `unpark <ID>` | พักและกลับมาทำงาน work item ทั้งชิ้นต่อ |
+
+<Callout kind="warning" title="ทำไมคำสั่งเหล่านี้จึงเป็นสำหรับมนุษย์เท่านั้น">
+การอนุมัติงานของตัวเองทำให้จุดประสงค์ของการอนุมัติหมดความหมาย Jarvis บังคับใช้กฎนี้ที่ระดับ
+hook (กฎ G2 ของ `guard.js`) แทนที่จะเชื่อว่าคำสั่งของเอเจนต์จะทำตามเสมอ — หลักการเดียวกับที่
+[แนวคิดหลัก](/docs/concepts) กล่าวไว้ว่า "hooks บังคับใช้กฎที่เข้มงวด"
+</Callout>

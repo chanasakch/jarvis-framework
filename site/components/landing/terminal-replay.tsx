@@ -142,7 +142,12 @@ export function TerminalReplay({ dict }: { dict: Dictionary }) {
           {showTranscript ? dict.landing.replay.hideTranscript : dict.landing.replay.showTranscript}
         </Button>
         {showTranscript && (
-          <pre className="mt-2 overflow-x-auto rounded-lg border border-border bg-muted p-4 text-left font-mono text-xs whitespace-pre-wrap">
+          // tabIndex: same WCAG 2.1.1/2.1.3 fix as the MDX/config table wrappers, in
+          // case a long unbroken line ever forces a real horizontal scroll here.
+          <pre
+            tabIndex={0}
+            className="mt-2 overflow-x-auto rounded-lg border border-border bg-muted p-4 text-left font-mono text-xs whitespace-pre-wrap"
+          >
             {transcriptText}
           </pre>
         )}

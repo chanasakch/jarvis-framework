@@ -1,0 +1,114 @@
+---
+title: มาตรฐาน
+description: ไฟล์มาตรฐานทั้ง 14 ไฟล์ รูปแบบ prefix ของ rule ID และวิธีเสนอการเปลี่ยนแปลงหรือขอข้อยกเว้นเฉพาะจุด
+---
+
+## มาตรฐานเป็นของโปรเจกต์
+
+Jarvis มาพร้อมชุดมาตรฐานสำหรับ monorepo ที่มี frontend เป็น React + TypeScript และ backend เป็น Go
+เชื่อมต่อกับ MySQL, MongoDB และ Redis — แต่ไฟล์เหล่านี้อยู่ในรีโปของคุณเอง ที่
+`.jarvis/standards/` และทีมของคุณแก้ไขได้โดยตรง ไม่มีอะไรใน `.jarvis/core` มา override มาตรฐานเหล่านี้
+และ `jarvis-framework upgrade` จะไม่แตะไฟล์เหล่านี้เลย (ดู [การใช้งานแบบทีม](/docs/team))
+
+ทุก rule มี ID กำกับ — `GO-01`, `DB-02`, `SEC-04` — เพื่อให้ finding จาก reviewer, การละเมิด lint หรือ
+ADR ข้อยกเว้น สามารถอ้างอิงได้ตรงว่า rule ไหนที่ทำงาน ความรุนแรงของ rule เมื่อถูกละเมิด (critical,
+major, minor, info) ถูกกำหนดไว้ที่เดียวคือใน `.jarvis/core/rules/conventions.md` §4 แล้วอ้างอิงใช้
+ทุกที่ — ดูตารางความรุนแรงฉบับเต็มที่ [เกต](/docs/gates)
+
+## ไฟล์ทั้ง 14 ไฟล์
+
+แต่ละไฟล์ถูกอ่านโดย Jarvis agent ที่ทำงานในส่วนนั้น โดย review agent หนึ่งในสี่ตัว
+(`STD`, `PERF`, `SEC`, `DB`) และโดยสคริปต์ `lint` สำหรับ rule ที่ตรวจสอบได้ด้วยเครื่องจักร
+
+| File | ID prefix | Covers |
+|---|---|---|
+| `structure.md` | `STR-` | โครงสร้าง monorepo, ทิศทางการพึ่งพา (handler → service → repository), อะไรควรอยู่ใน Go domain package หรือ frontend feature folder |
+| `coding-go.md` | `GO-` | กฎของ Go backend — ต้องผ่าน `gofmt`/`golangci-lint`, การส่งต่อ `context.Context` พร้อม timeout ที่ตั้งค่าไว้ |
+| `coding-react.md` | `RX-` | กฎของ React/TypeScript — ห้ามใช้ `any`, โครงสร้างแบบ feature-folder, ใช้ TanStack Query สำหรับ server state |
+| `api.md` | `API-` | ข้อตกลง REST — response envelope, cursor pagination, idempotency, status code |
+| `database.md` | `DB-` | การเข้าถึง MySQL และ MongoDB — ห้าม `JOIN`/`$lookup`, การครอบคลุมของ index, ขอบเขต transaction, ความปลอดภัยของ query |
+| `caching.md` | `CACHE-` | รูปแบบ cache-aside, รูปแบบ key `<service>:<domain>:<entity>:<id>:v<n>`, บังคับใช้ TTL แบบ jittered |
+| `performance.md` | `PERF-` | คอมเมนต์ความซับซ้อนเชิงอัลกอริทึม, การป้องกัน N+1, การทำ batching, concurrency, งบประมาณ latency |
+| `security.md` | `SEC-` | การ validate input ที่ backend boundary, parameterized SQL, injection/XSS, authn/authz, PII |
+| `error-handling.md` | `ERR-` | `packages/errors/registry.yaml` เป็นแหล่งความจริงเดียวของ error code ที่ส่งให้ client |
+| `logging.md` | `LOG-` | การ log แบบมีโครงสร้างด้วย `slog`, field ที่บังคับต้องมี, จุด log ที่บังคับ, log ครั้งเดียวที่ boundary |
+| `testing.md` | `TEST-` | รูปทรงของ test pyramid, coverage ขั้นต่ำจาก `jarvis.config.yaml`, งบเวลาต่อประเภทของ test |
+| `documentation.md` | `DOC-` | กฎการเขียน artifact — ภาษาอังกฤษเท่านั้น, ใช้ตารางแทนข้อความบรรยาย, ใช้ Mermaid สำหรับทุกไดอะแกรม |
+| `git.md` | `GIT-` | การตั้งชื่อ branch, Conventional Commits พร้อม work-item ID และ task ID, ห้าม commit ตรงเข้า `main` |
+| `lint-rules.yaml` | *(none — cites the 13 above)* | ส่วนย่อยของ MUST rule ที่ตรวจสอบด้วยเครื่องจักรได้ รันโดย `jarvis.js lint` เป็น regex ต่อบรรทัด |
+
+<Callout kind="note" title="ไม่ได้ผูกติดกับสแต็กนี้">
+มีแค่ตัวไฟล์เองที่จำเพาะกับสแต็กนี้ ส่วนกลไก — rule ที่มี ID ตรวจสอบด้วยสคริปต์และ agent —
+ใช้ได้กับสแต็กไหนก็ได้ แก้ไขหรือแทนที่ไฟล์เหล่านี้ให้เข้ากับสแต็กของคุณ
+</Callout>
+
+## MUST เทียบกับ SHOULD
+
+ทุก rule ในไฟล์มาตรฐานมีรูปแบบเดียวกัน คือ ID, ชื่อ, tag `(MUST)` หรือ `(SHOULD)`, เนื้อหา rule
+หนึ่งหรือสองประโยค ตามด้วยตัวอย่าง ✅ ที่ทำตาม rule และตัวอย่าง ❌ ที่ละเมิด rule — ตัวอย่างเช่น
+`### GO-01 — gofmt and golangci-lint clean (MUST)` ใน `coding-go.md` หรือ
+`### GIT-03 — Roughly one task per commit (SHOULD)` ใน `git.md`
+
+- **MUST** — การละเมิดมีความรุนแรงอย่างน้อย `major` (ตาม `conventions.md` §4) และบล็อกเกตโดยค่าเริ่มต้น
+- **SHOULD** — การละเมิดมีความรุนแรงระดับ `minor` จะถูก flag ใน review แต่ไม่บล็อกเกตด้วยตัวมันเอง
+- คู่ ✅/❌ มีไว้เพื่อให้ reviewer หรือ gatekeeper agent จับคู่รูปแบบของ diff กับตัวอย่างที่เป็น
+  รูปธรรมได้ แทนที่จะต้องตีความข้อความบรรยาย และเพื่อให้ `lint-rules.yaml` มีสิ่งที่ไม่กำกวมพอจะ
+  แปลงเป็น regex
+
+## อ่าน `lint-rules.yaml`
+
+ไม่ใช่ทุก MUST rule ที่ตรวจได้ด้วย regex แต่ที่ตรวจได้จะอยู่ใน
+`.jarvis/standards/lint-rules.yaml` รันด้วย `node .jarvis/scripts/jarvis.js lint` แต่ละรายการ
+ระบุ rule ID ที่บังคับใช้, glob ที่ใช้ตรวจ, pattern และความรุนแรง — ตัวอย่างเช่น รายการ `DB-01`
+จับคู่ `\bjoin\b` (ไม่สนตัวพิมพ์เล็กใหญ่) ทั่ว `apps/api/**/*.go` ที่ความรุนแรง `major` rule
+ที่มีเครื่องหมาย `[ADDED]` ใน `desc` ของมัน ไม่ได้อยู่ใน spec เดิมของ framework — เป็นส่วนเสริมที่
+พึ่งพา regex ควรตรวจสอบก่อนหาก team เจอ false positive
+
+## การเสนอเปลี่ยนแปลงมาตรฐาน
+
+มาตรฐานถูกออกแบบมาให้แก้ไขได้ วิธีเปลี่ยน:
+
+1. เปิด PR แก้ไขไฟล์ภายใต้ `.jarvis/standards/`
+2. ถ้า rule นั้นตรวจสอบได้ด้วยเครื่องจักร ให้อัปเดต `lint-rules.yaml` ใน PR เดียวกัน
+3. `CODEOWNERS` จะส่ง PR ไปยังกลุ่มที่ดูแลมาตรฐาน — ดู [การใช้งานแบบทีม](/docs/team) สำหรับ
+   path ที่แน่นอน
+4. **การผ่อนปรนหรือลบ rule ต้องมี ADR ด้วย** ใน `docs/adr/` ระบุ rule ID, เหตุผล, ขอบเขต
+   และวันหมดอายุ
+
+การแก้ถ้อยคำหรือเพิ่ม rule ใหม่ไม่ต้องมี ADR — เฉพาะการผ่อนปรนหรือลบ rule ที่มีอยู่แล้วเท่านั้นที่ต้องมี
+
+## กลไกข้อยกเว้น
+
+ข้อยกเว้นเฉพาะจุดไม่จำเป็นต้องเปลี่ยนตัวมาตรฐานเอง ทุกไฟล์มาตรฐานจบด้วยข้อความเดียวกัน
+คำต่อคำ (ตัวอย่างนี้มาจาก `caching.md` อ้างอิง `CACHE-03`):
+
+> Any deviation from a rule in this file requires an ADR in `docs/adr/` that references the rule ID
+> (e.g. `[CACHE-03]`) and is approved before the code merges.
+
+เมื่อ ADR นั้นได้รับการยอมรับแล้ว ให้ suppress finding ของ lint จุดนั้นด้วยคอมเมนต์
+`jarvis-ignore` บนบรรทัดที่ละเมิดหรือบรรทัดเหนือมันโดยตรง:
+
+```go
+// jarvis-ignore DB-01 ADR-0007
+```
+
+ไฟล์ YAML และ SQL ใช้ `-- jarvis-ignore ...` หรือ `# jarvis-ignore ...` แทน `//` linter จะ
+resolve `ADR-0007` ไปยัง `docs/adr/ADR-0007-*.md` และจะยอมรับการ suppress ก็ต่อเมื่อไฟล์นั้น
+มีอยู่จริง **และ** สถานะเป็น `accepted` — ADR ที่ยังไม่ resolve หรือแค่ถูกเสนอ จะทำให้การ
+suppress นั้นถูกรายงานเป็นการละเมิด rule ที่มันพยายามจะปิดเสียงเอง
+
+<Callout kind="warning" title="ADR ไม่ใช่ทางลัดข้ามการเช็คของ lint">
+คอมเมนต์นี้จะทำงานก็ต่อเมื่อ ADR ถูกเขียนและได้รับการยอมรับแล้วเท่านั้น ไม่มีทางที่จะ suppress
+finding ได้ด้วยการแก้ไขแค่ตัวมาตรฐาน, lint rule หรือคอมเมนต์ในโค้ดเพียงอย่างเดียว
+</Callout>
+
+## ขั้นตอนถัดไป
+
+<Steps>
+<Step title="ดูว่าความรุนแรงบล็อกเกตอย่างไร">
+`major`/`critical` finding หยุด phase ไม่ให้เดินหน้าอย่างไร — ดู [เกต](/docs/gates)
+</Step>
+<Step title="ตั้งค่า CI และ CODEOWNERS">
+เชื่อม rule เดียวกันเข้ากับ PR pipeline ให้ทั้งทีมของคุณ — ดู [การใช้งานแบบทีม](/docs/team)
+</Step>
+</Steps>

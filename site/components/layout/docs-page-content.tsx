@@ -1,9 +1,14 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
-import { Callout } from "@/components/mdx/callout";
+import { AgentsCatalog } from "@/components/reference/agents-catalog";
+import { CommandsExplorer } from "@/components/reference/commands-explorer";
+import { ConfigReference } from "@/components/reference/config-reference";
+import { SdlcPipeline } from "@/components/landing/sdlc-pipeline";
 import { DOCS_SLUGS, type DocSlug } from "@/lib/content/nav";
-import { getDictionary, type Locale } from "@/lib/i18n";
+import { docExists, loadDoc } from "@/lib/content/mdx";
+import { getAgents, getCli, getCommands, getConfigKeys, getWorkflows } from "@/lib/generated/loaders";
+import { getDictionary, type Dictionary, type Locale } from "@/lib/i18n";
 import { pageMetadata } from "@/lib/seo/alternates";
 
 import { DocsShell } from "./docs-shell";
@@ -13,11 +18,13 @@ import type { Heading } from "./docs-toc";
  * Shared implementation behind both app/(en)/docs/[...slug]/page.tsx and
  * app/th/docs/[...slug]/page.tsx (D-018's "thin wrapper, shared logic" pattern).
  *
- * Renders a placeholder body for now — the real MDX loader (frontmatter, headings
- * extraction, next-mdx-remote/rsc rendering) is built in S4/S6 and will replace only
- * the body of this function; DocsShell, routing, generateStaticParams and metadata are
- * already final.
+ * Two kinds of docs page:
+ *  - Reference (commands, agents, workflows, configuration): rendered from generated
+ *    JSON via a dedicated component — never a hand-copied table (SITE_SPEC.md S6 rule).
+ *  - Hand-written (everything else): real MDX under content/<locale>/docs/<slug>.mdx.
  */
+const REFERENCE_SLUGS = new Set(["commands", "agents", "workflows", "configuration"]);
+
 export function docsStaticParams() {
   return DOCS_SLUGS.map((slug) => ({ slug: [slug] }));
 }
@@ -30,34 +37,42 @@ export function docsMetadata(locale: Locale, slugParts: string[]): Metadata {
   return pageMetadata(locale, `/docs/${slug}`, title, dict.footer.tagline);
 }
 
-const PLACEHOLDER_HEADINGS: Heading[] = [
-  { id: "overview", text: "Overview", level: 2 },
-  { id: "coming-soon", text: "Coming soon", level: 2 },
-];
+function ReferenceBody({ locale, dict, slug }: { locale: Locale; dict: Dictionary; slug: string }) {
+  if (slug === "commands") return <CommandsExplorer locale={locale} dict={dict} commands={getCommands()} cli={getCli()} />;
+  if (slug === "agents") return <AgentsCatalog locale={locale} dict={dict} agents={getAgents()} />;
+  if (slug === "workflows") return <SdlcPipeline dict={dict} workflows={getWorkflows()} />;
+  return <ConfigReference locale={locale} dict={dict} configKeys={getConfigKeys()} />;
+}
 
-export function DocsPageContent({ locale, slugParts }: { locale: Locale; slugParts: string[] }) {
+export async function DocsPageContent({ locale, slugParts }: { locale: Locale; slugParts: string[] }) {
   const slug = slugParts[0] as DocSlug | undefined;
   if (!slug || slugParts.length !== 1 || !DOCS_SLUGS.includes(slug)) notFound();
 
   const dict = getDictionary(locale);
+  const title = dict.docsNav[slug];
+
+  if (REFERENCE_SLUGS.has(slug)) {
+    // Reference pages exist in one language of prose (the JSON they render is the same
+    // for both locales; translated strings come from content/i18n/generated.th.json).
+    const headings: Heading[] = [];
+    return (
+      <DocsShell locale={locale} dict={dict} activeSlug={slug} headings={headings}>
+        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <ReferenceBody locale={locale} dict={dict} slug={slug} />
+      </DocsShell>
+    );
+  }
+
+  const translated = docExists(locale, slug);
+  const sourceLocale: Locale = translated ? locale : "en";
+  if (!docExists(sourceLocale, slug)) notFound();
+
+  const { content, frontmatter, headings } = await loadDoc(sourceLocale, slug);
 
   return (
-    <DocsShell locale={locale} dict={dict} activeSlug={slug} headings={PLACEHOLDER_HEADINGS}>
-      <h1 id="overview" className="text-2xl font-semibold tracking-tight">
-        {dict.docsNav[slug]}
-      </h1>
-      <Callout kind="note" title="Content coming in step S6">
-        This page is wired up — navigation, breadcrumbs, the on-this-page outline, language
-        switching and the edit link all work — but its written content lands in step S6 of the
-        build, generated for reference pages and hand-written for the rest, per site/SITE_SPEC.md.
-      </Callout>
-      <h2 id="coming-soon" className="text-xl font-semibold tracking-tight">
-        Coming soon
-      </h2>
-      <p className="text-muted-foreground">
-        Try the language switch above, or use the on-this-page outline to jump between the two
-        headings on this placeholder — both are fully functional ahead of the real content.
-      </p>
+    <DocsShell locale={locale} dict={dict} activeSlug={slug} headings={headings} translated={translated}>
+      <h1 className="text-2xl font-semibold tracking-tight">{frontmatter.title || title}</h1>
+      {content}
     </DocsShell>
   );
 }

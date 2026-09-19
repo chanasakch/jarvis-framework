@@ -1,0 +1,77 @@
+---
+title: Introduction
+description: What Jarvis is, why it exists, and when not to use it.
+---
+
+## What Jarvis is
+
+Jarvis is an AI-driven SDLC framework that runs on Claude Code. It routes work to specialist
+subagents, validates every output against your team's own standards through a three-layer
+gate — a deterministic script, a gatekeeper agent, then human approval where it matters —
+and blocks progress until each phase meets its Definition of Done.
+
+<Callout kind="note" title="Built for one stack, not locked to it">
+The shipped standards target a monorepo with a React + TypeScript frontend and a Go backend,
+against MySQL and MongoDB. The mechanism — rules with IDs, checked by a script and an agent —
+works for any stack; only the `.jarvis/standards/*.md` files themselves are stack-specific,
+and they're project-owned, so your team edits them directly.
+</Callout>
+
+## Why it exists
+
+An AI coding agent left to itself will write plausible-looking code that doesn't follow your
+team's standards — a `JOIN` where you agreed never to use one, a query with no supporting
+index, a raw database error returned to the browser, an acceptance criterion with no test.
+None of that shows up by reading the code once; it shows up in an incident, or in review
+comments that get written the same way every time.
+
+Jarvis's answer is direct: turn every standard into a rule with an ID
+(`.jarvis/standards/*.md`), and turn every rule into something a script or an agent actually
+checks before the work can move on. Ten design principles hold this together:
+
+1. **Orchestrator = slash command.** `/jarvis` runs in your main session; subagents cannot
+   spawn subagents, so every handoff goes through it.
+2. **File-based handoff.** Agents exchange file paths, never pasted content — every artifact
+   lives in `docs/work/<ID>-<slug>/`.
+3. **Three-layer gates.** A deterministic script, then a gatekeeper agent with evidence, then
+   a human for the phases that matter — see [Gates](/docs/gates).
+4. **Hooks enforce hard rules.** Anything that must never happen — editing a framework file,
+   running a human-only command, touching a migration with no declared schema change — is
+   blocked by `guard.js` before the tool call runs, not caught after.
+5. **Traceability by ID.** `FR → US → AC → TC → code → release` — every requirement, story,
+   criterion, task and finding carries an ID.
+6. **Configuration over code.** Workflows, gates, commands and thresholds live in
+   `jarvis.config.yaml` and `.jarvis/core/workflows/*.yaml`, not hardcoded logic.
+7. **Framework-owned vs. project-owned.** `.jarvis/core`, `.jarvis/scripts`, `.claude/agents`
+   and `.claude/commands` are replaced on upgrade; `.jarvis/standards`, `jarvis.config.yaml`
+   and `CLAUDE.md` never are.
+8. **Every exception needs an ADR.** A standard can be relaxed for a specific case — the
+   exception has to be written down and reference the rule ID.
+9. **Strict by default.** Forcing past a failed gate is possible, but it's human-only,
+   requires a reason, is audited, and creates a follow-up item for what's still unresolved.
+10. **Token discipline.** Artifacts are short and in English; an agent only reads the
+    standards its phase actually needs.
+
+## When not to use it
+
+Jarvis adds real overhead — intake questions, gated phases, human approval on some of
+them — that pays for itself on work that outlives a single session: a feature, a fix that
+needs a real root cause, anything that touches production. It's the wrong tool for a
+one-line typo fix, an experiment you'll throw away, or a change with no code at all. For
+research where the deliverable is a decision rather than a merge, use the `spike` work type —
+it ends after investigation, with no implementation phase.
+
+## Where to go next
+
+<Steps>
+<Step title="Get started">
+Install Jarvis and run your first work item — see [Getting Started](/docs/getting-started).
+</Step>
+<Step title="Understand the mechanics">
+Orchestrator, agents, gates, state, hooks — see [Concepts](/docs/concepts).
+</Step>
+<Step title="Look up a command">
+Every slash command and human-only CLI command, with real examples — see
+[Commands](/docs/commands).
+</Step>
+</Steps>

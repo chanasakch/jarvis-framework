@@ -167,4 +167,28 @@ export interface Dictionary {
       cta: string;
     };
   };
+
+  reference: {
+    commands: {
+      filterPlaceholder: string;
+      tabSlash: string;
+      tabCli: string;
+      humanOnlyBadge: string;
+      argumentsLabel: string;
+      exampleLabel: string;
+      noResults: string;
+    };
+    agents: {
+      toolsLabel: string;
+      modelLabel: string;
+      modesLabel: string;
+      inputsLabel: string;
+      outputsLabel: string;
+    };
+    config: {
+      pathHeader: string;
+      defaultHeader: string;
+      descriptionHeader: string;
+    };
+  };
 }

@@ -172,4 +172,28 @@ export const en: Dictionary = {
       cta: "Read the docs",
     },
   },
+
+  reference: {
+    commands: {
+      filterPlaceholder: "Filter commands…",
+      tabSlash: "Slash commands",
+      tabCli: "CLI",
+      humanOnlyBadge: "human only",
+      argumentsLabel: "Arguments",
+      exampleLabel: "Example",
+      noResults: "No commands match that filter.",
+    },
+    agents: {
+      toolsLabel: "Tools",
+      modelLabel: "Model",
+      modesLabel: "Modes",
+      inputsLabel: "Inputs",
+      outputsLabel: "Outputs",
+    },
+    config: {
+      pathHeader: "Key",
+      defaultHeader: "Default",
+      descriptionHeader: "Description",
+    },
+  },
 };

@@ -1,0 +1,160 @@
+---
+title: แก้ปัญหาเบื้องต้น
+description: ข้อความบล็อกจริงจาก guard.js, เกตที่ล้มเหลว และผลลัพธ์จาก CLI แบบอธิบายละเอียด
+---
+
+## G1 BLOCKED: การแก้ไขไฟล์ที่เฟรมเวิร์กเป็นเจ้าของ
+
+`guard.js` จะสกัดการเรียก `Write`, `Edit`, `MultiEdit` หรือ `NotebookEdit` ทุกครั้งที่ปลายทาง
+ขึ้นต้นด้วย `.jarvis/state/`, `.jarvis/core/`, `.jarvis/scripts/` หรือ `.claude/` โดยจะแสดง
+ข้อความว่า:
+
+```text
+G1 BLOCKED: <file> is framework-owned and must not be edited during normal work.
+Instead: These are framework-owned files. To change the framework, start Claude Code
+with JARVIS_DEV=1, or open a PR against the jarvis-framework repo.
+```
+
+สำหรับไฟล์ที่อยู่ใต้ `.jarvis/state/` ข้อความส่วน instead จะเจาะจงกว่านั้น เพราะ state เป็น
+ของ CLI เท่านั้น ทางแก้คือใช้ `node .jarvis/scripts/jarvis.js set|task|flags ...` ไม่ใช่การ
+แก้ไขไฟล์ตรง ๆ
+
+<Callout kind="tip" title="JARVIS_DEV=1">
+หากคุณกำลังพัฒนาตัวเฟรมเวิร์กเอง เช่น แก้ไข agent, workflow YAML หรือ `guard.js` ให้เริ่ม
+Claude Code ด้วยตัวแปรสภาพแวดล้อม `JARVIS_DEV=1` โดย G1 จะตรวจตัวแปรนี้ก่อนเป็นอันดับแรก
+และจะอนุญาตให้เขียนไฟล์ได้เมื่อค่าถูกตั้งเป็น `1` อย่าลืมยกเลิกค่านี้เมื่อกลับมาทำงานโปรเจกต์
+ตามปกติ ไม่เช่นนั้น guard ที่คอยปกป้องผู้ใช้คนอื่น ๆ ทุกคนจะหยุดทำหน้าที่ของมัน
+</Callout>
+
+## G2 BLOCKED: Claude พยายามรันคำสั่งที่สงวนไว้สำหรับมนุษย์เท่านั้น
+
+`approve`, `force`, `skip`, `reopen`, `park` และ `unpark` จะถูกตรวจจับจากคำสั่ง `Bash` ใด ๆ
+ที่เรียก `jarvis.js <verb>` หรือ `npm run -s <prefix> -- <verb>` โดยจะแสดงข้อความว่า:
+
+```text
+G2 BLOCKED: "<verb>" is a human-only command (spec §8.2).
+Instead: print the command and ask the user to run it, for example:
+  ! npm run -s jarvis -- <verb> <ID> <phase> --reason "<why>"
+```
+
+นี่ไม่ใช่บั๊กเรื่องสิทธิ์การเข้าถึง แต่คือประเด็นสำคัญของระบบ Claude จะพิมพ์คำสั่งที่ถูกต้อง
+ออกมา (พร้อมแฟล็ก `--reason` เมื่อคำสั่งนั้นต้องการ) แล้วหยุด ให้คุณเป็นคนรันเอง ดู
+[เกต](/docs/gates) เพื่อเข้าใจว่าทำไม approval, force, skip, reopen และ park จึงถูกออกแบบ
+ให้เป็นคำสั่งของมนุษย์เท่านั้น
+
+## G3 BLOCKED: การแก้ไขซอร์สโค้ดนอกเฟส implement หรือ test
+
+การแก้ไขไฟล์ใด ๆ ใต้ `apps/` หรือ `packages/` จะถูกสกัด เว้นแต่ work item นั้นกำลังอยู่ในเฟส
+`implement` จริง ๆ (แก้ไขไฟล์ใดก็ได้) หรือเฟส `test` (เฉพาะไฟล์เทสต์ที่ตรงกับรูปแบบ
+`_test.go`, `.test.tsx`, `.spec.ts`, `__tests__/`, `e2e/` หรือ `tests/`) โดยจะแสดงข้อความว่า:
+
+```text
+G3 BLOCKED: <file> is source code, and no work item is in the implement phase
+Active items: <ID>:<phase>, <ID>:<phase>
+Instead: run the phase that owns this change:
+  node .jarvis/scripts/jarvis.js next <ID>
+  node .jarvis/scripts/jarvis.js set <ID> implement in_progress
+Source edits happen inside implement (any file) or test (test files only).
+```
+
+กรณีนี้มักเกิดตอนที่ Claude พยายาม "แก้ไปเลย" ระหว่างเฟส requirements, architecture หรือ
+review แทนที่จะส่งการเปลี่ยนแปลงผ่านเฟส implement จริง ๆ ให้ทำตามคำสั่งที่แสดงออกมา หรือ
+หากทีมของคุณไม่ต้องการ guard ตัวนี้ ก็ปิดได้ทั้งโปรเจกต์ด้วย `gates.source_guard: false` ใน
+`jarvis.config.yaml`
+
+## G4 BLOCKED: การแก้ไข migration โดยไม่มีการประกาศ DB change
+
+ไฟล์ใด ๆ ใต้พาธ `migrations_mysql` หรือ `migrations_mongo` ที่ตั้งค่าไว้จะถูกสกัด เว้นแต่มี
+work item ที่กำลังทำงานอยู่ตั้งค่า `flags.has_db_change === true` โดยจะแสดงข้อความว่า:
+
+```text
+G4 BLOCKED: <file> is a migration, but no active work item has has_db_change=true.
+Instead: set the flag on the item that owns this change:
+  node .jarvis/scripts/jarvis.js flags <ID> has_db_change=true
+If this is not a DB change, the file does not belong in a migration folder.
+```
+
+ถ้าแฟล็กนี้ไม่ได้ถูกตั้งไว้ตั้งแต่ตอน intake จริง ๆ ให้รันคำสั่ง `flags` ด้านบน แต่ถ้าไฟล์นี้
+ไม่ใช่ migration ของ schema หรือข้อมูลจริง ๆ ก็ให้ย้ายมันออกจากโฟลเดอร์ migrations แทน
+
+## G5 BLOCKED: การอ่านหรือเขียนไฟล์ secret
+
+เครื่องมือใด ๆ ที่แตะไฟล์ `.env` (ยกเว้น `.env.example`/`.env.sample`/`.env.template`),
+`.pem`, `.key`, `id_rsa*`, `id_ed25519*`, `credentials.json/.yaml`, `secrets.*`, `.p12` หรือ
+`.pfx` จะถูกสกัด ทั้งเครื่องมือ `Write`/`Edit` และคำสั่งเชลล์ (`cat`, `grep`, `cp`, `source`, …)
+ที่จะอ่านหรือคัดลอกไฟล์เหล่านี้ โดยจะแสดงข้อความว่า:
+
+```text
+G5 BLOCKED: <file> is a secret file. Jarvis never reads or writes secrets.
+Instead: read the variable NAMES from .env.example or the config schema, and describe
+the value the user must set.
+```
+
+Jarvis ไม่จำเป็นต้องรู้ค่าจริงของ secret เลย ต้องการแค่ชื่อของมันเพื่อบอกคุณว่าต้องตั้งค่า
+อะไร หากเจอข้อความนี้กับไฟล์ที่ไม่ใช่ secret จริง ๆ (ตรงกับรูปแบบ pattern โดยบังเอิญ) ให้
+เปลี่ยนชื่อไฟล์ หรือขอให้ผู้ใช้ส่งเฉพาะบรรทัดที่เกี่ยวข้องมาให้โดยตรง
+
+## เกตล้มเหลวซ้ำจนถึงขีดจำกัดการรีทราย
+
+ทุกครั้งที่เกตของสคริปต์หรือ gatekeeper ล้มเหลว ปัญหาจะถูกส่งกลับไปให้ agent ตัวเดิมและ
+ตัวนับจำนวนครั้งจะเพิ่มขึ้น เมื่อถึง `gates.max_retries` (ค่าเริ่มต้น 3) orchestrator จะหยุด
+รีทรายและแสดง Gate Failure Menu แทน:
+
+```text
+⚠️  GATE FAILED: FEAT-012 / review (attempt 3/3)
+Blocking issues:
+  - [F-SEC-001][critical] Raw DB error returned in POST /v1/otp response
+  - [F-PERF-002][major] Query inside loop in otp/service.go:88
+Risk if forced: <one or two lines>
+Options:
+  1) Retry — send issues back to the agent (resets attempts)
+  2) Fix manually, then run: /jarvis FEAT-012
+  3) Force pass (human only, audited):
+     ! npm run -s jarvis -- force FEAT-012 review --reason "<why>"
+  4) Park work item:
+     ! npm run -s jarvis -- park FEAT-012 --reason "<why>"
+```
+
+นี่ไม่ใช่การพัง แต่เป็นเฟรมเวิร์กที่ปฏิเสธจะวนซ้ำไม่รู้จบกับปัญหาเดิมที่ยังไม่ถูกแก้ ให้เลือก
+หนึ่งในสี่ตัวเลือกนี้ ส่วนกลไกแบบละเอียด (finding ที่ force ไม่ได้, audit trail, chore
+ติดตามผลอัตโนมัติ) อยู่ใน [เกต](/docs/gates)
+
+## การเช็กแบบ deterministic รายงานผลเป็น `skipped` แทนที่จะเป็น `pass` หรือ `fail`
+
+`jarvis.js check backend|frontend` จะรันคำสั่งที่ตั้งค่าไว้ใต้ `commands.backend` และ
+`commands.frontend` ใน `jarvis.config.yaml` ก่อนรันแต่ละคำสั่ง มันจะมองหาไดเรกทอรีที่คำสั่ง
+นั้น `cd` เข้าไป (หรือ workspace ที่ระบุด้วย `-w <dir>`) ถ้าไดเรกทอรีนั้นยังไม่มีอยู่ การเช็ก
+จะถูกรายงานเป็น `skipped` พร้อมเหตุผลประมาณ `apps/api does not exist` ไม่ใช่ `fail` และ
+คำสั่งจะถูกรายงานเป็น `skipped` (ไม่ใช่ `fail`) เช่นกัน เมื่อผลลัพธ์ที่ได้ดูเหมือน "เครื่องมือ
+ยังไม่ได้ติดตั้ง" เช่น `command not found` หรือ `ENOENT` ในบรรทัดเดียว
+
+นั่นหมายความว่า `skipped` เป็นเรื่องปกติและไม่เป็นอันตรายก่อนที่ `apps/api` หรือ `apps/web`
+จะถูกสร้างขึ้น หรือก่อนที่เครื่องมืออย่าง `golangci-lint` จะถูกติดตั้ง ไม่ใช่ pipeline ที่พัง
+รัน `node .jarvis/scripts/jarvis.js doctor` เพื่อดูว่าเครื่องมือตัวไหนขาดหายไป พร้อมคำแนะนำ
+การติดตั้งของแต่ละตัว
+
+## คำสั่งหรือ agent ดูเหมือนไม่อัปเดตหลังจาก upgrade
+
+`npx jarvis-framework upgrade` จะแทนที่ไฟล์ที่เฟรมเวิร์กเป็นเจ้าของ (`.jarvis/core/`,
+`.jarvis/scripts/`, `.claude/agents/`, `.claude/commands/`) บนดิสก์ แต่ Claude Code จะโหลด
+slash command และ agent definition แค่ครั้งเดียวตอนเริ่มเซสชัน ถ้าหลังจาก upgrade แล้วคุณ
+ยังเห็นข้อความเก่าของ `/jarvis-help` หรือ agent ยังทำงานแบบเดิม ให้รีสตาร์ท Claude Code
+เพื่อให้มันอ่านไฟล์ที่อัปเดตใหม่ `.jarvis/standards/`, `jarvis.config.yaml`,
+`.jarvis/project/` และ `CLAUDE.md` จะไม่ถูกแตะต้องโดย upgrade เลย ดังนั้นการรีสตาร์ทจะไม่
+ทำให้สิ่งที่คุณเป็นเจ้าของหายไป
+
+## ไปต่อที่ไหนดี
+
+<Steps>
+<Step title="ทำความเข้าใจ gate protocol">
+Script gate, agent gate, human approval และการ force คืออะไรกันแน่ — ดูที่
+[เกต](/docs/gates)
+</Step>
+<Step title="ค้นหาคำสั่ง">
+slash command และคำสั่ง CLI สำหรับมนุษย์ทั้งหมด — ดูที่ [คำสั่ง](/docs/commands)
+</Step>
+<Step title="เช็กคำถามที่พบบ่อย">
+การตั้งค่าแบบไม่ผูกกับสแตก, bugfix เทียบกับ hotfix, โมเดลต่อ agent — ดูที่
+[คำถามที่พบบ่อย](/docs/faq)
+</Step>
+</Steps>

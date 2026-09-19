@@ -171,4 +171,28 @@ export const th: Dictionary = {
       cta: "อ่านเอกสาร",
     },
   },
+
+  reference: {
+    commands: {
+      filterPlaceholder: "กรองคำสั่ง…",
+      tabSlash: "Slash commands",
+      tabCli: "CLI",
+      humanOnlyBadge: "เฉพาะคนเท่านั้น",
+      argumentsLabel: "อาร์กิวเมนต์",
+      exampleLabel: "ตัวอย่าง",
+      noResults: "ไม่พบคำสั่งที่ตรงกับตัวกรองนี้",
+    },
+    agents: {
+      toolsLabel: "Tools",
+      modelLabel: "Model",
+      modesLabel: "Modes",
+      inputsLabel: "Inputs",
+      outputsLabel: "Outputs",
+    },
+    config: {
+      pathHeader: "คีย์",
+      defaultHeader: "ค่าเริ่มต้น",
+      descriptionHeader: "คำอธิบาย",
+    },
+  },
 };

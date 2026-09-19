@@ -34,7 +34,13 @@ export async function CodeBlock({
           <CopyButton value={code} />
         </div>
       </div>
+      {/* tabIndex + role: WCAG 2.1.1/2.1.3 — a long code line scrolls horizontally with
+          no focusable content inside it otherwise, so the region itself must be a
+          keyboard-reachable scroll target (found by axe-core on a real docs page). */}
       <div
+        role="region"
+        aria-label={filename ?? lang}
+        tabIndex={0}
         className="overflow-x-auto text-sm [&_.shiki]:m-0 [&_.shiki]:p-4"
         dangerouslySetInnerHTML={{ __html: html }}
       />
