@@ -1,10 +1,12 @@
 import type { Dictionary } from "@/lib/i18n";
+import { CONTAINER } from "@/lib/layout";
+import { cn } from "@/lib/utils";
 
 export function ProblemApproach({ dict }: { dict: Dictionary }) {
   const { problem } = dict.landing;
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+    <section className={cn(CONTAINER, "py-16")}>
       <h2 className="sr-only">{problem.heading}</h2>
       <div className="grid gap-8 sm:grid-cols-2">
         <div className="space-y-2">

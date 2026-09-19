@@ -2,6 +2,8 @@ import { Ban, FileCode2, GitBranch, Hash, ShieldCheck, Users2, type LucideIcon }
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Dictionary } from "@/lib/i18n";
+import { CONTAINER } from "@/lib/layout";
+import { cn } from "@/lib/utils";
 
 const ICONS: Record<keyof Dictionary["landing"]["features"]["items"], LucideIcon> = {
   orchestrator: GitBranch,
@@ -17,7 +19,7 @@ export function FeatureGrid({ dict }: { dict: Dictionary }) {
   const items = Object.entries(features.items) as [keyof Dictionary["landing"]["features"]["items"], { title: string; body: string }][];
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+    <section className={cn(CONTAINER, "py-16")}>
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="text-2xl font-semibold tracking-tight">{features.heading}</h2>
         <p className="mt-2 text-sm text-muted-foreground">{features.subhead}</p>

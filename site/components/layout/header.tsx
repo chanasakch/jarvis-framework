@@ -13,6 +13,8 @@ import { siteConfig } from "@/site.config";
 import { GithubIcon } from "./github-icon";
 import { Logo } from "./logo";
 import { MobileNav } from "./mobile-nav";
+import { CONTAINER } from "@/lib/layout";
+import { cn } from "@/lib/utils";
 
 export function Header({ locale, dict, version }: { locale: Locale; dict: Dictionary; version?: string }) {
   const links = [
@@ -25,7 +27,7 @@ export function Header({ locale, dict, version }: { locale: Locale; dict: Dictio
   return (
     <SearchProvider>
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:px-6">
+        <div className={cn(CONTAINER, "flex h-14 items-center gap-4")}>
           <MobileNav locale={locale} dict={dict} />
 
           {/* aria-label, not just the visible span: below `sm` the text is hidden and

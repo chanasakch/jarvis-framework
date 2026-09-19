@@ -65,3 +65,12 @@ test("mobile nav sheet's links navigate correctly", async ({ page }) => {
   await page.getByRole("dialog").getByRole("link", { name: "Docs", exact: true }).click();
   await expect(page).toHaveURL(/\/docs\/introduction\/?$/);
 });
+
+test("below lg the menu sheet replaces the docs sidebar and lists every docs page", async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto("/docs/getting-started");
+  await expect(page.locator("aside").first()).toBeHidden();
+  await page.getByRole("button", { name: "Open menu" }).click();
+  await page.getByRole("dialog").getByRole("link", { name: "Gates", exact: true }).click();
+  await expect(page).toHaveURL(/\/docs\/gates\/?$/);
+});

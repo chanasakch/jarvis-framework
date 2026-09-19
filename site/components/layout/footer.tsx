@@ -5,6 +5,8 @@ import { DOCS_NAV } from "@/lib/content/nav";
 import { siteConfig } from "@/site.config";
 
 import { Logo } from "./logo";
+import { CONTAINER } from "@/lib/layout";
+import { cn } from "@/lib/utils";
 
 export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   const docsLinks = DOCS_NAV[0]?.items ?? [];
@@ -12,7 +14,7 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
 
   return (
     <footer className="border-t border-border">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6">
+      <div className={cn(CONTAINER, "grid gap-8 py-10 sm:grid-cols-3")}>
         <div className="space-y-2">
           <div className="flex items-center gap-2 font-semibold">
             <Logo className="size-5 text-brand" />
@@ -54,7 +56,7 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
           </ul>
         </div>
       </div>
-      <div className="border-t border-border px-4 py-4 text-xs text-muted-foreground sm:px-6">
+      <div className={cn(CONTAINER, "border-t border-border py-4 text-xs text-muted-foreground")}>
         © {year} {dict.meta.frameworkName} · {dict.footer.license}
       </div>
     </footer>

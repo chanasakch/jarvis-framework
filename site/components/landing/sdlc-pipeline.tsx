@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Workflow, WorkflowPhase } from "@/lib/generated/schemas";
 import type { Dictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { CONTAINER } from "@/lib/layout";
 
 function agentLine(phase: WorkflowPhase, dict: Dictionary): string {
   const { pipeline } = dict.landing;
@@ -117,7 +118,7 @@ export function SdlcPipeline({ dict, workflows }: { dict: Dictionary; workflows:
   const [workType, setWorkType] = useState(workflows[0]?.id ?? "");
 
   return (
-    <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+    <section className={cn(CONTAINER, "py-16")}>
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="text-2xl font-semibold tracking-tight">{pipeline.heading}</h2>
         <p className="mt-2 text-sm text-muted-foreground">{pipeline.subhead}</p>

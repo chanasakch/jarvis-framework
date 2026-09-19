@@ -7,12 +7,14 @@ import { CopyButton } from "@/components/ui/copy-button";
 import { getMeta } from "@/lib/generated/loaders";
 import { localizeHref, type Dictionary, type Locale } from "@/lib/i18n";
 import { siteConfig } from "@/site.config";
+import { CONTAINER } from "@/lib/layout";
+import { cn } from "@/lib/utils";
 
 export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   const meta = getMeta();
 
   return (
-    <section className="mx-auto max-w-3xl px-4 pt-16 pb-12 text-center sm:px-6 sm:pt-24">
+    <section className={cn(CONTAINER, "max-w-3xl pt-16 pb-12 text-center sm:pt-24")}>
       <Badge variant="neutral" className="mb-4">
         v{meta.version}
       </Badge>

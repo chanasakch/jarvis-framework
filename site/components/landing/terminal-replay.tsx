@@ -8,6 +8,7 @@ import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { replayScript, type ReplayFrame } from "@/lib/content/replay-script";
 import type { Dictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { CONTAINER } from "@/lib/layout";
 
 const FRAME_DELAY_MS = 2200;
 
@@ -65,7 +66,7 @@ export function TerminalReplay({ dict }: { dict: Dictionary }) {
   );
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+    <section className={cn(CONTAINER, "max-w-4xl py-16")}>
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="text-2xl font-semibold tracking-tight">{dict.landing.replay.heading}</h2>
         <p className="mt-2 text-sm text-muted-foreground">{dict.landing.replay.subhead}</p>

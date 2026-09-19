@@ -8,6 +8,8 @@ import { DocsSidebar } from "./docs-sidebar";
 import { DocsToc, type Heading } from "./docs-toc";
 import { EditOnGithub } from "./edit-on-github";
 import { PrevNext } from "./prev-next";
+import { CONTAINER } from "@/lib/layout";
+import { cn } from "@/lib/utils";
 
 /**
  * Composes the docs page chrome: left nav, breadcrumbs, content, right TOC, edit link,
@@ -33,8 +35,8 @@ export function DocsShell({
   const title = dict.docsNav[activeSlug as keyof Dictionary["docsNav"]] ?? activeSlug;
 
   return (
-    <div className="mx-auto flex max-w-6xl gap-8 px-4 py-8 sm:px-6">
-      <aside className="hidden w-56 shrink-0 md:block">
+    <div className={cn(CONTAINER, "flex gap-8 py-8")}>
+      <aside className="hidden w-56 shrink-0 lg:block">
         <div className="sticky top-20">
           <DocsSidebar locale={locale} dict={dict} activeSlug={activeSlug} />
         </div>
@@ -50,7 +52,7 @@ export function DocsShell({
         <PrevNext locale={locale} dict={dict} activeSlug={activeSlug} />
       </main>
 
-      <aside className="hidden w-48 shrink-0 lg:block">
+      <aside className="hidden w-52 shrink-0 xl:block">
         <div className="sticky top-20">
           <DocsToc headings={headings} title={dict.docsShell.onThisPage} />
         </div>
