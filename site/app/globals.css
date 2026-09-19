@@ -95,6 +95,11 @@
 }
 
 :root {
+  /* Motion (SYSTEM_DESIGN.md §14: subtle, functional, 100–200ms, Tailwind default easing). */
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-stagger: 30ms;
+
   --radius: 0.625rem;
 
   /* Neutral OKLCH ramp — the same starting point the reference uses (shadcn's neutral
@@ -270,10 +275,35 @@
   color: var(--shiki-dark);
 }
 
+/* Pipeline diagram: connectors draw in along the phase order; `--i` is the element's
+   index, so the stagger shows sequence rather than decorating. */
+@keyframes pipeline-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.pipeline-segment {
+  stroke-dasharray: 1;
+  animation: pipeline-draw var(--motion-base) ease-out both;
+  animation-delay: calc(var(--i, 0) * var(--motion-stagger));
+  transition: stroke var(--motion-base);
+}
+/* One equal column per phase (count in `--n`); the SVG connectors rely on equal widths. */
+.pipeline-track {
+  grid-template-columns: repeat(var(--n, 1), minmax(calc(var(--spacing) * 24), 1fr));
+}
+.pipeline-stagger {
+  animation-delay: calc(var(--i, 0) * var(--motion-stagger));
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
+    animation-delay: 0s !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

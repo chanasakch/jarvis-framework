@@ -117,6 +117,11 @@ export const th: Dictionary = {
       approvalNone: "ไม่ต้องมีการอนุมัติ",
       optionalLabel: "ทางเลือก — ข้ามได้ ยกเว้น",
       conditionalLabel: "เฉพาะเมื่อ",
+      stepOf: "Phase ที่ {n} จาก {total}",
+      summary: "{phases} phase ต้องให้คนอนุมัติ {approvals} phase",
+      legendApproval: "คนต้องอนุมัติ",
+      legendOptional: "ข้ามได้",
+      legendConditional: "มี agent เพิ่มเมื่อเปิด flag",
     },
     features: {
       heading: "สิ่งที่บังคับใช้จริง",

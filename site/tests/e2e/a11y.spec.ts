@@ -18,6 +18,16 @@ const PAGES = [
 for (const path of PAGES) {
   test(`no axe violations on ${path}`, async ({ page }) => {
     await page.goto(path);
+    // Check the settled page: an element mid fade-in (e.g. the pipeline's staggered
+    // entrance) has partial opacity and would report a transient contrast failure.
+    await page.evaluate(() =>
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+          .map((a) => a.finished.catch(() => undefined)),
+      ),
+    );
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
     expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
   });

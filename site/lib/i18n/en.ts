@@ -118,6 +118,11 @@ export const en: Dictionary = {
       approvalNone: "No approval required",
       optionalLabel: "Optional — skipped unless",
       conditionalLabel: "Only when",
+      stepOf: "Phase {n} of {total}",
+      summary: "{phases} phases, {approvals} need human approval",
+      legendApproval: "Human approval",
+      legendOptional: "Optional",
+      legendConditional: "Extra agent when a flag is set",
     },
     features: {
       heading: "What's actually enforced",

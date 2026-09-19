@@ -40,7 +40,7 @@ export function docsMetadata(locale: Locale, slugParts: string[]): Metadata {
 function ReferenceBody({ locale, dict, slug }: { locale: Locale; dict: Dictionary; slug: string }) {
   if (slug === "commands") return <CommandsExplorer locale={locale} dict={dict} commands={getCommands()} cli={getCli()} />;
   if (slug === "agents") return <AgentsCatalog locale={locale} dict={dict} agents={getAgents()} />;
-  if (slug === "workflows") return <SdlcPipeline dict={dict} workflows={getWorkflows()} />;
+  if (slug === "workflows") return <SdlcPipeline dict={dict} workflows={getWorkflows()} embedded />;
   return <ConfigReference locale={locale} dict={dict} configKeys={getConfigKeys()} />;
 }
 

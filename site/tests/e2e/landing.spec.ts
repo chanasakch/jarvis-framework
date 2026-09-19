@@ -50,3 +50,36 @@ test("copying the install command shows a toast", async ({ page, context }) => {
   await page.getByRole("button", { name: "Copy install command" }).click();
   await expect(page.getByText("Copied", { exact: true })).toBeVisible();
 });
+
+test("pipeline connectors fill up to the selected phase", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("tab", { name: "feature", exact: true }).click();
+  await page.getByRole("tab", { name: "architecture", exact: true }).click();
+  // architecture is phase 6 → the 5 connectors before it are filled.
+  await expect(page.locator("line.pipeline-segment.stroke-brand")).toHaveCount(5);
+  await expect(page.getByRole("heading", { name: "architecture", level: 3 })).toBeVisible();
+});
+
+test("reduced motion: pipeline nodes and connectors render with no stagger or duration", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const timing = await page
+    .locator("line.pipeline-segment")
+    .last()
+    .evaluate((el) => {
+      const s = getComputedStyle(el);
+      return [s.animationDelay, parseFloat(s.animationDuration)];
+    });
+  expect(timing[0]).toBe("0s");
+  expect(timing[1]).toBeLessThan(0.001);
+});
+
+test("on narrow screens the phase list is vertical and ArrowDown moves the selection", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto("/");
+  const phases = page.getByRole("tablist", { name: "Phases" });
+  await expect(phases).toHaveAttribute("aria-orientation", "vertical");
+  await phases.getByRole("tab").first().focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(phases.getByRole("tab").nth(1)).toHaveAttribute("aria-selected", "true");
+});

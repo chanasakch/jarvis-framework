@@ -131,6 +131,11 @@ export interface Dictionary {
       approvalNone: string;
       optionalLabel: string;
       conditionalLabel: string;
+      stepOf: string;
+      summary: string;
+      legendApproval: string;
+      legendOptional: string;
+      legendConditional: string;
     };
     features: {
       heading: string;
