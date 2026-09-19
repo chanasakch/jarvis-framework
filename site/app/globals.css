@@ -1,0 +1,281 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/*
+ * Jarvis site design tokens.
+ *
+ * Every token lives here, once, in :root (light) and .dark (dark overrides), then is
+ * re-exposed to Tailwind utilities via @theme inline. Components consume tokens through
+ * Tailwind classes (bg-background, text-muted-foreground, ring-border, ...) or the raw
+ * CSS variable — never a hard-coded hex or px radius. See site/SITE_PLAN.md §3 for what
+ * was adopted from site/design-reference/SYSTEM_DESIGN.md, what was added, and what was
+ * deliberately left out (the reference's intent/chart palette — this site has no charts).
+ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+
+  /* Fixed-hue indicator colors: conventions.md severity, phase status, approval. Same
+     mode as the reference's status-pipeline colors — a named token per state, always
+     paired with an icon and a label by the components that use them, never color alone. */
+  --color-severity-critical: var(--severity-critical);
+  --color-severity-major: var(--severity-major);
+  --color-severity-minor: var(--severity-minor);
+  --color-severity-info: var(--severity-info);
+
+  --color-phase-pending: var(--phase-pending);
+  --color-phase-in-progress: var(--phase-in-progress);
+  --color-phase-gate-failed: var(--phase-gate-failed);
+  --color-phase-passed: var(--phase-passed);
+  --color-phase-approved: var(--phase-approved);
+  --color-phase-forced: var(--phase-forced);
+  --color-phase-skipped: var(--phase-skipped);
+  --color-phase-blocked: var(--phase-blocked);
+  --color-phase-parked: var(--phase-parked);
+
+  --color-approval-human: var(--approval-human);
+  --color-approval-none: var(--approval-none);
+
+  /* Callouts: note/tip/warning/danger. New for the docs site — the reference has no
+     equivalent (it is an app, not a documentation surface). */
+  --color-callout-note: var(--callout-note);
+  --color-callout-note-border: var(--callout-note-border);
+  --color-callout-tip: var(--callout-tip);
+  --color-callout-tip-border: var(--callout-tip-border);
+  --color-callout-warning: var(--callout-warning);
+  --color-callout-warning-border: var(--callout-warning-border);
+  --color-callout-danger: var(--callout-danger);
+  --color-callout-danger-border: var(--callout-danger-border);
+
+  --color-code-bg: var(--code-bg);
+  --color-code-border: var(--code-border);
+
+  /* Radius scale derived from one base token — never hand-picked per component. */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-inter), var(--font-noto-thai), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  /* Landing-page-only display scale. The reference has no equivalent — it is an internal
+     dashboard with no marketing hero. Derived from the same font, not a second typeface.
+     Tailwind v4's font-size namespace is --text-*, generating text-display-sm/md/lg. */
+  --text-display-sm: 2rem;
+  --text-display-sm--line-height: 1.1;
+  --text-display-md: 2.75rem;
+  --text-display-md--line-height: 1.08;
+  --text-display-lg: 3.5rem;
+  --text-display-lg--line-height: 1.05;
+}
+
+:root {
+  --radius: 0.625rem;
+
+  /* Neutral OKLCH ramp — the same starting point the reference uses (shadcn's neutral
+     preset), carrying no brand-specific meaning; only --brand and the fixed-hue indicator
+     tokens below are Jarvis-specific. */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.44 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: var(--brand);
+
+  /* Brand: a distinct blue from the reference's dashboard accent (#2a78d6) — Tailwind's
+     well-known blue-600/400 pair, chosen for a "precise engineering tool" feel without
+     inventing an arbitrary new hue. One accent, no gradient (see SITE_SPEC.md design
+     direction and the reference's own §17.16 "patterns to avoid"). */
+  --brand: #2563eb;
+  --brand-foreground: #ffffff;
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+
+  /* Severity (conventions.md §4). Critical reuses a red at the same weight as
+     --destructive; the other three are new, since the reference only ever needed two
+     fixed semantic colors (success/critical) and never a 4-step severity ramp. */
+  --severity-critical: #d03b3b;
+  --severity-major: #b65f0e; /* darkened from an initial #c2650f — WCAG AA check found 4.07:1, this is 4.53:1 */
+  --severity-minor: #3b7a99;
+  --severity-info: #5b6472;
+
+  /* Phase status (conventions.md §6.3) — 9 states, each a fixed hue paired with an icon
+     by StatusBadge, never color alone. */
+  /* All nine checked against the card background for a real WCAG AA contrast ratio
+     (>= 4.5:1, small text) — see site/SITE_PLAN.md acceptance note; three were darkened
+     from their initial pick after that check (passed, forced, skipped). */
+  --phase-pending: #6b7280;
+  --phase-in-progress: #2563eb;
+  --phase-gate-failed: #d03b3b;
+  --phase-passed: #0d874c;
+  --phase-approved: #0a7d43;
+  --phase-forced: #b65f0e;
+  --phase-skipped: #6b7687;
+  --phase-blocked: #b5432e;
+  --phase-parked: #6d4aad;
+
+  --approval-human: #6d4aad;
+  --approval-none: #6b7280;
+
+  --callout-note: #eef4ff;
+  --callout-note-border: #b9d1fb;
+  --callout-tip: #eafaf3;
+  --callout-tip-border: #a9e6c9;
+  --callout-warning: #fff8e6;
+  --callout-warning-border: #f6dd9a;
+  --callout-danger: #fdeeee;
+  --callout-danger-border: #f3bcbc;
+
+  --code-bg: oklch(0.97 0 0);
+  --code-border: oklch(0.922 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.145 0 0);
+
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+
+  --brand: #5b8ff0;
+  --brand-foreground: #06131f;
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+
+  --severity-critical: #e66767;
+  --severity-major: #e0a539;
+  --severity-minor: #6fb4d6;
+  --severity-info: #9aa3af;
+
+  --phase-pending: #9aa3af;
+  --phase-in-progress: #5b8ff0;
+  --phase-gate-failed: #e66767;
+  --phase-passed: #3fc27a;
+  --phase-approved: #2fbf8e;
+  --phase-forced: #e0a539;
+  --phase-skipped: #8b96a8;
+  --phase-blocked: #e0765f;
+  --phase-parked: #9085e9;
+
+  --approval-human: #9085e9;
+  --approval-none: #9aa3af;
+
+  --callout-note: oklch(0.269 0.05 255 / 40%);
+  --callout-note-border: oklch(0.4 0.08 255 / 60%);
+  --callout-tip: oklch(0.269 0.05 155 / 40%);
+  --callout-tip-border: oklch(0.4 0.08 155 / 60%);
+  --callout-warning: oklch(0.269 0.06 80 / 40%);
+  --callout-warning-border: oklch(0.45 0.1 80 / 60%);
+  --callout-danger: oklch(0.269 0.07 25 / 40%);
+  --callout-danger-border: oklch(0.45 0.12 25 / 60%);
+
+  --code-bg: oklch(0.205 0 0);
+  --code-border: oklch(1 0 0 / 10%);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* 3px, 50%-opacity brand ring — the one focus treatment for every interactive
+     primitive, consistent in both themes (SITE_SPEC.md design direction). */
+  :focus-visible {
+    @apply outline-none ring-3 ring-ring/50;
+  }
+
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50
+      focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground;
+  }
+}
+
+/* Shiki dual-theme code blocks. Every highlighted token carries both a light and a dark
+   color as inline CSS variables (produced by shiki's `themes: {light, dark}` +
+   `defaultColor: false` — verified output shape, see lib/shiki.ts); we only pick which
+   variable is visible, keyed off the same .dark class next-themes toggles on <html>. No
+   client-side JS re-highlights code when the theme changes. `.shiki` is shiki's own
+   wrapper class, present whether it's called directly (components/mdx/code-block.tsx)
+   or through rehype-pretty-code in the MDX pipeline (S4) — one rule covers both. */
+.shiki {
+  background-color: var(--shiki-light-bg) !important;
+}
+.dark .shiki {
+  background-color: var(--shiki-dark-bg) !important;
+}
+.shiki .line span {
+  color: var(--shiki-light);
+}
+.dark .shiki .line span {
+  color: var(--shiki-dark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

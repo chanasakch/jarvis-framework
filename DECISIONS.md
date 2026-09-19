@@ -97,6 +97,25 @@ Format: decision · options considered · reason.
 - **Decision:** Config key descriptions come from `config-descriptions.ts`, not from YAML comments.
 - **Reason:** `yaml.parse` (the same library the CLI uses) does not expose comments as structured data. The generator fails the build if a config key has no description entry, or a description entry refers to a key that no longer exists — so the map can't silently drift from `jarvis.config.yaml`.
 
-## D-020 — `.nvmrc` pins Node 20, not the locally installed 24
-- **Decision:** `site/.nvmrc` and `engines.node` are `20`, the oldest LTS line satisfying Next 16's `>=20.9.0` requirement.
-- **Reason:** CI runners standardize on LTS lines; pinning to whatever happens to be installed locally (24.x) would be arbitrary and untested against what GitHub Actions' `setup-node` typically caches.
+## D-020 — `.nvmrc` pins Node 22, not 20 and not the locally installed 24
+- **Decision:** `site/.nvmrc` and `engines.node` are `22`.
+- **Options considered, in order:** (a) Node 20 (the initial S1 pick — oldest line satisfying Next 16's `>=20.9.0`); (b) Node 22; (c) the locally installed 24.
+- **Reason:** Two independent things ruled out (a). First, Node 20 reaches end-of-life April 2026, which is already in the past relative to today — pinning a new project to an EOL runtime is wrong regardless of dependencies. Second, and found empirically: `npm install` hard-failed with `vitest@5.0.1` requiring `@types/node` `>=22.0.0` as a peer, which Node 20's own types package can't satisfy. Node 22 (Active LTS since Oct 2024) satisfies Next 16, resolves the vitest peer requirement, and is a currently-maintained line — verified by a real `npm install` completing with 0 vulnerabilities. Not (c): pin to whatever a CI runner reliably caches as an LTS line, not to what happens to be on this machine.
+
+## D-021 — `js-yaml` bumped to 4.3.2 (patch), not the 5.x line
+- **Decision:** `site/package.json` pins `js-yaml@4.3.2`, not the registry's current latest (`5.4.2`).
+- **Reason:** `npm audit` flagged `js-yaml@4.1.0` (prototype pollution + quadratic-complexity DoS, high severity) after the initial install; `4.3.2` is the patched release in the same major line already matched by `@types/js-yaml@4.0.9`. Verified with a real `npm audit`: 0 vulnerabilities after the bump. The 5.x major was not adopted here to avoid an unrelated breaking-change review while just fixing a vulnerability.
+
+## D-022 — Two independent Next.js root layouts, not one shared `app/layout.tsx`
+- **Decision:** There is no top-level `app/layout.tsx`. English lives under the route group `app/(en)/layout.tsx` (contributes no URL segment) and Thai under `app/th/layout.tsx` (a real `/th` segment); each renders its own `<html lang="...">`.
+- **Options:** (a) one shared `app/layout.tsx` with a hardcoded or client-detected `lang`; (b) two independent root layouts, Next's documented "multiple root layouts" pattern.
+- **Reason:** App Router renders exactly one `<html>` per root layout. A single shared layout can't know the locale at the point it renders `<html lang>` without a client-side effect (a hydration-order hack, and wrong for the initial static HTML search engines see). Next explicitly supports parallel root layouts when the top level has no shared layout of its own — each locale gets a correct, static `lang` attribute with no client JS. This refines D-018: the "thin parallel route trees" now start at the layout, not just the page.
+
+## D-023 — Site: pin ESLint to 9.39.5, not the latest 10.11.0
+- **Decision:** `site/package.json` pins `eslint@9.39.5`.
+- **Options:** (a) latest ESLint 10; (b) latest ESLint 9.x.
+- **Reason:** Found empirically: `eslint-config-next@16.3.5` bundles `eslint-plugin-react@7.37.5`, whose own `peerDependencies.eslint` caps at `^9.7` — confirmed against the npm registry, no newer `eslint-plugin-react` exists yet. Running ESLint 10 against it crashed mid-lint (`contextOrFilename.getFilename is not a function`, an ESLint-9-era API the plugin still calls). 9.39.5 is the newest release inside the supported range; `npx eslint .` runs clean on it. Revisit once `eslint-plugin-react` ships ESLint-10 support.
+
+## D-024 — Severity/phase indicator colors darkened after a real contrast check
+- **Decision:** `--severity-major`, `--phase-passed`, `--phase-forced`, `--phase-skipped` in light mode were darkened from their first pick.
+- **Reason:** Computed actual WCAG contrast ratios (OKLCH→sRGB→relative luminance, no external tool) for every phase/severity/approval token against its card background in both themes. Four light-mode tokens measured below the 4.5:1 small-text AA threshold (as low as 3.51:1); each was darkened by the smallest amount that cleared 4.5:1, keeping the same hue. All 22 tokens (11 per theme) now pass; recorded in `site/SITE_PLAN.md`-adjacent code comments in `app/globals.css`.
