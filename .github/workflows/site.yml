@@ -46,6 +46,14 @@ jobs:
 
       - run: npm ci
 
+      # The content generator shells out to `node .jarvis/scripts/jarvis.js` (parse-cli.ts)
+      # to read the real CLI reference — that script requires the `yaml` package from
+      # .jarvis/'s own node_modules, which is gitignored and never installed by the
+      # site's own `npm ci` above.
+      - name: Install .jarvis CLI dependencies
+        working-directory: .jarvis
+        run: npm ci
+
       - run: npm run typecheck
       - run: npm run lint
 
