@@ -8,12 +8,11 @@ import { SearchProvider } from "@/components/search/search-provider";
 import { SearchTrigger, SearchTriggerIcon } from "@/components/search/search-trigger";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { localizeHref, type Dictionary, type Locale } from "@/lib/i18n";
+import { siteConfig } from "@/site.config";
 
 import { GithubIcon } from "./github-icon";
 import { Logo } from "./logo";
 import { MobileNav } from "./mobile-nav";
-
-const GITHUB_URL = "https://github.com/your-org/jarvis-framework";
 
 export function Header({ locale, dict, version }: { locale: Locale; dict: Dictionary; version?: string }) {
   const links = [
@@ -56,7 +55,7 @@ export function Header({ locale, dict, version }: { locale: Locale; dict: Dictio
               labels={{ light: dict.theme.light, dark: dict.theme.dark, system: dict.theme.system }}
             />
             <Button asChild variant="ghost" size="icon">
-              <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" aria-label={dict.nav.github}>
+              <a href={siteConfig.githubUrl} target="_blank" rel="noreferrer noopener" aria-label={dict.nav.github}>
                 <GithubIcon />
               </a>
             </Button>

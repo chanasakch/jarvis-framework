@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,10 +8,10 @@ import { CodeBlock } from "@/components/mdx/code-block";
 import { StatusBadge, type Approval, type PhaseStatus, type Severity } from "@/components/mdx/status-badge";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
-// Internal visual QA page — excluded from the sitemap and production nav (see
-// lib/seo/sitemap-entries.ts and components/layout/header.tsx). Not localized: this is
-// for reviewing the token layer, not end-user content.
-export const metadata: Metadata = { robots: { index: false, follow: false } };
+// Internal visual QA page, deliberately outside both locale trees — see
+// app/dev/layout.tsx (its `robots: noindex` metadata covers this page too) and
+// DECISIONS.md for why. Not localized: this is for reviewing the token layer, not
+// end-user content.
 
 const COLOR_GROUPS: { label: string; tokens: string[] }[] = [
   { label: "Base", tokens: ["background", "foreground", "card", "card-foreground", "popover", "popover-foreground"] },

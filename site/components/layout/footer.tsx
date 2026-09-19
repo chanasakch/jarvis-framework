@@ -2,10 +2,9 @@ import Link from "next/link";
 
 import { localizeHref, type Dictionary, type Locale } from "@/lib/i18n";
 import { DOCS_NAV } from "@/lib/content/nav";
+import { siteConfig } from "@/site.config";
 
 import { Logo } from "./logo";
-
-const GITHUB_URL = "https://github.com/your-org/jarvis-framework";
 
 export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   const docsLinks = DOCS_NAV[0]?.items ?? [];
@@ -43,7 +42,7 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
           </h3>
           <ul className="space-y-1 text-sm">
             <li>
-              <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" className="text-muted-foreground hover:text-foreground">
+              <a href={siteConfig.githubUrl} target="_blank" rel="noreferrer noopener" className="text-muted-foreground hover:text-foreground">
                 GitHub
               </a>
             </li>

@@ -1,0 +1,15 @@
+name: demo
+id_prefix: DEM
+description: Fixture workflow for parser tests.
+
+phases:
+  - id: intake
+    owner: orchestrator
+  - id: requirements
+    agent: jarvis-po
+    mode: full
+  - id: implement
+    agents: { backend: jarvis-dev-backend, frontend: jarvis-dev-frontend }
+  - id: release
+    agent: jarvis-release
+    approval: none

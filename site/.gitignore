@@ -2,6 +2,7 @@ node_modules/
 .next/
 out/
 content/generated/
+public/search-index.*.json
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
