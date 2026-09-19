@@ -1,0 +1,27 @@
+# Changelog
+
+All notable changes to the Jarvis framework are documented here. Format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow semver.
+Rendered on the docs site's [Changelog](https://your-org.github.io/jarvis-framework/changelog)
+page — see `site/lib/generated/loaders.ts`'s `getChangelog()` for how.
+
+## [1.0.0] - 2026-09-19
+
+### Added
+- Orchestrator (`/jarvis`) and an 18-phase SDLC workflow set (intake through release)
+  covering feature, enhancement, bugfix, hotfix, refactor, performance, security,
+  migration, spike and chore work types, each with its own phase sequence.
+- 13 phase agents (analyst, ba, po, architect, ux, planner, dev-backend, dev-frontend,
+  tester, 4 reviewers, qa, release) plus the orchestrator and gatekeeper.
+- Dual-gate model: a scripted gate (lint, build, test, standards checks) and an agent
+  gatekeeper verdict, both required before a phase can advance.
+- Human-only CLI commands (`approve`, `force`, `skip`, `reopen`, `park`, `unpark`)
+  enforced by a `guard.js` pre-tool-use hook, so Claude cannot run them.
+- `.jarvis/scripts/jarvis.js` CLI: `new`, `status`, `explain`, `doctor`, `set`, and the
+  human-only commands above.
+- Standards packs for Go and React, a shared error registry, and severity-graded review
+  findings (critical / major / minor / info) used by all four reviewers.
+- Documentation site: an interactive SDLC pipeline explorer and scripted terminal
+  replay on the landing page, a full command / agent / workflow / config reference
+  generated from the framework's real source, 12 docs pages in English and Thai, a
+  command-palette search, dark mode, and a static export deployable to GitHub Pages.

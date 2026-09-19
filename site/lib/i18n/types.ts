@@ -168,6 +168,12 @@ export interface Dictionary {
     };
   };
 
+  changelog: {
+    title: string;
+    subhead: string;
+    empty: string;
+  };
+
   reference: {
     commands: {
       filterPlaceholder: string;

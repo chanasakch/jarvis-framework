@@ -83,6 +83,17 @@ export const metaSchema = z.object({
 });
 export type Meta = z.infer<typeof metaSchema>;
 
+export const changelogSectionSchema = z.object({
+  heading: z.string(), // "Added", "Changed", "Fixed", ...
+  items: z.array(z.string()),
+});
+export const changelogEntrySchema = z.object({
+  version: z.string(), // "1.0.0"
+  date: z.string(), // "2026-09-19"
+  sections: z.array(changelogSectionSchema),
+});
+export type ChangelogEntry = z.infer<typeof changelogEntrySchema>;
+
 export const searchIndexItemSchema = z.object({
   id: z.string(),
   title: z.string(),

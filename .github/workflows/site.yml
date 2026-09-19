@@ -1,0 +1,91 @@
+name: Deploy site
+
+# Path-filtered on push to main: the site's own source, the framework source it
+# generates reference content from (.claude/**, .jarvis/**), and CHANGELOG.md. Also
+# deploys on every published GitHub Release, regardless of which paths changed, and can
+# be re-run manually from the Actions tab.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".claude/**"
+      - ".jarvis/**"
+      - "CHANGELOG.md"
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deploy in flight at a time; a newer push should win, not queue behind an
+# older one still building.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: site/.nvmrc
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run typecheck
+      - run: npm run lint
+
+      # Runs generate -> search-index -> i18n parity -> route parity -> next build (see
+      # package.json). SITE_BASE_PATH is a repo/environment variable (Settings ->
+      # Secrets and variables -> Actions -> Variables): set it to "/<repo-name>" for a
+      # project-page deploy (the default for org.github.io/<repo-name>/), or leave unset
+      # for a user/org page or a custom domain served from "/".
+      - run: npm run build
+        env:
+          SITE_BASE_PATH: ${{ vars.SITE_BASE_PATH }}
+
+      # Needs the real static export in out/, so it runs after build, not before —
+      # despite "typecheck -> lint -> i18n check -> link check -> build" reading as a
+      # strict pipeline order, link checking a page's rendered anchors is only possible
+      # once next build has produced them.
+      - run: npm run check:links
+
+      # Custom domain only: SITE_CNAME is an optional repo variable (e.g. "docs.example.com").
+      # Leave it unset to deploy at the default *.github.io URL.
+      - name: Write CNAME
+        if: ${{ vars.SITE_CNAME != '' }}
+        run: echo "${{ vars.SITE_CNAME }}" > out/CNAME
+
+      # Without this, GitHub Pages' Jekyll processing drops any output path starting
+      # with an underscore — including every asset under _next/ — and the deployed site
+      # 404s on all of its JS/CSS.
+      - name: Disable Jekyll processing
+        run: touch out/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

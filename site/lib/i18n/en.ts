@@ -173,6 +173,12 @@ export const en: Dictionary = {
     },
   },
 
+  changelog: {
+    title: "Changelog",
+    subhead: "Every notable change to the framework, newest first.",
+    empty: "No releases yet.",
+  },
+
   reference: {
     commands: {
       filterPlaceholder: "Filter commands…",

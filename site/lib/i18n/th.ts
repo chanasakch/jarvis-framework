@@ -172,6 +172,12 @@ export const th: Dictionary = {
     },
   },
 
+  changelog: {
+    title: "ประวัติการอัปเดต",
+    subhead: "ทุกการเปลี่ยนแปลงที่สำคัญของเฟรมเวิร์ก เรียงจากล่าสุด",
+    empty: "ยังไม่มีการเผยแพร่เวอร์ชัน",
+  },
+
   reference: {
     commands: {
       filterPlaceholder: "กรองคำสั่ง…",

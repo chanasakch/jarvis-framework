@@ -14,6 +14,7 @@ import YAML from "yaml";
 
 import {
   agentSchema,
+  changelogEntrySchema,
   cliCommandSchema,
   configKeySchema,
   metaSchema,
@@ -22,6 +23,7 @@ import {
   workflowSchema,
 } from "../lib/generated/schemas";
 import { parseAgents } from "./generate/parse-agents";
+import { parseChangelog } from "./generate/parse-changelog";
 import { parseCli } from "./generate/parse-cli";
 import { parseCommands } from "./generate/parse-commands";
 import { parseConfig } from "./generate/parse-config";
@@ -96,6 +98,10 @@ function main() {
   const meta = metaSchema.parse(parseMeta(path.join(REPO_ROOT, ".jarvis/VERSION")));
   writeJson("meta.json", meta);
 
+  // Changelog
+  const changelog = parseChangelog(path.join(REPO_ROOT, "CHANGELOG.md")).map((e) => changelogEntrySchema.parse(e));
+  writeJson("changelog.json", changelog);
+
   console.log(`Generated content in ${path.relative(SITE_ROOT, OUT_DIR)}/:`);
   console.log(`  commands.json      ${commands.length} entries`);
   console.log(`  cli.json           ${cli.length} entries`);
@@ -104,6 +110,7 @@ function main() {
   console.log(`  config.json        ${configKeys.length} entries`);
   console.log(`  requirements.json  ${requirements.length} entries`);
   console.log(`  meta.json          version ${meta.version}`);
+  console.log(`  changelog.json     ${changelog.length} entries`);
   if (report.length) {
     console.log("\nNotes:");
     report.forEach((line) => console.log(`  - ${line}`));

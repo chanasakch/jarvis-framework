@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import type { Agent, CliCommand, ConfigKey, Meta, Requirement, SlashCommand, Workflow } from "./schemas";
+import type { Agent, ChangelogEntry, CliCommand, ConfigKey, Meta, Requirement, SlashCommand, Workflow } from "./schemas";
 
 const GENERATED_DIR = path.join(process.cwd(), "content", "generated");
 
@@ -19,3 +19,4 @@ export const getWorkflows = () => read<Workflow[]>("workflows.json");
 export const getConfigKeys = () => read<ConfigKey[]>("config.json");
 export const getRequirements = () => read<Requirement[]>("requirements.json");
 export const getMeta = () => read<Meta>("meta.json");
+export const getChangelog = () => read<ChangelogEntry[]>("changelog.json");
