@@ -33,6 +33,11 @@ jobs:
     defaults:
       run:
         working-directory: site
+    # Job-level, not just on the build step: `check:links` below also needs it to
+    # resolve the same basePath-prefixed hrefs the build just produced — each `run:`
+    # step's own `env:` block does not carry over to the next step.
+    env:
+      SITE_BASE_PATH: ${{ vars.SITE_BASE_PATH }}
     steps:
       - uses: actions/checkout@v5
 
@@ -63,8 +68,6 @@ jobs:
       # project-page deploy (the default for org.github.io/<repo-name>/), or leave unset
       # for a user/org page or a custom domain served from "/".
       - run: npm run build
-        env:
-          SITE_BASE_PATH: ${{ vars.SITE_BASE_PATH }}
 
       # Needs the real static export in out/, so it runs after build, not before —
       # despite "typecheck -> lint -> i18n check -> link check -> build" reading as a
