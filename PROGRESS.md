@@ -18,10 +18,10 @@ See commits `jarvis: step 0` … `jarvis: step 17` and `jarvis: settings.json`.
 | S4 | Content generation pipeline + Thai translations | done |
 | S5 | Landing page | done |
 | S6 | All 12 docs pages, EN + TH (MDX pipeline + reference pages) | done |
-| S7 | Quality pass | **next** |
-| S8 | Deployment (GitHub Actions → Pages) | not started |
+| S7 | Quality pass | done |
+| S8 | Deployment (GitHub Actions → Pages) | **next** |
 
-### Site stack decisions of note (see DECISIONS.md D-017 to D-035)
+### Site stack decisions of note (see DECISIONS.md D-017 to D-039)
 - TypeScript 6.0.3, ESLint 9.39.5, Node 22, `yaml` (not `js-yaml`) — found/fixed by
   actually running the tools.
 - i18n: two independent root layouts for EN/TH (D-018/D-022); language switch is a full
@@ -42,6 +42,19 @@ See commits `jarvis: step 0` … `jarvis: step 17` and `jarvis: settings.json`.
 - **D-033/D-034/D-035**: a real, full-coverage a11y pass (every page, not a sample)
   found link-contrast and keyboard-scroll-region bugs that a 5-page sample missed
   entirely. The e2e suite now covers all 30 real pages.
+- **D-036/D-037**: Playwright now runs every test in both `light`/`dark` color-scheme
+  projects (82 tests total, 0 dark-mode-only regressions found); a new
+  `tests/e2e/keyboard.spec.ts` covers the 3 keyboard-walkthrough interactions
+  (switcher, replay controls, mobile nav sheet) that had no dedicated test before.
+- **D-038**: Lighthouse's `heading-order` audit (not covered by the axe WCAG-tag suite)
+  found two real heading-hierarchy bugs — `<Steps>` step titles skipped from `h2` to
+  `h4`, and the shared footer's `h3` category headings skipped a level on pages with no
+  in-page `h2` (e.g. `/docs/commands`). Both fixed (`h3` and `h2` respectively); all
+  four SITE_SPEC.md-required pages now score accessibility 100.
+- **D-039**: token-layer raw-value audit found one real bug (`docs-toc.tsx` inline
+  `style={{ paddingLeft }}` → Tailwind `pl-6`/`pl-3`) and confirmed two other raw
+  Tailwind values (`text-[10px]` kbd hint, `text-[0.85em]` inline code) and one vendored
+  shadcn primitive (`min-w-[8rem]`) are defensible exceptions, not defects.
 
 ### Verified so far (site) — re-run these after every step, they must stay green
 ```
@@ -51,24 +64,35 @@ npx eslint .
 npx vitest run                # parser unit tests with fixtures
 npm run build                 # generate -> search-index -> i18n parity -> route parity -> next build
 npx tsx scripts/check-links.ts
-npx playwright test           # 37 tests: full axe WCAG 2A+2AA on all 30 real pages + interactions
+npx playwright test           # 82 tests: full axe WCAG 2A+2AA on all 30 real pages, both themes, + interactions/keyboard
 ```
-Current real state: all of the above pass, 37/37 e2e tests. 12 docs pages fully written
-in EN and TH (identical file trees, confirmed). 163 UI/landing dictionary strings +
-123 generated-content strings translated. 0 hard-coded hex/radius in components.
+Current real state: all of the above pass, 82/82 e2e tests (light+dark themes), 10/10
+vitest. 12 docs pages fully written in EN and TH (identical file trees, confirmed). 163
+UI/landing dictionary strings + 123 generated-content strings translated. Lighthouse
+mobile on `/`, `/docs/getting-started`, `/docs/commands`, `/th`: performance 92-94,
+accessibility 100, best-practices 100, SEO 100 (thresholds: ≥90/≥95/≥95/≥95).
 
-### What S7 inherits / must know
-- Lighthouse was already run once at S5 (landing page: 90-93/100/100/100) — S7 should
-  re-run it across the docs pages too (getting-started was checked; the other 11 were
-  not) and treat any regression as a real finding, not a formality.
-- The a11y e2e suite (37 tests) already covers every page's static WCAG 2A/2AA state;
-  S7's remaining scope per SITE_SPEC.md: a full keyboard walkthrough across pages (not
-  just the isolated interaction tests that exist), dark-mode axe passes (everything so
-  far has run in the default/light theme), a raw grep for any hard-coded value that
-  slipped through, and confirming reduced-motion/no-JS behavior beyond the terminal
-  replay (e.g. the SDLC pipeline's Tabs, the mobile nav sheet).
-- `site/CONTENT_TODO.md` does not exist — nothing was left unverifiable in S6. If S7
-  finds a real content gap, that's the file to create.
+### S7 Quality Pass — results
+
+| Check | Result | Fix applied |
+|---|---|---|
+| 1. Typecheck, lint, build (static export) | Clean | none needed |
+| 2. i18n parity (EN/TH MDX + UI dict + generated translations) | OK, already verified in S6 | none needed |
+| 3. Link check (internal links, anchors, basePath) | OK — 32 pages, 178 hrefs, 143 anchors checked | Extended `check-links.ts` to also validate `#fragment` targets (previously only checked file existence); fixed one real broken Thai anchor in `content/th/docs/getting-started.mdx` |
+| 4. Accessibility: axe both themes + keyboard walkthrough | 82/82 pass, 0 dark-mode-only violations | Added `light`/`dark` Playwright projects (D-036); added `tests/e2e/keyboard.spec.ts` for switcher/replay/mobile-nav keyboard coverage (D-037) |
+| 5. Lighthouse mobile on required pages, thresholds met | All 4 pages pass with margin after fix | Fixed 2 real `heading-order` bugs found by Lighthouse (D-038); a transient 89/100 perf reading on one page was confirmed as run-to-run variance (reran 92 consistently), not a regression |
+| 6. Visual consistency audit (raw values vs token layer) | 1 real bug found and fixed; 3 defensible exceptions logged | `docs-toc.tsx` inline-style rem values → Tailwind classes (D-039) |
+| 7. Reduced-motion + no-JS behavior | Pass | Verified (no code change needed): global CSS `prefers-reduced-motion` rule already collapses Sheet/Tabs transitions to ~0ms; no-JS content (headings, article text, nav links, default SDLC pipeline tab) renders and is readable via SSR — only palette/replay *controls* require JS, as scoped by SITE_SPEC.md |
+
+### What S8 inherits / must know
+- Deployment target: GitHub Actions → GitHub Pages, per JARVIS_SITE_PROMPTS.md S8. Needs
+  a workflow file, `SITE_BASE_PATH`/`NEXT_PUBLIC_BASE_PATH` wiring for a project-page
+  deploy (already supported by `next.config.ts`, verified working in S7's link-check
+  basePath test), version display sourced from the framework's real `VERSION` file,
+  `site/README.md`, and a root `README.md` badge.
+- Operator must still: enable GitHub Pages (source = GitHub Actions) and check
+  Actions/Pages permissions in repo settings before the first real deploy — this cannot
+  be done from here.
 
 ## Manual steps for the operator (unchanged from before)
 1. Restart Claude Code after any `.claude/**` or `.jarvis/core|scripts` change (hooks/agents/commands
