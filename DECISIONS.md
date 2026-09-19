@@ -82,3 +82,21 @@ Format: decision · options considered · reason.
 - **Decision:** Files under `.claude/agents`, `.claude/commands` and `.jarvis/core` that the new version does not ship are listed as `?` and left in place.
 - **Options:** (a) delete for a clean tree; (b) report.
 - **Reason:** A team may add its own agent or command next to the shipped ones. Deleting someone's work during an upgrade is not recoverable from inside the tool.
+
+## D-017 — Site: pin TypeScript to 6.0.3, not the latest 7.0.2
+- **Decision:** `site/` pins `typescript@6.0.3` instead of the current latest `7.0.2`.
+- **Options:** (a) use latest TypeScript; (b) pin to the last release the lint toolchain supports.
+- **Reason:** Verified live against the npm registry: `typescript-eslint@8.70.0`'s peer range is `>=4.8.4 <6.1.0`. TypeScript 7.0.2 is the new native/Go-based rewrite and is not yet supported by that plugin. 6.0.3 is the newest release still inside the supported range. Revisit once `typescript-eslint` ships a 7.x-compatible major.
+
+## D-018 — Site i18n: two thin parallel route trees, not a `[locale]` + postbuild move
+- **Decision:** English lives at the natural unprefixed App Router paths (`app/docs/...`); Thai lives under a real `app/th/docs/...` tree. Each route file is a thin wrapper around shared rendering logic. No postbuild step relocates files.
+- **Options:** (a) single `app/[locale]/...` tree with a postbuild script promoting `out/en/**` to `out/**`; (b) two parallel thin trees.
+- **Reason:** Next's built-in `i18n` config and middleware do not apply under `output: 'export'`, so locale switching is entirely build-time either way. Option (a) is more DRY but makes `sitemap.xml`, `robots.txt` and the root `404.html` depend on a file-move script getting every edge case right, invisibly, after the build. Option (b) costs ~10 tiny wrapper files (checked for parity by a script) but removes that entire failure class, and GitHub Pages' single global 404 naturally resolves to the true-root English `not-found.tsx` with no extra step.
+
+## D-019 — `/docs/configuration` descriptions are a hand-maintained, drift-checked map
+- **Decision:** Config key descriptions come from `config-descriptions.ts`, not from YAML comments.
+- **Reason:** `yaml.parse` (the same library the CLI uses) does not expose comments as structured data. The generator fails the build if a config key has no description entry, or a description entry refers to a key that no longer exists — so the map can't silently drift from `jarvis.config.yaml`.
+
+## D-020 — `.nvmrc` pins Node 20, not the locally installed 24
+- **Decision:** `site/.nvmrc` and `engines.node` are `20`, the oldest LTS line satisfying Next 16's `>=20.9.0` requirement.
+- **Reason:** CI runners standardize on LTS lines; pinning to whatever happens to be installed locally (24.x) would be arbitrary and untested against what GitHub Actions' `setup-node` typically caches.
