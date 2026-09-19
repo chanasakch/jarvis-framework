@@ -22,9 +22,9 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             {dict.footer.docsHeading}
-          </h3>
+          </h2>
           <ul className="space-y-1 text-sm">
             {docsLinks.map((slug) => (
               <li key={slug}>
@@ -37,9 +37,9 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             {dict.footer.projectHeading}
-          </h3>
+          </h2>
           <ul className="space-y-1 text-sm">
             <li>
               <a href={siteConfig.githubUrl} target="_blank" rel="noreferrer noopener" className="text-muted-foreground hover:text-foreground">

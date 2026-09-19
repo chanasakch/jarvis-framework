@@ -43,7 +43,7 @@ export function DocsToc({ headings, title }: { headings: Heading[]; title: strin
       <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{title}</h3>
       <ul className="space-y-1 border-l border-border">
         {headings.map((h) => (
-          <li key={h.id} style={{ paddingLeft: h.level === 3 ? "1.5rem" : "0.75rem" }}>
+          <li key={h.id} className={h.level === 3 ? "pl-6" : "pl-3"}>
             <a
               href={`#${h.id}`}
               aria-current={activeId === h.id ? "location" : undefined}

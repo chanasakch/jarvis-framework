@@ -10,5 +10,12 @@ export default defineConfig({
     url: "http://127.0.0.1:3000",
     reuseExistingServer: !process.env.CI,
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // Two projects, not a manual theme toggle inside every test: next-themes respects
+  // prefers-color-scheme when no stored preference exists (defaultTheme="system"), so a
+  // fresh context with an emulated colorScheme renders that theme from first paint —
+  // the same real WCAG surface a light-only run would silently never check.
+  projects: [
+    { name: "light", use: { ...devices["Desktop Chrome"], colorScheme: "light" } },
+    { name: "dark", use: { ...devices["Desktop Chrome"], colorScheme: "dark" } },
+  ],
 });
