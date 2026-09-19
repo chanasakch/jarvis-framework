@@ -28,9 +28,18 @@ export function Header({ locale, dict, version }: { locale: Locale; dict: Dictio
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:px-6">
           <MobileNav locale={locale} dict={dict} />
 
-          <Link href={localizeHref(locale, "/")} className="flex items-center gap-2 font-semibold">
+          {/* aria-label, not just the visible span: below `sm` the text is hidden and
+              the Logo is aria-hidden, which left this link with no accessible name at
+              all — a real WCAG failure Lighthouse caught (link-name audit). */}
+          <Link
+            href={localizeHref(locale, "/")}
+            aria-label={dict.meta.frameworkName}
+            className="flex items-center gap-2 font-semibold"
+          >
             <Logo className="size-5 text-brand" />
-            <span className="hidden sm:inline">{dict.meta.frameworkName}</span>
+            <span className="hidden sm:inline" aria-hidden="true">
+              {dict.meta.frameworkName}
+            </span>
           </Link>
 
           {version && (

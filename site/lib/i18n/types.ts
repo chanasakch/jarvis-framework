@@ -98,4 +98,73 @@ export interface Dictionary {
     body: string;
     backHome: string;
   };
+
+  landing: {
+    hero: {
+      headline: string;
+      subhead: string;
+      getStarted: string;
+      viewOnGithub: string;
+      copyInstall: string;
+      copied: string;
+    };
+    problem: {
+      heading: string;
+      problemLabel: string;
+      problemTitle: string;
+      problemBody: string;
+      approachLabel: string;
+      approachTitle: string;
+      approachBody: string;
+    };
+    pipeline: {
+      heading: string;
+      subhead: string;
+      workTypeLabel: string;
+      phasesLabel: string;
+      agentLabel: string;
+      ownerLabel: string;
+      outputsLabel: string;
+      checklistLabel: string;
+      approvalLabel: string;
+      approvalHuman: string;
+      approvalNone: string;
+      optionalLabel: string;
+    };
+    features: {
+      heading: string;
+      subhead: string;
+      items: {
+        orchestrator: { title: string; body: string };
+        gates: { title: string; body: string };
+        traceability: { title: string; body: string };
+        standards: { title: string; body: string };
+        hooks: { title: string; body: string };
+        team: { title: string; body: string };
+      };
+    };
+    replay: {
+      heading: string;
+      subhead: string;
+      play: string;
+      pause: string;
+      step: string;
+      restart: string;
+      showTranscript: string;
+      hideTranscript: string;
+      captions: {
+        start: string;
+        intake: string;
+        answer: string;
+        status: string;
+        gateFailed: string;
+        forced: string;
+      };
+    };
+    finalCta: {
+      heading: string;
+      body: string;
+      cta: string;
+    };
+  };
 }

@@ -141,3 +141,15 @@ Format: decision · options considered · reason.
 ## D-027 — `/dev/tokens` moved to its own third root layout, outside both locale trees
 - **Decision:** `/dev/tokens` lives at `app/dev/tokens/page.tsx` under a dedicated minimal `app/dev/layout.tsx` (no Header, no LanguageSwitch, `robots: noindex`), not inside `app/(en)/`.
 - **Reason:** Found by the real link checker (`scripts/check-links.ts`), not assumed: while it lived under `app/(en)/`, it inherited the full localized `Header`, whose `LanguageSwitch` computed a mirrored link to `/th/dev/tokens/` — a page that correctly does not exist, since this is an internal QA page with no Thai content to switch to. Moving it out of the locale tree removes the broken link at the source instead of special-casing the switch component around one page.
+
+## D-028 — Header logo link needs an explicit aria-label, not just its visible text
+- **Decision:** The header's home link carries `aria-label={frameworkName}`; its visible text span is now `aria-hidden` (the icon + label together already announce as one name).
+- **Reason:** Found by a real Lighthouse mobile run (not assumed): below the `sm` breakpoint the visible "Jarvis" text is hidden and the logo SVG is `aria-hidden`, leaving the link with no accessible name at all (`link-name` audit, WCAG 4.1.2, scored 0). Fixed and reverified: `link-name` now scores 1, accessibility category 96 → 100.
+
+## D-029 — Real `favicon.ico` + `app/icon.svg`, not just an SVG icon
+- **Decision:** Added both `app/icon.svg` (Next's file-convention icon, used by modern browsers) and a real `app/favicon.ico` (rendered from the SVG via a headless Chromium screenshot, converted with macOS `sips` — no new dependency).
+- **Reason:** Lighthouse's real browser run logged a console 404 for `/favicon.ico`, which some browsers still request directly regardless of a declared `<link rel="icon">`. Fixed and reverified: 0 console errors, `best-practices` 96 → 100.
+
+## D-030 — Real Lighthouse mobile scores, not assumed compliant
+- **Decision:** Ran `lighthouse@13.5.0` against the actual static export (mobile form factor, simulated throttling) for `/`, `/th`, `/docs/getting-started` before treating S5 as done.
+- **Result:** Performance 90–93, Accessibility 100, Best Practices 100, SEO 100 on all three — all clear SITE_SPEC.md's thresholds (≥90/≥95/≥95/≥95) with margin. Caught D-028 and D-029 in the process; both fixed and reverified with a second Lighthouse run before this was called complete.

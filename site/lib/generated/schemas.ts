@@ -45,6 +45,10 @@ export const workflowPhaseSchema = z.object({
   mode: z.string().optional(),
   approval: z.enum(["human", "none"]).optional(),
   optionalIfFalse: z.string().optional(),
+  outputs: z.array(z.string()).optional(),
+  /** The checklist item ID prefix used inside this phase's checklist file (e.g. "REQ"
+   *  for requirements.md) — read from the checklist's own first item, not invented. */
+  checklistPrefix: z.string().optional(),
 });
 export type WorkflowPhase = z.infer<typeof workflowPhaseSchema>;
 

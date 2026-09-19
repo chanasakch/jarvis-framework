@@ -65,6 +65,7 @@ function main() {
     path.join(REPO_ROOT, ".jarvis/core/workflows"),
     path.join(REPO_ROOT, ".jarvis/scripts/lib/workflow.js"),
     jarvisConfig,
+    path.join(REPO_ROOT, ".jarvis/core/checklists"),
   );
   const workflows = rawWorkflows.map((w) => workflowSchema.parse(w));
   writeJson("workflows.json", workflows);
