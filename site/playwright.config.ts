@@ -3,7 +3,10 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
-  reporter: "list",
+  // `list` locally, where the terminal is the report. On CI also write the HTML report,
+  // which the workflow uploads as an artifact on failure — a runner has no terminal to
+  // scroll back through, and the trace and screenshot live in that report.
+  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   // A dedicated port, never 3000: `next dev` owns 3000, and with `reuseExistingServer`
   // a running dev server would silently be tested instead of the static export — a dev
   // build hydrates differently, redirects `/docs/workflows` to a trailing slash, and
