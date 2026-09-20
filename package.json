@@ -4,5 +4,8 @@
   "private": true,
   "scripts": {
     "jarvis": "node .jarvis/scripts/jarvis.js"
+  },
+  "bin": {
+    "jarvis-framework": "jarvis-framework/bin/cli.js"
   }
 }
