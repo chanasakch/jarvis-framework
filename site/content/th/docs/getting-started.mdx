@@ -1,22 +1,22 @@
 ---
 title: เริ่มต้นใช้งาน
-description: ติดตั้ง Jarvis ตรวจสอบการตั้งค่า แล้วรัน work item แรกของคุณ
+description: ติดตั้ง Jarvis ตรวจว่าตั้งค่าครบ แล้วรัน work item แรก
 ---
 
 ## สิ่งที่ต้องมี
 
-มีสองอย่างที่ต้องมีเสมอ ส่วนที่เหลือจำเป็นก็ต่อเมื่อคุณใช้มาตรฐาน Go + React ที่มากับเฟรมเวิร์ก
+เครื่องมือที่ต้องมีทุกกรณีมีสองตัว ที่เหลือจำเป็นเฉพาะเมื่อใช้มาตรฐาน Go + React ที่ให้มาในชุด
 
 | สิ่งที่ต้องมี | Profile | หมายเหตุ |
 |---|---|---|
-| Node.js ≥18 | ต้องมีเสมอ | รัน `.jarvis/scripts` |
-| git | ต้องมีเสมอ | บันทึกผู้ทำ `approve`/`force` ผ่าน `user.name` |
+| Node.js ≥18 | ต้องมีทุกกรณี | ใช้รัน `.jarvis/scripts` |
+| git | ต้องมีทุกกรณี | ใช้ `user.name` บันทึกว่าใครสั่ง `approve`/`force` |
 | Go | Go + React | `go version` |
 | golangci-lint | Go + React | [ติดตั้ง](https://go.dev/dl/) |
 | govulncheck | Go + React | `go install golang.org/x/vuln/cmd/govulncheck@latest` |
-| Docker | Go + React | จำเป็นสำหรับ integration test แบบ testcontainers |
+| Docker | Go + React | ใช้รัน integration test ที่ใช้ testcontainers |
 
-`jarvis.js doctor` ตรวจสอบทั้งหมดนี้เทียบกับ `PATH` จริงของคุณ — ดู
+`jarvis.js doctor` จะเช็กเครื่องมือทั้งหมดนี้กับ `PATH` ในเครื่องคุณ ดูหัวข้อ
 [ตรวจสอบการตั้งค่า](#ตรวจสอบการตั้งค่า) ด้านล่าง
 
 ## ติดตั้ง
@@ -26,10 +26,9 @@ npx jarvis-framework init --name jarvis
 cd .jarvis && npm install
 ```
 
-`init` จะไม่เขียนทับไฟล์ที่คุณเป็นเจ้าของอยู่แล้ว — รันซ้ำได้หลังอัปเกรดเฟรมเวิร์ก โดย
-`.jarvis/standards/`, `jarvis.config.yaml` และ `CLAUDE.md` ของคุณจะไม่ถูกแตะต้อง `--name`
-กำหนด prefix ให้ทุก slash command และ agent — `--name ops` จะให้คุณได้ `/ops`, `/ops-init`
-และ `ops-architect` แทน
+`init` ไม่เขียนทับไฟล์ที่เป็นของคุณ รันซ้ำหลังอัปเกรดเฟรมเวิร์กได้ `.jarvis/standards/`,
+`jarvis.config.yaml` และ `CLAUDE.md` จะยังอยู่เหมือนเดิม ส่วน `--name` ใช้ตั้ง prefix ของ slash command
+และ agent ทุกตัว เช่น `--name ops` จะได้ `/ops`, `/ops-init` และ `ops-architect`
 
 ## ไฟล์ที่ถูกเพิ่มเข้ามาในรีโป
 
@@ -72,9 +71,9 @@ cd .jarvis && npm install
 </Folder>
 </FileTree>
 
-`.claude/`, `.jarvis/core/` และ `.jarvis/scripts/` เป็นของ framework — `upgrade` จะแทนที่
-ไฟล์เหล่านี้ ส่วน `jarvis.config.yaml`, `.jarvis/standards/`, `.jarvis/project/` และ
-`CLAUDE.md` เป็นของคุณ ไม่มีส่วนไหนของ framework เขียนทับไฟล์พวกนี้เลย
+`.claude/`, `.jarvis/core/` และ `.jarvis/scripts/` เป็นไฟล์ของ framework ซึ่ง `upgrade` จะเขียนทับ
+ส่วน `jarvis.config.yaml`, `.jarvis/standards/`, `.jarvis/project/` และ `CLAUDE.md` เป็นของคุณ
+framework จะไม่เขียนทับไฟล์กลุ่มนี้
 
 ## ตรวจสอบการตั้งค่า
 
@@ -93,9 +92,9 @@ hint: govulncheck → go install golang.org/x/vuln/cmd/govulncheck@latest
 hint: docker → needed for testcontainers integration tests
 ```
 
-เครื่องหมาย `·` ข้าง path ใดหมายความว่า path นั้นยังไม่มีอยู่ในรีโปนี้ — ซึ่งเป็นเรื่องปกติก่อนที่
-`apps/web`/`apps/api` จะถูกสร้างขึ้น เครื่องมือ Go ที่ขาดหายไปจะบล็อกเฉพาะงานที่ต้องใช้มันจริง ๆ
-เท่านั้น ขั้นต่อไปให้รัน `/jarvis-init` เพื่อสแกนรีโปแล้วเติมข้อมูลลงใน `.jarvis/project/context.md`
+`·` หน้า path แปลว่ารีโปนี้ยังไม่มี path นั้น ซึ่งเป็นเรื่องปกติถ้ายังไม่ได้สร้าง `apps/web`/`apps/api`
+ถ้าขาดเครื่องมือของ Go งานที่บล็อกจะมีแค่งานที่ต้องใช้เครื่องมือนั้น ขั้นต่อไปให้รัน `/jarvis-init` เพื่อสแกนรีโป
+และเติมข้อมูลใน `.jarvis/project/context.md`
 
 ## Work item แรกของคุณ
 
@@ -104,18 +103,18 @@ hint: docker → needed for testcontainers integration tests
 ```text
 /jarvis-init
 ```
-เขียน `.jarvis/project/context.md` (stack, repo map, domain, pattern ที่มีอยู่แล้ว,
-glossary) จากสิ่งที่มีอยู่จริงในโค้ดของคุณ
+เขียน `.jarvis/project/context.md` (stack, repo map, domain, pattern ที่ใช้อยู่,
+glossary) จากโค้ดที่มีอยู่จริงในรีโป
 </Step>
 <Step title="เริ่ม work item">
 ```text
 /jarvis Add OTP login for returning customers
 ```
-orchestrator จะจัดประเภทงาน ถามคำถาม intake flag สูงสุด 5 ข้อในข้อความเดียว แล้วรันลำดับ
-phase ต่อไปเอง — ดู [เวิร์กโฟลว์](/docs/workflows) ว่า work type แต่ละแบบรันอะไรบ้าง
+orchestrator จะจัดประเภทงาน ถามคำถาม intake flag ไม่เกิน 5 ข้อในข้อความเดียว แล้วรัน phase ต่อไปเองตามลำดับ
+ดูว่า work type แต่ละแบบมี phase อะไรบ้างได้ที่ [เวิร์กโฟลว์](/docs/workflows)
 </Step>
 <Step title="อ่าน status report">
-ทุกรอบจบด้วย status report เสมอ ไม่ว่าผลลัพธ์จะเป็นอย่างไร:
+ทุกรอบจะจบด้วย status report เสมอ ไม่ว่าผลจะออกมาอย่างไร
 ```text
 ── JARVIS ─────────────────────────────
 Item:   FEAT-012 OTP login (feature)
@@ -127,19 +126,19 @@ Warnings: none
 ```
 </Step>
 <Step title="อนุมัติ phase">
-`approve` เป็นคำสั่งที่สงวนไว้สำหรับคนเท่านั้น — Claude ถูก `guard.js` บล็อกไม่ให้รันคำสั่งนี้
-รันคำสั่งตรงตามที่ status report บอกไว้:
+`approve` เป็นคำสั่งที่คนต้องรันเอง `guard.js` จะบล็อกไม่ให้ Claude รันคำสั่งนี้ ให้รันคำสั่งตามที่
+status report แสดงไว้
 ```text
 ! npm run -s jarvis -- approve FEAT-012 architecture
 ```
-เครื่องหมาย `!` คือการรันคำสั่งนั้นในเทอร์มินัลของคุณเองโดยตรง แทนที่จะให้ Claude เป็นคนรัน
-ดู [เกต](/docs/gates) ว่ายังมีคำสั่งไหนที่สงวนไว้สำหรับคนอีกและทำไม
+`!` ข้างหน้าคือการรันคำสั่งในเทอร์มินัลของคุณเอง ไม่ได้ให้ Claude รันแทน ดูว่ามีคำสั่งไหนอีกบ้างที่คนต้องรันเอง
+และเพราะอะไรได้ที่ [เกต](/docs/gates)
 </Step>
 </Steps>
 
 ## ขั้นต่อไป
 
 <Callout kind="tip">
-`/jarvis-status` แสดง work item ที่กำลังทำงานอยู่ทั้งหมดพร้อมคำเตือนได้ตลอดเวลา ส่วน
-`/jarvis-explain <ID>` อธิบายให้ชัดเจนว่าทำไม work item หนึ่งถึงถูกบล็อกและอะไรจะปลดล็อกมันได้
+เรียก `/jarvis-status` เมื่อไหร่ก็ได้เพื่อดู work item ที่ยังเปิดอยู่ทั้งหมดพร้อมคำเตือน ส่วน
+`/jarvis-explain <ID>` จะบอกว่า work item นั้นติดอะไรอยู่ และต้องทำอะไรถึงจะไปต่อได้
 </Callout>

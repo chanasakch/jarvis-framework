@@ -1,81 +1,80 @@
 ---
 title: คำถามที่พบบ่อย
-description: คำถามที่พบบ่อยเกี่ยวกับการทำงานของ Jarvis ในแต่ละวัน
+description: คำถามที่มักเจอเวลาใช้ Jarvis ทำงานประจำวัน
 ---
 
 ## Jarvis ใช้กับสแตกอื่นที่ไม่ใช่ Go และ React ได้ไหม
 
-ได้ กลไกหลักของ Jarvis คือ กฎที่มี ID ตรวจสอบด้วยสคริปต์แบบ deterministic ร่วมกับ
-gatekeeper agent แล้วเกตตาม phase และ severity ซึ่งไม่ผูกกับสแตกใดสแตกหนึ่งเลย ส่วนเดียว
-ที่ผูกกับสแตกคือไฟล์ standards เอง (`.jarvis/standards/*.md`) ที่มาพร้อมค่าเริ่มต้นสำหรับ
-backend ที่เขียนด้วย Go และ frontend ที่เป็น React + TypeScript คู่กับ MySQL และ MongoDB
-ไฟล์เหล่านี้เป็นของโปรเจกต์เอง `init` และ `upgrade` จะไม่แตะต้องมันเลย ทีมที่ใช้สแตกอื่นจึง
-แทนที่เนื้อหาในไฟล์เหล่านี้ได้โดยตรง (พร้อมทั้งรายการที่ตรงกันใน
-`.jarvis/standards/lint-rules.yaml`) และทุกอย่างที่ต่อจากนั้น ทั้ง gate protocol, severity,
-reviewer, workflow จะยังทำงานได้เหมือนเดิม ดู callout "Built for one stack, not locked to
+ได้ กลไกของ Jarvis ไม่ผูกกับสแต็กไหน คือมี rule ที่มี ID ให้สคริปต์แบบ deterministic กับ
+gatekeeper agent ตรวจ แล้วใช้ gate ตาม phase และความรุนแรง ส่วนที่ผูกกับสแต็กมีแค่ไฟล์มาตรฐาน
+(`.jarvis/standards/*.md`) ซึ่งเขียนมาสำหรับ backend ที่เป็น Go และ frontend ที่เป็น React +
+TypeScript ใช้ MySQL และ MongoDB ไฟล์เหล่านี้เป็นของโปรเจกต์ `init` และ `upgrade` ไม่แตะเลย
+ทีมที่ใช้สแต็กอื่นจึงเขียนเนื้อหาใหม่ได้เลย (แก้รายการที่เกี่ยวข้องใน
+`.jarvis/standards/lint-rules.yaml` ด้วย) ส่วนอื่นที่ต่อจากนั้น ทั้งขั้นตอนของ gate, ระดับความรุนแรง,
+reviewer และ workflow ยังทำงานเหมือนเดิม ดู callout "Built for one stack, not locked to
 it" ได้ที่ [ความรู้เบื้องต้น](/docs/introduction)
 
 ## ทำไม Claude ถึงอนุมัติงานของตัวเองไม่ได้
 
-เพราะถ้าทำได้ ก็จะทำให้การอนุมัติหมดความหมายไปเลย `approve` (รวมถึง `force`, `skip`,
-`reopen` และ `park`/`unpark`) อยู่ในรายการคำสั่งที่สงวนไว้สำหรับมนุษย์เท่านั้น และกฎ G2 ของ
-`guard.js` จะสกัดการเรียก Bash ใด ๆ ที่พยายามรันคำสั่งเหล่านี้ ไม่ว่าจะเป็น `jarvis.js
-approve` หรือ `npm run -s jarvis -- approve` Claude จะพิมพ์คำสั่งที่ถูกต้องออกมาแล้วให้คุณ
-เป็นคนรันเอง กฎนี้ถูกบังคับใช้ที่ระดับ hook ไม่ใช่แค่คำสั่งในพรอมป์ เช่นเดียวกับที่
-`.jarvis/core/rules/orchestration.md` กำหนดให้เป็นกฎตายตัวที่ Claude ต้องไม่ละเมิดเด็ดขาด
-ดูตาราง phase-status แบบเต็มได้ที่ [เกต](/docs/gates)
+ถ้าคนเขียนงานอนุมัติงานตัวเองได้ การอนุมัติก็ไม่มีความหมาย `approve` (รวมทั้ง `force`, `skip`,
+`reopen` และ `park`/`unpark`) เป็นคำสั่งที่คนต้องรันเอง และ rule G2 ใน `guard.js` จะบล็อก
+การเรียก Bash ทุกครั้งที่พยายามรันคำสั่งเหล่านี้ ไม่ว่าจะเรียกผ่าน `jarvis.js
+approve` หรือ `npm run -s jarvis -- approve` Claude จะพิมพ์คำสั่งที่ต้องรันออกมาแล้วให้คุณ
+รันเอง ข้อนี้บังคับที่ระดับ hook ไม่ได้ฝากไว้กับคำสั่งใน prompt อย่างเดียว และ
+`.jarvis/core/rules/orchestration.md` ก็เขียนไว้เป็นกฎเด็ดขาดที่ Claude ห้ามละเมิด
+ตารางสถานะของ phase ฉบับเต็มอยู่ที่ [Gate](/docs/gates)
 
-## ถ้า force เกตไปแล้วจะเกิดอะไรขึ้น
+## ถ้า force gate ไปแล้วจะเกิดอะไรขึ้น
 
-การ force คือการทำให้เฟสที่เกตล้มเหลวจนถึงขีดจำกัดการรีทรายผ่านไปได้ เป็นคำสั่งสำหรับ
-มนุษย์เท่านั้น (`guard.js` สกัด Claude ไม่ให้รันได้) ต้องระบุ `--reason` เสมอ และไม่มีทาง
-เงียบเชียบ เพราะเหตุผล, `user.name` ของ git, เวลาที่ทำ และ ID ของ finding ที่ยังไม่ถูกแก้
-จะถูกบันทึกลง audit log ของ work item พร้อมทั้งสร้าง work item ประเภท `chore` ตามมาโดย
-อัตโนมัติเพื่อไล่ตามสิ่งที่ยังค้างอยู่ รายงานสถานะครั้งต่อ ๆ ไปจะแสดง
+การ force คือการปล่อยให้ phase ที่ gate ไม่ผ่านจนครบจำนวน retry ไปต่อได้ เป็นคำสั่งที่คนต้องรันเอง
+(`guard.js` บล็อกไม่ให้ Claude รัน) ต้องใส่ `--reason` ทุกครั้ง และมีบันทึกไว้เสมอ เหตุผล,
+`user.name` ใน git ของคุณ, เวลา และ ID ของ finding ที่ยังไม่ได้แก้ จะลงไปอยู่ใน audit log
+ของ work item แล้วระบบจะสร้าง work item ประเภท `chore` ขึ้นมาเองเพื่อตามเก็บสิ่งที่ค้างอยู่
+รายงานสถานะทุกครั้งหลังจากนั้นจะแสดง
 `⚠️ <ID> has N forced gate(s): <phases>` และทั้ง `qa-report.md` กับ `release-notes.md`
-จะมีส่วน **Forced Gates** เพิ่มเข้ามา บาง finding เช่น finding ด้านความปลอดภัยระดับ
-critical หรือ acceptance criterion ที่ไม่ผ่านใน `qa` จะต้องใส่ `--accept-risk` เพิ่มเติม
-นอกเหนือจาก `--reason` ด้วย กลไกแบบเต็มอยู่ใน [เกต](/docs/gates)
+จะมีหัวข้อ **Forced Gates** เพิ่มขึ้นมา finding บางประเภท เช่น ปัญหาความปลอดภัยระดับ
+critical หรือ acceptance criterion ที่ไม่ผ่านใน `qa` ต้องใส่ `--accept-risk` เพิ่มจาก
+`--reason` ด้วย รายละเอียดทั้งหมดอยู่ที่ [Gate](/docs/gates)
 
 ## State ถูก commit เข้า git ด้วยไหม
 
-ใช่ ตั้งใจให้เป็นแบบนั้น work item แต่ละตัวจะมีไฟล์ state เป็น JSON หนึ่งไฟล์ พร้อม audit
-log แบบ append-only อยู่ใต้ `.jarvis/state/` และทั้งสองไฟล์ตั้งใจให้ commit ไปพร้อมกับ
-`.claude/`, `.jarvis/` และ `docs/work/` เพราะ state แยกเก็บตาม work item แทนที่จะรวมอยู่
-ในไฟล์เดียว คนสองคนที่ทำงานคนละ work item จะไม่มีทางชนกันบนบรรทัดเดียวกัน คุณไม่ควรแก้ไข
-ไฟล์เหล่านี้ด้วยมือเด็ดขาด มีแค่ CLI (`node .jarvis/scripts/jarvis.js set|task|flags|...`)
-เท่านั้นที่เขียนได้ และกฎ G1 ของ `guard.js` จะสกัดการแก้ไข `.jarvis/state/` โดยตรง
+ใช่ ตั้งใจให้เป็นแบบนั้น work item แต่ละรายการมีไฟล์ state แบบ JSON หนึ่งไฟล์ กับ audit
+log ที่เขียนต่อท้ายอย่างเดียว อยู่ใต้ `.jarvis/state/` ให้ commit ทั้งสองไฟล์ไปพร้อมกับ
+`.claude/`, `.jarvis/` และ `docs/work/` เนื่องจาก state แยกไฟล์ตาม work item ไม่ได้รวมอยู่
+ในไฟล์เดียว สองคนที่ทำคนละ work item จึงไม่มีทางแก้บรรทัดเดียวกันจนชนกัน ห้ามแก้
+ไฟล์เหล่านี้ด้วยมือ ต้องให้ CLI (`node .jarvis/scripts/jarvis.js set|task|flags|...`)
+เขียนเท่านั้น และ rule G1 ใน `guard.js` จะบล็อกการแก้ `.jarvis/state/` ตรง ๆ
 
 ## bugfix กับ hotfix ต่างกันอย่างไร
 
-ทั้งสองอย่างแก้ defect เหมือนกัน แต่ใช้กันคนละสถานการณ์:
+ทั้งคู่ใช้แก้ defect เหมือนกัน แต่ใช้คนละสถานการณ์
 
-| | Bugfix (`BUG`) | Hotfix (`HOT`) |
+| หัวข้อ | Bugfix (`BUG`) | Hotfix (`HOT`) |
 |---|---|---|
-| ความเร่งด่วน | ไม่เร่งด่วน | เหตุขัดข้องบน production |
-| เฟส | intake → investigation → plan → implement → test → review → **qa** → release | intake → investigation → implement → test → review → release → **postmortem** |
-| เฟส QA | จำเป็น | ข้ามไปเลยทั้งหมด |
-| Postmortem | ไม่มี | มี แต่ `deferrable: 3d` — ทำได้ภายใน 3 วันหลัง release |
+| ความเร่งด่วน | ไม่เร่งด่วน | production มีปัญหา |
+| Phase | intake → investigation → plan → implement → test → review → **qa** → release | intake → investigation → implement → test → review → release → **postmortem** |
+| Phase QA | ต้องมี | ข้ามทั้งหมด |
+| Postmortem | ไม่มี | มี แต่เป็น `deferrable: 3d` คือทำได้ภายใน 3 วันหลัง release |
 | Reviewer ที่บล็อกได้ | ครบทั้งสี่ reviewer | เฉพาะ `security` และ `standards` |
 
-hotfix แลกเฟส QA แบบเต็มและ postmortem ทันทีเพื่อความเร็ว แต่ยังคงบังคับให้มี review และ
-ยังต้องเขียน postmortem อยู่ดี เพียงแต่ทำหลังจากแก้ปัญหาเสร็จแล้วภายใน 3 วัน ดูรายละเอียด
+hotfix ตัด phase QA ออกและเลื่อน postmortem ไปทำทีหลังเพื่อให้ออกได้เร็ว แต่ยังต้องผ่าน review
+และยังต้องเขียน postmortem ภายใน 3 วันหลังแก้เหตุขัดข้องเสร็จ ดูรายละเอียด
 ได้ที่ `.jarvis/core/workflows/bugfix.yaml` และ `.jarvis/core/workflows/hotfix.yaml`
 
-## spike คืออะไร และทำไมถึงไม่มีเฟส implementation
+## spike คืออะไร และทำไมถึงไม่มี phase implement
 
-spike (`SPK`) คืองานวิจัยแบบตั้งกรอบเวลา (time-boxed) ที่ผลลัพธ์สุดท้ายคือการตัดสินใจ
-ไม่ใช่การ merge โค้ด workflow ของมันมีแค่สองเฟสเท่านั้นคือ `intake` และ `investigation`
-โดย `investigation` จะออกผลเป็น `spike-report.md` พร้อม ADR ฉบับร่าง แทนที่จะเป็น
-`investigation.md` แบบปกติ ไม่มีเฟส `plan`, `implement`, `test`, `review`, `qa` หรือ
-`release` เลย เพราะ spike ถูกออกแบบมาให้ไม่สร้าง production code ถ้าผลสรุปของ spike บอกว่า
-ควรสร้างอะไรบางอย่าง สิ่งนั้นจะกลายเป็น work item แยกต่างหากที่สร้างด้วย `jarvis.js new`
-ไม่ใช่การสานต่อจาก spike เดิม ดู [ความรู้เบื้องต้น](/docs/introduction) และ
+spike (`SPK`) คืองานค้นคว้าที่จำกัดเวลาไว้ ผลลัพธ์ที่ได้คือการตัดสินใจ
+ไม่ใช่โค้ดที่ merge เข้าไป workflow ของ spike มีแค่สอง phase คือ `intake` และ `investigation`
+โดย `investigation` จะได้ `spike-report.md` กับ ADR ฉบับร่าง แทน
+`investigation.md` แบบปกติ ไม่มี phase `plan`, `implement`, `test`, `review`, `qa` หรือ
+`release` เลย เพราะ spike ตั้งใจไม่ให้สร้าง production code ถ้าสรุปผลจาก spike แล้วว่า
+ควรสร้างอะไรสักอย่าง ให้สร้าง work item ใหม่แยกด้วย `jarvis.js new`
+ไม่ได้ทำต่อใน spike เดิม ดู [ความรู้เบื้องต้น](/docs/introduction) และ
 `.jarvis/core/workflows/spike.yaml`
 
 ## กำหนดโมเดลแยกตาม agent เองได้ไหม
 
-ได้ ผ่าน `models.overrides` ใน `jarvis.config.yaml`:
+ได้ ตั้งผ่าน `models.overrides` ใน `jarvis.config.yaml`
 
 ```yaml
 models:
@@ -87,28 +86,28 @@ models:
     jarvis-release: haiku
 ```
 
-`default: inherit` หมายความว่า agent ที่ไม่มีการ override จะรันด้วยโมเดลเดียวกับที่เซสชัน
-Claude Code ของคุณกำลังใช้อยู่ ส่วน agent ที่อยู่ใน `overrides` จะรันด้วยโมเดลที่ระบุไว้แทน
-โดยตัวติดตั้ง (installer) จะใส่ค่านี้ลงใน frontmatter ของ agent นั้น ๆ ดู config schema
-ที่เหลือได้ที่ [การตั้งค่า](/docs/configuration)
+`default: inherit` แปลว่า agent ที่ไม่ได้ override จะใช้โมเดลเดียวกับ session
+Claude Code ที่คุณเปิดอยู่ ส่วน agent ที่อยู่ใน `overrides` จะใช้โมเดลที่ระบุไว้แทน
+โดยตัวติดตั้งจะเขียนค่านี้ลงใน frontmatter ของ agent นั้น schema ส่วนอื่นของ config
+ดูได้ที่ [การตั้งค่า](/docs/configuration)
 
 ## การ upgrade จะแตะต้อง standards ของเราไหม
 
-ไม่ `npx jarvis-framework upgrade` จะแทนที่เฉพาะไฟล์ที่เฟรมเวิร์กเป็นเจ้าของเท่านั้น ได้แก่
+ไม่ `npx jarvis-framework upgrade` แทนที่เฉพาะไฟล์ของ framework ได้แก่
 `.jarvis/core/`, `.jarvis/scripts/`, `.claude/agents/` และ `.claude/commands/` แล้วพิมพ์
-รายการที่เปลี่ยนแปลงออกมา ส่วน `.jarvis/standards/`, `jarvis.config.yaml`,
-`.jarvis/project/` และ `CLAUDE.md` เป็นของโปรเจกต์เอง จะไม่ถูกเขียนทับโดย `init` หรือ
-`upgrade` เลย แม้ว่าค่าเริ่มต้นที่มาพร้อมเฟรมเวิร์กจะเปลี่ยนไปก็ตาม ดูรายละเอียดการแบ่ง
-ความเป็นเจ้าของแบบเต็มได้ที่ [การใช้งานแบบทีม](/docs/team)
+รายการที่เปลี่ยนออกมา ส่วน `.jarvis/standards/`, `jarvis.config.yaml`,
+`.jarvis/project/` และ `CLAUDE.md` เป็นของโปรเจกต์ `init` และ `upgrade` ไม่เขียนทับเลย
+ถึงค่าเริ่มต้นที่มากับ framework จะเปลี่ยนไปก็ตาม ดูว่าไฟล์ไหนเป็นของใครทั้งหมดได้ที่
+[การใช้งานแบบทีม](/docs/team)
 
 ## ไปต่อที่ไหนดี
 
 <Steps>
 <Step title="เจอข้อความ error จริง ๆ ใช่ไหม">
-ข้อความบล็อกจริงจาก guard.js และผลลัพธ์ตอนเกตล้มเหลว อธิบายไว้ที่
+คำอธิบายข้อความบล็อกจริงจาก guard.js และผลลัพธ์ตอน gate ไม่ผ่าน อยู่ที่
 [แก้ปัญหาเบื้องต้น](/docs/troubleshooting)
 </Step>
-<Step title="ตั้งค่าโมเดล, เกต หรือพาธต่าง ๆ">
-schema แบบเต็มของ `jarvis.config.yaml` — ดูที่ [การตั้งค่า](/docs/configuration)
+<Step title="ตั้งค่าโมเดล, gate หรือ path">
+schema ฉบับเต็มของ `jarvis.config.yaml` ดูที่ [การตั้งค่า](/docs/configuration)
 </Step>
 </Steps>

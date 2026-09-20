@@ -13,23 +13,23 @@ cd .jarvis && npm install                   # one dependency: yaml
 node .jarvis/scripts/jarvis.js doctor       # tools, paths, error registry
 ```
 
-`--name` sets the prefix for slash commands and agents — `--name ops` gives `/ops`, `/ops-init` and
-an `ops-architect` agent. Internal paths (`.jarvis/`, `jarvis.config.yaml`) always keep their own
+`--name` sets the prefix for slash commands and agents: `--name ops` gives `/ops`, `/ops-init` and
+an `ops-architect` agent. Internal paths (`.jarvis/`, `jarvis.config.yaml`) keep their own
 names regardless of the prefix.
 
 `init` **never overwrites a file your team owns.** Re-running it is safe: framework files are
 refreshed, and your standards, `jarvis.config.yaml` and `CLAUDE.md` are left alone. After install,
-restart Claude Code so it loads the new hooks, agents and commands, then run `/jarvis-init` to scan
+restart Claude Code so it loads the new hooks, agents and commands. Then run `/jarvis-init` to scan
 the repo and write `.jarvis/project/context.md`.
 
-Commit `.claude/`, `.jarvis/` and `docs/work/`, including `.jarvis/state/` — state is one small JSON
-file plus an append-only audit log per work item, so two people working different items don't
+Commit `.claude/`, `.jarvis/` and `docs/work/`, including `.jarvis/state/`. State is one small JSON
+file plus an append-only audit log per work item, so two people working on different items don't
 conflict.
 
 ## The CI gate
 
 The ready-made workflow (`project-templates/.github/workflows/jarvis.yml`) runs a `gate` job on
-every PR into `main`, alongside separate `backend` and `frontend` check jobs that only run when
+every PR into `main`. Separate `backend` and `frontend` check jobs run alongside it, only when
 `apps/api/go.mod` or `apps/web/package.json` exist. After checkout and `npm install` in `.jarvis/`,
 the `gate` job's enforcement steps are:
 
@@ -51,20 +51,20 @@ A GitLab equivalent ships at `project-templates/ci/gitlab-ci.example.yml`.
 
 ## CODEOWNERS
 
-`project-templates/.github/CODEOWNERS` routes review to whichever group owns the thing being
-changed, so a standards relaxation or a framework edit doesn't slip through on an unrelated
+`project-templates/.github/CODEOWNERS` routes review to the group that owns the thing being
+changed. That way a standards relaxation or a framework edit can't get merged on an unrelated
 approval:
 
 | Path | Reviewer | Why |
 |---|---|---|
-| `.jarvis/standards/` | tech leads | Relaxing a rule needs sign-off, not just any approval |
+| `.jarvis/standards/` | tech leads | Relaxing a rule needs sign-off from the owners, not any approval |
 | `.jarvis/core/`, `.jarvis/scripts/`, `.claude/agents/`, `.claude/commands/`, `.claude/settings.json` | tech leads | Framework-owned; normally replaced by `upgrade`, not hand-edited |
 | `packages/errors/registry.yaml` | tech leads + frontend | A public error key change is a breaking API change for every client |
 | `jarvis.config.yaml` | tech leads | Controls who may weaken a gate |
 | `docs/architecture/query-index-matrix.md` | tech leads + DBA | Index evidence backing the database standard |
 
 The template ships placeholder team names (`@your-org/tech-leads`, `@your-org/frontend`,
-`@your-org/dba`) — replace them with real teams before turning on branch protection.
+`@your-org/dba`). Replace them with real teams before turning on branch protection.
 
 ## Upgrading
 
@@ -74,8 +74,8 @@ node .jarvis/scripts/audit.js                 # framework is internally consiste
 node --test ".jarvis/scripts/test/*.test.js"  # scripts still behave
 ```
 
-`upgrade` walks every file the framework ships, and for each one either writes it (new), replaces it
-(changed), or leaves it alone (identical) — then writes the new `.jarvis/VERSION`. It only ever
+`upgrade` walks every file the framework ships. For each one it writes it (new), replaces it
+(changed), or leaves it alone (identical), then writes the new `.jarvis/VERSION`. It only
 touches framework-owned paths: `.jarvis/core/`, `.jarvis/scripts/`, `.claude/agents/`,
 `.claude/commands/`, `.claude/settings.json`. It prints a summary of what was added, updated and left
 unchanged.
@@ -84,7 +84,7 @@ Project-owned files are never touched by `upgrade`: `jarvis.config.yaml`, `CLAUD
 `.jarvis/standards/**`, `.jarvis/project/**`, and `packages/errors/registry.yaml`.
 
 If an older version shipped an agent or command this version no longer ships, `upgrade` reports it
-under "not shipped by this version" instead of deleting it — your team may have built on it, so the
+under "not shipped by this version" instead of deleting it. Your team may have built on it, so the
 decision to remove it is yours. Restart Claude Code afterwards so it picks up the change.
 
 ## Proposing a standards change
@@ -97,9 +97,9 @@ Standards live in your repo so your team can change them without touching the fr
    reason, the scope, and when it expires.
 4. `CODEOWNERS` sends the PR to the group above that owns `.jarvis/standards/`.
 
-See [Standards](/docs/standards) for the full rule-ID reference and the one-off exception mechanism
-(`jarvis-ignore` plus an accepted ADR) for when a single line needs to deviate without changing the
-rule itself.
+See [Standards](/docs/standards) for the full rule-ID reference. It also covers the one-off exception
+mechanism (`jarvis-ignore` plus an accepted ADR), for when a single line needs to deviate without
+changing the rule itself.
 
 ## Troubleshooting
 
@@ -113,9 +113,9 @@ rule itself.
 
 <Steps>
 <Step title="Understand what CI enforces">
-The full gate protocol a phase passes through before CI ever sees it — see [Gates](/docs/gates).
+The full gate protocol a phase passes through before CI sees it. See [Gates](/docs/gates).
 </Step>
 <Step title="Look up the rule IDs">
-Every standards file, its prefix, and how an exception is recorded — see [Standards](/docs/standards).
+Every standards file, its prefix, and how an exception is recorded. See [Standards](/docs/standards).
 </Step>
 </Steps>

@@ -9,29 +9,29 @@ Every phase passes through the same sequence before it can unlock the next one:
 
 <Steps>
 <Step title="Script gate">
-`jarvis.js validate <ID> <phase>` checks the deterministic parts — front matter, required
+`jarvis.js validate <ID> <phase>` checks the deterministic parts: front matter, required
 headings, ID formats, upstream references, coverage counts, and (for implement) the
 configured check commands and lint rules.
 </Step>
 <Step title="Agent gate">
-The `jarvis-gatekeeper` agent reads the phase's checklist and the upstream artifacts, and
-verifies every Blocking item with evidence — a line, an ID, a table row. It never accepts
+The `jarvis-gatekeeper` agent reads the phase's checklist and the upstream artifacts. It
+verifies every Blocking item with evidence (a line, an ID, a table row) and never accepts
 "almost complete."
 </Step>
 <Step title="Human approval">
 Only for the phases listed in `gates.human_approval` (by default: requirements, ux,
-architecture, release) — a workflow can override this per phase. See
+architecture, release). A workflow can override this per phase. See
 [Configuration](/docs/configuration).
 </Step>
 </Steps>
 
 A failed script or agent gate sends the issues back to the same agent and increments an
 attempt counter. At `gates.max_retries` (default 3), the orchestrator stops and prints the
-Gate Failure Menu instead of retrying again.
+Gate Failure Menu instead of retrying.
 
 ## The Gate Failure Menu
 
-This is the exact shape the orchestrator prints — copied here verbatim, not paraphrased:
+The orchestrator prints this menu, copied here verbatim:
 
 ```text
 ⚠️  GATE FAILED: FEAT-012 / review (attempt 3/3)
@@ -48,8 +48,8 @@ Options:
      ! npm run -s jarvis -- park FEAT-012 --reason "<why>"
 ```
 
-If you ask Claude to force a gate at any other point, it prints this same menu with the
-current issues — it never runs `force` itself.
+If you ask Claude to force a gate at any other point, it prints the same menu with the
+current issues. It never runs `force` itself.
 
 ## Phase statuses
 
@@ -70,8 +70,7 @@ it isn't), `forced`, or `skipped` (optional phases only).
 
 ## Severity
 
-Defined once, referenced everywhere else — a reviewer, the gatekeeper, and `qa` all use
-exactly this scale:
+Reviewers, the gatekeeper and `qa` all use this one scale:
 
 <div className="not-prose flex flex-wrap gap-2 my-4">
 <StatusBadge kind="severity" value="critical" label="critical" />
@@ -80,30 +79,30 @@ exactly this scale:
 <StatusBadge kind="severity" value="info" label="info" />
 </div>
 
-- **critical** — a security vulnerability; data loss or corruption; an acceptance
+- **critical**: a security vulnerability; data loss or corruption; an acceptance
   criterion not met; internal error details returned to the client; external input used
   without validation or sanitization.
-- **major** — any MUST rule violated; a SQL `JOIN` or Mongo `$lookup` with no ADR; a query
+- **major**: any MUST rule violated; a SQL `JOIN` or Mongo `$lookup` with no ADR; a query
   not covered by an index; a query, HTTP or cache call inside a loop; a missing log at an
   error boundary; an error code not in the registry; an acceptance criterion with no test.
-- **minor** — a SHOULD violation, naming, readability, small duplication.
-- **info** — a suggestion, no action required.
+- **minor**: a SHOULD violation, naming, readability, small duplication.
+- **info**: a suggestion, no action required.
 
 `review.block_on` in `jarvis.config.yaml` decides which severities make a reviewer's
-verdict `fail` — critical and major by default; minor and info are always advisory.
+verdict `fail`. The default is critical and major. Minor and info are always advisory.
 
-## Force: human-only, audited, never silent
+## Forcing past a failed gate
 
-Forcing is the escape hatch, not a way around the standards. Only a human can run it —
-`guard.js` blocks Claude from running any human-only command, including this one.
+Forcing is an escape hatch for exceptional cases. Only a human can run it: `guard.js` blocks
+Claude from running any human-only command, including this one.
 
 ```text
 ! npm run -s jarvis -- force FEAT-012 review --reason "hotfix window closes in 10 min"
 ```
 
 - `--reason` is mandatory.
-- Anything listed in `gates.non_forceable` — by default a critical security finding, or a
-  failed acceptance criterion in `qa` — additionally needs `--accept-risk`.
+- Anything listed in `gates.non_forceable` also needs `--accept-risk`. By default that covers
+  a critical security finding and a failed acceptance criterion in `qa`.
 - The reason, your git `user.name`, the timestamp and the unresolved finding IDs are
   recorded in the work item's audit log.
 - A follow-up `chore` work item is created automatically, listing the unresolved findings.
@@ -121,7 +120,7 @@ Also human-only, also blocked for Claude by `guard.js`:
 | `park <ID> --reason "<why>"` / `unpark <ID>` | Pause and resume a whole work item. |
 
 <Callout kind="warning" title="Why these are human-only">
-Approving your own work removes the point of an approval. Jarvis enforces this at the
-hook level (`guard.js`'s G2 rule) rather than trusting an agent's instructions to hold —
-the same principle as [Concepts](/docs/concepts)'s "hooks enforce hard rules."
+Approving your own work defeats the purpose of approval. Jarvis enforces this at the hook
+level (`guard.js`'s G2 rule) instead of relying on an agent's instructions. This follows the
+"hooks enforce hard rules" principle in [Concepts](/docs/concepts).
 </Callout>

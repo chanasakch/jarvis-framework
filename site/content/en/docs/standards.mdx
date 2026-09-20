@@ -6,14 +6,14 @@ description: The standards files, their rule-ID prefixes, and how to propose a c
 ## Standards are project-owned
 
 Jarvis ships one set of standards for a monorepo with a React + TypeScript frontend and a Go
-backend, against MySQL, MongoDB and Redis — but the files live in your repo, under
+backend, against MySQL, MongoDB and Redis. The files live in your repo, under
 `.jarvis/standards/`, and your team edits them directly. Nothing in `.jarvis/core` overrides them,
 and `jarvis-framework upgrade` never touches them (see [Team](/docs/team)).
 
-Every rule carries an ID — `GO-01`, `DB-02`, `SEC-04` — so a reviewer finding, a lint violation, or
+Every rule carries an ID (`GO-01`, `DB-02`, `SEC-04`), so a reviewer finding, a lint violation, or
 an ADR exception can cite exactly which rule fired. A rule's severity when it's violated (critical,
 major, minor, info) is defined once, in `.jarvis/core/rules/conventions.md` §4, and referenced
-everywhere — see [Gates](/docs/gates) for the full severity table.
+everywhere else. See [Gates](/docs/gates) for the full severity table.
 
 ## The standards files
 
@@ -27,33 +27,33 @@ area, and by the `lint` script for rules a machine can check. This list is gener
 subset of the MUST rules above, run by `jarvis.js lint` as one regex per line.
 
 <Callout kind="note" title="Not locked to this stack">
-Only the files themselves are stack-specific. The mechanism — a rule with an ID, checked by a
-script and an agent — works for any stack; edit or replace these files for yours.
+Only the files themselves are stack-specific. The mechanism (a rule with an ID, checked by a
+script and an agent) works for any stack. Edit or replace these files for yours.
 </Callout>
 
 ## MUST vs SHOULD
 
 Every rule in a standards file has the same shape: an ID, a title, a `(MUST)` or `(SHOULD)` tag, one
-or two sentences of the rule itself, then a ✅ example that follows it and a ❌ example that breaks
-it — for instance `### GO-01 — gofmt and golangci-lint clean (MUST)` in `coding-go.md`, or
+or two sentences stating the rule, then a ✅ example that follows it and a ❌ example that breaks
+it. For instance, `### GO-01 — gofmt and golangci-lint clean (MUST)` in `coding-go.md`, or
 `### GIT-03 — Roughly one task per commit (SHOULD)` in `git.md`.
 
-- **MUST** — a violation is at least `major` severity (per `conventions.md` §4) and blocks a gate by
+- **MUST**: a violation is at least `major` severity (per `conventions.md` §4) and blocks a gate by
   default.
-- **SHOULD** — a violation is `minor` severity; it's flagged in review but doesn't block a gate on
+- **SHOULD**: a violation is `minor` severity. It's flagged in review but doesn't block a gate on
   its own.
-- The ✅/❌ pair exists so a reviewer or the gatekeeper agent can pattern-match a diff against a
-  concrete example instead of interpreting prose, and so `lint-rules.yaml` has something unambiguous
-  to turn into a regex.
+- The ✅/❌ pair lets a reviewer or the gatekeeper agent match a diff against a concrete example
+  instead of interpreting prose. It also gives `lint-rules.yaml` something unambiguous to turn into
+  a regex.
 
 ## Reading `lint-rules.yaml`
 
-Not every MUST rule can be checked by a regex, but the ones that can live in
+Not every MUST rule can be checked by a regex. The ones that can live in
 `.jarvis/standards/lint-rules.yaml`, run with `node .jarvis/scripts/jarvis.js lint`. Each entry
-names the rule ID it enforces, the glob it applies to, the pattern, and the severity — for example
+names the rule ID it enforces, the glob it applies to, the pattern, and the severity. For example,
 the `DB-01` entry matches `\bjoin\b` (case-insensitive) across `apps/api/**/*.go` at `major`
-severity. Rules marked `[ADDED]` in their `desc` aren't in the framework's own spec — they're
-regex-reliable additions worth reviewing first if the team sees false positives.
+severity. Rules marked `[ADDED]` in their `desc` aren't in the framework's own spec. They're
+regex-reliable additions, and the first ones to review if the team sees false positives.
 
 ## Proposing a standards change
 
@@ -61,16 +61,16 @@ The standards are meant to be edited. To change one:
 
 1. Open a PR against the file under `.jarvis/standards/`.
 2. If the rule is machine-checkable, update `lint-rules.yaml` in the same PR.
-3. `CODEOWNERS` routes the PR to the group that owns standards — see [Team](/docs/team) for the
+3. `CODEOWNERS` routes the PR to the group that owns standards. See [Team](/docs/team) for the
    exact paths.
 4. **Relaxing or removing a rule also needs an ADR** in `docs/adr/`, naming the rule ID, the reason,
    the scope, and when it expires.
 
-A wording fix or a new rule doesn't need an ADR — only weakening or dropping an existing one does.
+A wording fix or a new rule doesn't need an ADR. Only weakening or dropping an existing rule does.
 
 ## The exception mechanism
 
-A one-off exception doesn't require changing the standard itself. Every standards file closes with
+A one-off exception doesn't require changing the standard itself. Every standards file ends with
 the same line, word for word (this one's from `caching.md`, citing `CACHE-03`):
 
 > Any deviation from a rule in this file requires an ADR in `docs/adr/` that references the rule ID
@@ -85,11 +85,11 @@ offending line or the line directly above it:
 
 YAML and SQL files use `-- jarvis-ignore ...` or `# jarvis-ignore ...` instead of `//`. The linter
 resolves `ADR-0007` to `docs/adr/ADR-0007-*.md` and only honors the suppression if that file exists
-**and** its status is `accepted` — an unresolved or merely proposed ADR means the suppression itself
-is reported as a violation of the rule it tried to silence.
+**and** its status is `accepted`. If the ADR can't be found or is only proposed, the suppression
+itself is reported as a violation of the rule it tried to silence.
 
 <Callout kind="warning" title="An ADR is not a lint bypass">
-The comment only works after the ADR is written and accepted. There's no way to suppress a finding
+The comment only works after the ADR is written and accepted. You can't suppress a finding
 by editing the standard, the lint rule, or the code comment alone.
 </Callout>
 
@@ -97,9 +97,9 @@ by editing the standard, the lint rule, or the code comment alone.
 
 <Steps>
 <Step title="See severity block a gate">
-How `major`/`critical` findings stop a phase from advancing — see [Gates](/docs/gates).
+How `major`/`critical` findings stop a phase from advancing. See [Gates](/docs/gates).
 </Step>
 <Step title="Set up CI and CODEOWNERS">
-Wire the same rules into the PR pipeline for your whole team — see [Team](/docs/team).
+Wire the same rules into the PR pipeline for your whole team. See [Team](/docs/team).
 </Step>
 </Steps>

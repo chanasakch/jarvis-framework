@@ -42,7 +42,7 @@ export const th: Dictionary = {
   },
 
   footer: {
-    tagline: "เฟรมเวิร์ก SDLC ที่ขับเคลื่อนด้วย AI สำหรับ Claude Code",
+    tagline: "เฟรมเวิร์ก SDLC ที่ใช้ AI ขับเคลื่อน สำหรับ Claude Code",
     docsHeading: "เอกสารประกอบ",
     projectHeading: "โปรเจกต์",
     license: "สัญญาอนุญาต MIT",
@@ -55,7 +55,7 @@ export const th: Dictionary = {
     previous: "ก่อนหน้า",
     next: "ถัดไป",
     breadcrumbHome: "เอกสาร",
-    missingTranslationNotice: "หน้านี้ยังไม่มีฉบับแปลภาษาไทย — แสดงเนื้อหาภาษาอังกฤษแทน",
+    missingTranslationNotice: "หน้านี้ยังไม่มีฉบับภาษาไทย จึงแสดงฉบับภาษาอังกฤษแทน",
   },
 
   docsNavGroups: {
@@ -87,8 +87,8 @@ export const th: Dictionary = {
 
   landing: {
     hero: {
-      headline: "มาตรฐานที่บังคับใช้ด้วย gate ไม่ใช่ด้วยความหวัง",
-      subhead: "Jarvis ส่งทุกการเปลี่ยนแปลงผ่าน agent เฉพาะทาง ตรวจสอบกับมาตรฐานของทีมคุณเอง และบล็อกส่วนที่ห้ามเกิดขึ้นเด็ดขาด ก่อนที่คนจะต้องมาคอยเตือนด้วยซ้ำ",
+      headline: "มาตรฐานที่มี gate คุม ไม่ต้องหวังให้ทุกคนจำได้",
+      subhead: "Jarvis ส่งงานทุกชิ้นให้ agent เฉพาะทาง ตรวจกับมาตรฐานของทีม และบล็อกสิ่งที่ห้ามเกิดไว้ก่อน ไม่ต้องรอให้คนมาทักทีหลัง",
       getStarted: "เริ่มต้นใช้งาน",
       viewOnGithub: "ดูใน GitHub",
       copyInstall: "คัดลอกคำสั่งติดตั้ง",
@@ -97,15 +97,15 @@ export const th: Dictionary = {
     problem: {
       heading: "ปัญหา และแนวทางแก้ไข",
       problemLabel: "ปัญหา",
-      problemTitle: "agent ที่เขียนโค้ดดูน่าเชื่อถือ กับ agent ที่ทำตามมาตรฐานของคุณจริง ๆ ไม่ใช่เรื่องเดียวกัน",
-      problemBody: "ถ้าปล่อยให้ทำงานตามลำพัง AI coding agent จะเขียน JOIN ในจุดที่ทีมคุณตกลงกันแล้วว่าห้ามใช้ ข้าม index ที่ควรมี ส่ง error ดิบจากฐานข้อมูลตรงไปที่เบราว์เซอร์ หรือส่งมอบ acceptance criterion ที่ไม่มี test รองรับ — ทั้งหมดนี้โดยที่ยังพูดจาน่าเชื่อถือราวกับไม่มีอะไรผิดพลาด",
+      problemTitle: "โค้ดที่ agent เขียนออกมาดูดี ไม่ได้แปลว่าตรงตามมาตรฐานของทีม",
+      problemBody: "ถ้าไม่มีใครคุม AI coding agent จะใช้ JOIN ทั้งที่ทีมตกลงกันแล้วว่าห้ามใช้ ลืมสร้าง index ส่ง error ดิบจากฐานข้อมูลไปถึงเบราว์เซอร์ หรือส่งงานที่ acceptance criterion ไม่มี test แล้วยังรายงานอย่างมั่นใจว่าเรียบร้อยดี",
       approachLabel: "แนวทางแก้ไข",
-      approachTitle: "Jarvis จึงแปลงมาตรฐานของคุณให้เป็นกฎที่มี ID กำกับ และแปลงกฎเหล่านั้นให้เป็น gate ที่บล็อกงานทันทีเมื่อไม่ผ่าน",
-      approachBody: "สคริปต์ตรวจสอบส่วนที่ชัดเจนตายตัว ส่วน gatekeeper agent ตรวจสอบส่วนที่ต้องใช้วิจารณญาณพร้อมหลักฐานประกอบ และคนเป็นผู้อนุมัติ phase ที่สำคัญ ไม่มีอะไรผ่านไปได้แบบเงียบ ๆ",
+      approachTitle: "Jarvis เขียนมาตรฐานของทีมเป็นกฎที่มี ID กำกับ แล้วใช้กฎเหล่านั้นเป็น gate ที่บล็อกงานเมื่อไม่ผ่าน",
+      approachBody: "สคริปต์ตรวจส่วนที่เช็กด้วยกฎตายตัวได้ gatekeeper agent ตรวจส่วนที่ต้องใช้วิจารณญาณโดยต้องมีหลักฐาน และคนอนุมัติ phase ที่สำคัญ งานจะไปต่อได้ก็ต่อเมื่อผ่านครบ",
     },
     pipeline: {
       heading: "วิธีการทำงาน",
-      subhead: "งาน 10 ประเภท แต่ละแบบมีลำดับ phase เป็นของตัวเอง เลือกดูได้เลยว่าแต่ละแบบไปตั้งแต่ต้นจนจบอย่างไร",
+      subhead: "งานมี 10 ประเภท แต่ละประเภทมีลำดับ phase ของตัวเอง เลือกประเภทงานเพื่อดูตั้งแต่ต้นจนจบ",
       workTypeLabel: "ประเภทงาน",
       phasesLabel: "Phase",
       agentLabel: "Agent",
@@ -115,7 +115,7 @@ export const th: Dictionary = {
       approvalLabel: "การอนุมัติ",
       approvalHuman: "ต้องมีการอนุมัติจากคน",
       approvalNone: "ไม่ต้องมีการอนุมัติ",
-      optionalLabel: "ทางเลือก — ข้ามได้ ยกเว้น",
+      optionalLabel: "ไม่บังคับ ข้ามไปเว้นแต่",
       conditionalLabel: "เฉพาะเมื่อ",
       stepOf: "Phase ที่ {n} จาก {total}",
       summary: "{phases} phase ต้องให้คนอนุมัติ {approvals} phase",
@@ -124,38 +124,38 @@ export const th: Dictionary = {
       legendConditional: "มี agent เพิ่มเมื่อเปิด flag",
     },
     features: {
-      heading: "สิ่งที่บังคับใช้จริง",
-      subhead: "ไม่ใช่เอกสารที่ทุกคนตั้งใจจะอ่านแต่ไม่เคยอ่าน แต่เป็นกฎที่สคริปต์และ agent ตรวจสอบจริง",
+      heading: "สิ่งที่ระบบบังคับจริง",
+      subhead: "ไม่ใช่เอกสารที่ทุกคนบอกว่าจะอ่านแล้วไม่เคยได้อ่าน แต่เป็นกฎที่สคริปต์และ agent ตรวจจริง",
       items: {
         orchestrator: {
-          title: "หนึ่ง orchestrator กับ agent เฉพาะทางหลายตัว",
-          body: "/jarvis ส่งแต่ละ phase ไปยัง agent ที่รับผิดชอบโดยตรง ไม่ว่าจะเป็นคนเขียน requirements, architect, backend developer หรือ security reviewer — ตัวมันเองไม่ลงมือทำงานเอง",
+          title: "orchestrator ตัวเดียว คุม agent เฉพาะทาง",
+          body: "/jarvis ส่งแต่ละ phase ให้ agent ที่รับผิดชอบ phase นั้น เช่น คนเขียน requirements, architect, backend developer หรือ security reviewer โดย /jarvis ไม่ลงมือทำงานเอง",
         },
         gates: {
           title: "Gate สามชั้น",
-          body: "เริ่มจากสคริปต์ที่ตรวจแบบตายตัว ตามด้วย gatekeeper agent ที่ตรวจพร้อมหลักฐาน และปิดท้ายด้วยคนในจุดที่สำคัญจริง ๆ จะฝืนผ่าน gate ที่ fail ก็ทำได้ แต่ต้องมีการบันทึกตรวจสอบย้อนหลังได้ มีเหตุผลรองรับ และไม่มีทางทำแบบเงียบ ๆ",
+          body: "สคริปต์ที่ตรวจตามกฎตายตัว ต่อด้วย gatekeeper agent ที่ต้องมีหลักฐาน และคนตรวจใน phase ที่จำเป็น force ผ่าน gate ที่ไม่ผ่านได้ แต่ต้องระบุเหตุผล และระบบจะบันทึกไว้ให้ตรวจย้อนหลังเสมอ",
         },
         traceability: {
-          title: "ตรวจสอบย้อนกลับได้ด้วย ID",
-          body: "ทุก requirement, story, criterion, task และ finding มี ID กำกับ ตั้งแต่คำถามแรกใน intake ไปจนถึง release notes",
+          title: "ย้อนรอยได้ด้วย ID",
+          body: "requirement, story, criterion, task และ finding ทุกตัวมี ID กำกับ ตั้งแต่คำถามแรกตอน intake ไปจนถึง release notes",
         },
         standards: {
-          title: "มาตรฐานในรูปแบบโค้ด",
-          body: "กฎของทีมคุณอยู่ในไฟล์ที่มีเวอร์ชันควบคุม พร้อม rule ID ที่ reviewer อ้างอิงได้ ไม่ใช่หน้า wiki ที่ไม่มีใครเปิดดูก่อน merge",
+          title: "มาตรฐานที่เก็บเป็นไฟล์ในรีโป",
+          body: "กฎของทีมเก็บในไฟล์ที่อยู่ใน git มี rule ID ให้ reviewer อ้างถึงได้ ไม่ได้อยู่ในหน้า wiki ที่ไม่มีใครเปิดก่อน merge",
         },
         hooks: {
-          title: "Hook ที่บล็อกการกระทำที่ไม่ปลอดภัย",
-          body: "ไม่ว่าจะเป็นการแก้ไฟล์ของ framework การรันคำสั่งที่สงวนไว้สำหรับคนเท่านั้น หรือการแตะ migration โดยไม่ประกาศ schema change ไว้ก่อน — ทุกอย่างถูกบล็อกก่อนที่ tool call จะรัน ไม่ใช่จับได้ทีหลัง",
+          title: "Hook บล็อกคำสั่งที่เสี่ยง",
+          body: "การแก้ไฟล์ของ framework การรันคำสั่งที่คนต้องรันเอง หรือการแก้ migration โดยไม่ได้ประกาศ schema change ไว้ก่อน จะถูกบล็อกตั้งแต่ก่อน tool call รัน ไม่ต้องรอไปจับได้ทีหลัง",
         },
         team: {
-          title: "พร้อมใช้งานกับทั้งทีมตั้งแต่วันแรก",
-          body: "การอัปเกรดแทนที่เฉพาะไฟล์ของ framework เท่านั้น ไม่แตะมาตรฐานของคุณ ส่วน state ก็เป็น JSON ขนาดเล็กที่เป็นมิตรกับ git — สองคนทำงานคนละ work item พร้อมกันก็ไม่มีทางชนกัน",
+          title: "ใช้กับทั้งทีมได้ตั้งแต่วันแรก",
+          body: "อัปเกรดแล้วเขียนทับเฉพาะไฟล์ของ framework ไม่แตะมาตรฐานของทีม state เป็นไฟล์ JSON เล็ก ๆ ที่ใช้กับ git ได้ดี สองคนทำคนละ work item พร้อมกันก็ไม่ conflict",
         },
       },
     },
     replay: {
-      heading: "ดูตัวอย่างเซสชันจริง",
-      subhead: "การรัน /jarvis จริง ตั้งแต่คำถามใน intake, status report ไปจนถึง gate ที่ fail",
+      heading: "ดูตัวอย่าง session จริง",
+      subhead: "การรัน /jarvis จริง ตั้งแต่คำถามตอน intake, status report ไปจนถึงตอนที่ gate ไม่ผ่าน",
       play: "เล่น",
       pause: "หยุดชั่วคราว",
       step: "ทีละขั้น",
@@ -164,23 +164,23 @@ export const th: Dictionary = {
       hideTranscript: "ซ่อน transcript",
       captions: {
         start: "เริ่มต้น work item ใหม่",
-        intake: "orchestrator จัดประเภทงานแล้วถามคำถาม intake สูงสุด 5 ข้อในข้อความเดียว",
-        answer: "พอตอบคำถามแล้ว ลำดับ phase ก็จะทำงานต่อไปเองจนกว่าจะถึงจุดที่ต้อง approve หรือ gate ไหน fail",
-        status: "ทุกรอบจบด้วย status report ไม่ว่าผลลัพธ์จะเป็นอย่างไร",
-        gateFailed: "ต่อมา review เจอปัญหาจริง — gate ไม่ผ่าน แล้ว orchestrator ก็แสดงให้เห็นชัดเจนว่าอะไรบล็อกอยู่",
-        forced: "จะ force ผ่านไปก็ได้ แต่ถูกบันทึกไว้ตรวจสอบ มีเหตุผลกำกับ และสร้าง follow-up item ให้สิ่งที่ยังไม่ได้แก้ — ไม่มีทางเงียบหายไปเฉยๆ",
+        intake: "orchestrator จัดประเภทงาน แล้วถามคำถาม intake ไม่เกิน 5 ข้อในข้อความเดียว",
+        answer: "พอตอบคำถามแล้ว phase ต่าง ๆ จะรันต่อไปเองจนกว่าจะถึงจุดที่ต้องอนุมัติ หรือเจอ gate ที่ไม่ผ่าน",
+        status: "ทุกรอบจบด้วย status report เสมอ ไม่ว่าผลจะออกมาอย่างไร",
+        gateFailed: "ต่อมา phase review เจอปัญหาจริง gate จึงไม่ผ่าน และ orchestrator แสดงให้เห็นว่าติดอะไรอยู่",
+        forced: "force ผ่าน gate ได้ แต่ต้องระบุเหตุผล ระบบจะบันทึกไว้ให้ตรวจย้อนหลัง และสร้าง follow-up item สำหรับเรื่องที่ยังไม่ได้แก้",
       },
     },
     finalCta: {
-      heading: "นำมาตรฐานของคุณเองมาใช้ได้เลย",
-      body: "Jarvis มาพร้อมชุดมาตรฐานครบชุดสำหรับ Go และ React — จะอ่าน แก้ไข หรือแทนที่ทั้งหมดก็ได้ ไม่ว่าจะเลือกทางไหน gate ก็ยังคุมเข้มเหมือนเดิม",
+      heading: "ใช้มาตรฐานของทีมคุณเองได้",
+      body: "Jarvis มีมาตรฐานสำหรับ Go และ React ให้ครบชุด จะใช้ตามนั้น แก้ หรือเปลี่ยนใหม่ทั้งหมดก็ได้ gate ก็ยังตรวจเหมือนเดิม",
       cta: "อ่านเอกสาร",
     },
   },
 
   changelog: {
     title: "ประวัติการอัปเดต",
-    subhead: "ทุกการเปลี่ยนแปลงที่สำคัญของเฟรมเวิร์ก เรียงจากล่าสุด",
+    subhead: "การเปลี่ยนแปลงสำคัญของเฟรมเวิร์ก เรียงจากใหม่ไปเก่า",
     empty: "ยังไม่มีการเผยแพร่เวอร์ชัน",
   },
 
@@ -189,7 +189,7 @@ export const th: Dictionary = {
       filterPlaceholder: "กรองคำสั่ง…",
       tabSlash: "Slash commands",
       tabCli: "CLI",
-      humanOnlyBadge: "เฉพาะคนเท่านั้น",
+      humanOnlyBadge: "คนรันเท่านั้น",
       argumentsLabel: "อาร์กิวเมนต์",
       exampleLabel: "ตัวอย่าง",
       noResults: "ไม่พบคำสั่งที่ตรงกับตัวกรองนี้",

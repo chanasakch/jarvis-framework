@@ -5,13 +5,13 @@ description: The orchestrator, agents, commands, rules, gates, state, hooks, and
 
 ## The orchestrator
 
-`/jarvis` runs in your main Claude Code session, never inside a subagent — subagents cannot
+`/jarvis` runs in your main Claude Code session, never inside a subagent. Subagents cannot
 spawn subagents, so every delegation has to go through the orchestrator. It does no phase
-work itself; intake (classifying the work item and asking the flag questions) is the only
-exception.
+work itself, with one exception: intake (classifying the work item and asking the flag
+questions).
 
 For every other phase, the orchestrator reads `jarvis.js next <ID> --json` and turns the
-result into a **Handoff Brief** — the only thing a phase agent ever receives:
+result into a **Handoff Brief**. That brief is the only thing a phase agent receives:
 
 ```text
 HANDOFF
@@ -32,26 +32,26 @@ previous_gate_issues: none | [list]
 user_answers: none | [list]
 ```
 
-`read`, `standards`, `template`, `checklist` and `write` come verbatim from `jarvis.js next` —
-the orchestrator adds nothing else. An agent that needs a file outside this list has to ask
+`read`, `standards`, `template`, `checklist` and `write` come verbatim from `jarvis.js next`.
+The orchestrator adds nothing else. An agent that needs a file outside this list has to ask
 for it through `open_questions` instead of reading it directly.
 
 <Callout kind="note" title="Why the brief never carries artifact content">
-Only file paths cross the boundary, never pasted text. See "File-based handoff" below.
+Only file paths cross the boundary. Pasted text never does. See "File-based handoff" below.
 </Callout>
 
 ## Agents
 
 Every agent lives in `.claude/agents/jarvis-*.md` with the same shape: YAML frontmatter
-(`name`, `description`, `tools`, `model`), followed by fixed sections — `Role`, `Modes` (when
+(`name`, `description`, `tools`, `model`), followed by fixed sections: `Role`, `Modes` (when
 the phase has more than one), `Inputs`, `Outputs`, `Process`, `Must`, `Must Not`, `Self-Check`,
-`Return Format`. `jarvis-po`, for example, declares `tools: Read, Write, Glob, Grep` and
+`Return Format`. For example, `jarvis-po` declares `tools: Read, Write, Glob, Grep` and
 `model: inherit`, and its `Must Not` section forbids designing a solution or naming an internal
 error code in a user-facing acceptance criterion. `jarvis-architect` runs on `model: opus` and
 its `Modes` are `full`, `lite` and `migration`.
 
-Every agent runs its own `Self-Check` against the phase checklist before returning, and every
-agent — regardless of phase — returns exactly this block:
+Every agent runs its own `Self-Check` against the phase checklist before returning. Every
+agent, in any phase, returns this block:
 
 ```text
 RESULT
@@ -63,20 +63,20 @@ self_check: pass | [failed item IDs]
 ```
 
 `DONE` hands control back to the orchestrator for the Gate Protocol. `BLOCKED` means the agent
-needs something only a human can answer — it never guesses.
+needs something only a human can answer. It never guesses.
 
 ## Commands
 
-Jarvis splits commands into two groups on purpose. Slash commands (`/jarvis`, `/jarvis-status`,
-`/jarvis-new`, `/jarvis-run`, `/jarvis-review`, `/jarvis-init`) are the ones Claude runs — they
-drive intake, resume work, and run phases. The CLI verbs `approve`, `force`, `skip`, `reopen`,
-`park` and `unpark` are human-only: `guard.js` blocks Claude from running them (see "Hooks"),
-so the orchestrator only ever prints the command for you to run.
+Jarvis splits commands into two groups. Claude runs the slash commands (`/jarvis`, `/jarvis-status`,
+`/jarvis-new`, `/jarvis-run`, `/jarvis-review`, `/jarvis-init`), which drive intake, resume work,
+and run phases. The CLI verbs `approve`, `force`, `skip`, `reopen`, `park` and `unpark` are
+human-only. `guard.js` blocks Claude from running them (see "Hooks"), so the orchestrator only
+prints the command for you to run.
 
 The split exists because a subagent cannot talk to you directly. When a phase agent needs a
 decision only a human can make, it returns `BLOCKED` with `open_questions`, and the
-orchestrator asks you in the main session — the same reason approving your own work is a
-CLI command, not something an agent can decide on your behalf. See
+orchestrator asks you in the main session. For the same reason, approval is a CLI command
+you run, and an agent cannot approve work on your behalf. See
 [Commands](/docs/commands) for the full reference with examples.
 
 ## Rules and standards
@@ -86,29 +86,31 @@ Two directories hold the rules an agent reads, and they are owned differently:
 | Directory | Owner | Contains |
 |---|---|---|
 | `.jarvis/core/rules/` | Framework | `orchestration.md` (the protocol above), `conventions.md` (IDs, front matter, phase statuses, severity) |
-| `.jarvis/standards/` | Your team | `structure.md`, `coding-go.md`, `coding-react.md`, `api.md`, `database.md`, and more — each rule carries an ID prefix such as `DB-01` or `SEC-07` |
+| `.jarvis/standards/` | Your team | `structure.md`, `coding-go.md`, `coding-react.md`, `api.md`, `database.md`, and more. Each rule carries an ID prefix such as `DB-01` or `SEC-07` |
 
 `.jarvis/core/` is replaced on upgrade, so a team never edits it. `.jarvis/standards/` is
-yours: every MUST rule in it is what reviewers, the gatekeeper and `jarvis.js lint` actually
-check. See [Standards](/docs/standards) for the full rule list.
+yours. Reviewers, the gatekeeper and `jarvis.js lint` check every MUST rule in it. See [Standards](/docs/standards) for the full rule list.
 
 ## Gates
 
-Every phase passes through the same three layers before the next one unlocks: a deterministic
-**script gate** (`jarvis.js validate`), an **agent gate** (`jarvis-gatekeeper`, checking the
-phase's checklist against the artifacts with evidence), and — for the phases listed in
-`gates.human_approval` — **human approval**. A failed gate goes back to the same agent with
-the issues attached; after `gates.max_retries` the orchestrator stops and prints the Gate
-Failure Menu instead of retrying again. Full protocol, the exact menu shape, and the force
-rules are in [Gates](/docs/gates).
+Every phase passes through the same three layers before the next one unlocks:
+
+1. A deterministic **script gate** (`jarvis.js validate`).
+2. An **agent gate** (`jarvis-gatekeeper`), which checks the phase's checklist against the
+   artifacts with evidence.
+3. **Human approval**, for the phases listed in `gates.human_approval`.
+
+A failed gate goes back to the same agent with the issues attached. After `gates.max_retries`,
+the orchestrator stops and prints the Gate Failure Menu instead of retrying. The full
+protocol, the menu shape and the force rules are in [Gates](/docs/gates).
 
 ## State
 
 Each work item's state lives in one committed file, `.jarvis/state/<ID>.json`, plus an
-append-only `.jarvis/state/<ID>.audit.jsonl` — one JSON line per transition
-(`{ts, actor, action, phase, from, to, detail}`). One file per item means two people working
-on different items never conflict in git, and because the state is committed, anyone can see
-exactly where an item stands without asking.
+append-only `.jarvis/state/<ID>.audit.jsonl` with one JSON line per transition
+(`{ts, actor, action, phase, from, to, detail}`). With one file per item, two people working
+on different items never conflict in git. Because the state is committed, anyone can see
+where an item stands without asking.
 
 A phase status is always one of:
 
@@ -124,20 +126,20 @@ A phase status is always one of:
 <StatusBadge kind="phase" value="parked" label="parked" />
 </div>
 
-Only the CLI ever writes `.jarvis/state/**` — Claude moves a phase to
+Only the CLI writes `.jarvis/state/**`. Claude moves a phase to
 <StatusBadge kind="phase" value="in_progress" label="in_progress" /> or
 <StatusBadge kind="phase" value="passed" label="passed" /> through `jarvis.js set`, but
 <StatusBadge kind="phase" value="approved" label="approved" /> and
-<StatusBadge kind="phase" value="forced" label="forced" /> only ever come from a human running
+<StatusBadge kind="phase" value="forced" label="forced" /> only come from a human running
 `approve` or `force`.
 
 ## Hooks
 
-`guard.js` runs as a `PreToolUse`/`PostToolUse` hook on every tool call, enforcing the rules
-above at the tool level instead of trusting an agent's instructions to hold:
+`guard.js` runs as a `PreToolUse`/`PostToolUse` hook on every tool call. It enforces the rules
+above at the tool level instead of relying on an agent to follow its instructions:
 
 - **G1** blocks `Write`/`Edit` under `.jarvis/state/**`, `.jarvis/core/**`, `.jarvis/scripts/**`
-  and `.claude/**` — framework-owned files.
+  and `.claude/**` (framework-owned files).
 - **G2** blocks any Bash invocation of a human-only CLI verb (`approve`, `force`, `skip`,
   `reopen`, `park`, `unpark`).
 - **G3** (source guard) blocks edits under `apps/**`/`packages/**` unless an active item is in
@@ -145,16 +147,16 @@ above at the tool level instead of trusting an agent's instructions to hold:
 - **G4** blocks edits to migration folders unless the active item has `has_db_change=true`.
 - **G5** blocks reading or writing `.env*` files and other secret files.
 
-A bug inside `guard.js` itself fails open — it allows the call rather than bricking the
-session, so a guard error never becomes the thing that stops you from working.
+A bug inside `guard.js` fails open: it allows the call rather than bricking the session. A
+guard error never stops you from working.
 
 ## File-based handoff
 
-Agents never exchange pasted content — only file paths. Every artifact a phase produces lives
-under `docs/work/<ID>-<slug>/` (reviews under its `review/` subfolder), and the next agent in
-the chain receives those paths in its Handoff Brief's `read` list, not the text itself. This
-keeps context small, makes every artifact independently reviewable in git, and is what lets
-the orchestrator hand off to a fresh agent per phase — and per task during implement — without
+Agents exchange file paths, never pasted content. Every artifact a phase produces lives
+under `docs/work/<ID>-<slug>/` (reviews go in its `review/` subfolder). The next agent in the
+chain receives those paths in its Handoff Brief's `read` list, not the text itself. This keeps
+context small and makes every artifact reviewable on its own in git. It also lets the
+orchestrator hand off to a fresh agent per phase (and per task during implement) without
 losing anything.
 
 ## Where to go next
@@ -164,9 +166,9 @@ losing anything.
 See [Getting Started](/docs/getting-started) for installation and the first `/jarvis` call.
 </Step>
 <Step title="Read the full gate protocol">
-Script, agent and human layers, the Gate Failure Menu, and force rules — see [Gates](/docs/gates).
+Script, agent and human layers, the Gate Failure Menu, and force rules: see [Gates](/docs/gates).
 </Step>
 <Step title="Look up a command">
-Every slash command and human-only CLI command, with examples — see [Commands](/docs/commands).
+Every slash command and human-only CLI command, with examples: see [Commands](/docs/commands).
 </Step>
 </Steps>

@@ -53,7 +53,7 @@ export const en: Dictionary = {
     previous: "Previous",
     next: "Next",
     breadcrumbHome: "Docs",
-    missingTranslationNotice: "This page hasn't been translated to Thai yet — showing the English version.",
+    missingTranslationNotice: "This page hasn't been translated to Thai yet. Showing the English version.",
   },
 
   docsNavGroups: {
@@ -87,7 +87,7 @@ export const en: Dictionary = {
     hero: {
       headline: "Standards enforced by gates, not by hope.",
       subhead:
-        "Jarvis routes every change through specialist agents, checks it against your team's own standards, and blocks the parts that must never happen — before a human ever has to say so.",
+        "Jarvis routes every change through specialist agents and checks it against your team's own standards. What must never happen is blocked before a human has to catch it.",
       getStarted: "Get started",
       viewOnGithub: "View on GitHub",
       copyInstall: "Copy install command",
@@ -98,11 +98,11 @@ export const en: Dictionary = {
       problemLabel: "The problem",
       problemTitle: "An agent that writes plausible code isn't the same as one that follows your standards.",
       problemBody:
-        "Left to itself, an AI coding agent will write a JOIN where your team agreed never to use one, skip an index, return a raw database error to the browser, or ship an acceptance criterion with no test — all while sounding confident about it.",
+        "Left to itself, an AI coding agent will write a JOIN where your team agreed never to use one, skip an index, return a raw database error to the browser, or ship an acceptance criterion with no test. It will sound confident the whole time.",
       approachLabel: "The approach",
-      approachTitle: "So Jarvis turns your standards into rules with IDs, and the rules into gates that fail.",
+      approachTitle: "Jarvis turns your standards into rules with IDs, and the rules into gates that fail.",
       approachBody:
-        "A script checks the deterministic parts. A gatekeeper agent checks the judgement calls, with evidence. A human approves the phases that matter. Nothing moves forward silently.",
+        "A script checks the deterministic parts. A gatekeeper agent checks the judgement calls and cites evidence. A human approves the key phases. Every step forward is recorded.",
     },
     pipeline: {
       heading: "How it works",
@@ -116,7 +116,7 @@ export const en: Dictionary = {
       approvalLabel: "Approval",
       approvalHuman: "Human approval required",
       approvalNone: "No approval required",
-      optionalLabel: "Optional — skipped unless",
+      optionalLabel: "Optional, skipped unless",
       conditionalLabel: "Only when",
       stepOf: "Phase {n} of {total}",
       summary: "{phases} phases, {approvals} need human approval",
@@ -125,16 +125,16 @@ export const en: Dictionary = {
       legendConditional: "Extra agent when a flag is set",
     },
     features: {
-      heading: "What's actually enforced",
-      subhead: "Not documentation everyone means to read. Rules a script and an agent actually check.",
+      heading: "What's enforced",
+      subhead: "Rules that a script and an agent check on every change.",
       items: {
         orchestrator: {
           title: "One orchestrator, specialist agents",
-          body: "/jarvis routes each phase to the agent that owns it — a requirements writer, an architect, a backend developer, a security reviewer — never doing the work itself.",
+          body: "/jarvis routes each phase to the agent that owns it: a requirements writer, an architect, a backend developer, a security reviewer. It never does the work itself.",
         },
         gates: {
           title: "Three-layer gates",
-          body: "A deterministic script, then a gatekeeper agent with evidence, then a human where it matters. Forcing past a failed gate is possible — audited, reasoned, and never silent.",
+          body: "A deterministic script runs first, then a gatekeeper agent that cites evidence, then a human on the phases that need approval. A human can force past a failed gate, but must give a reason, and the force is written to the audit log.",
         },
         traceability: {
           title: "Traceability by ID",
@@ -142,21 +142,21 @@ export const en: Dictionary = {
         },
         standards: {
           title: "Standards as code",
-          body: "Your team's rules live in versioned files with rule IDs a reviewer can cite — not a wiki page nobody opens before merging.",
+          body: "Your team's rules live in versioned files, with rule IDs a reviewer can cite in a finding.",
         },
         hooks: {
           title: "Hooks that block unsafe actions",
-          body: "Editing framework files, running a human-only command, touching a migration without a declared schema change — blocked before the tool call runs, not caught after.",
+          body: "Hooks block the tool call before it runs when it would edit framework files, run a human-only command, or touch a migration without a declared schema change.",
         },
         team: {
-          title: "Team-ready from day one",
-          body: "Upgrades replace framework files only, never your standards. State is small, git-friendly JSON — two people on two work items never conflict.",
+          title: "Built for teams",
+          body: "Upgrades replace framework files only, never your standards. State is small JSON files committed to git, one per work item, so two people on two work items never conflict.",
         },
       },
     },
     replay: {
       heading: "See a session",
-      subhead: "A real /jarvis run — the intake questions, the status report, a gate failure.",
+      subhead: "A real /jarvis run: the intake questions, the status report, a gate failure.",
       play: "Play",
       pause: "Pause",
       step: "Step",
@@ -166,15 +166,15 @@ export const en: Dictionary = {
       captions: {
         start: "Starting a new work item.",
         intake: "The orchestrator classifies the work and asks up to five intake questions, in one message.",
-        answer: "Answering unlocks the phase sequence — it runs on its own until an approval or a gate stops it.",
-        status: "Every turn ends with a status report, whatever happened.",
-        gateFailed: "Later, a review finds a real problem — the gate fails, and the orchestrator prints exactly what's blocking it.",
-        forced: "Forcing past it is possible. It's audited, reasoned, and creates a follow-up item for what's still unresolved — never silent.",
+        answer: "Answering unlocks the phase sequence. It runs on its own until an approval or a gate stops it.",
+        status: "Every turn ends with a status report.",
+        gateFailed: "Later, a review finds a real problem. The gate fails, and the orchestrator prints exactly what's blocking it.",
+        forced: "A human can force past it with a reason. The force goes into the audit log, and a follow-up item is created for what's still unresolved.",
       },
     },
     finalCta: {
       heading: "Bring your own standards.",
-      body: "Jarvis ships with a full standards set for Go and React — read it, change it, or replace it. Either way, the gates hold.",
+      body: "Jarvis ships with a full standards set for Go and React. Read it, change it, or replace it. The gates enforce whatever version you keep.",
       cta: "Read the docs",
     },
   },

@@ -5,8 +5,8 @@ description: Install Jarvis, verify the setup, and run your first work item.
 
 ## Requirements
 
-Two things are always required; the rest only matter if you're using the shipped Go +
-React standards.
+Two tools are always required. The rest matter only if you use the shipped Go + React
+standards.
 
 | Requirement | Profile | Notes |
 |---|---|---|
@@ -17,7 +17,7 @@ React standards.
 | govulncheck | Go + React | `go install golang.org/x/vuln/cmd/govulncheck@latest` |
 | Docker | Go + React | Needed for testcontainers integration tests |
 
-`jarvis.js doctor` checks all of these against your actual `PATH` — see [Verify the
+`jarvis.js doctor` checks all of these against your `PATH`. See [Verify the
 setup](#verify-the-setup) below.
 
 ## Install
@@ -27,10 +27,10 @@ npx jarvis-framework init --name jarvis
 cd .jarvis && npm install
 ```
 
-`init` never overwrites a file you already own — run it again after upgrading the
-framework and your `.jarvis/standards/`, `jarvis.config.yaml` and `CLAUDE.md` are left
-untouched. `--name` sets the prefix for every slash command and agent; `--name ops`
-would give you `/ops`, `/ops-init` and `ops-architect` instead.
+`init` never overwrites a file you already own. If you run it again after upgrading the
+framework, your `.jarvis/standards/`, `jarvis.config.yaml` and `CLAUDE.md` are left
+untouched. `--name` sets the prefix for every slash command and agent. For example,
+`--name ops` gives you `/ops`, `/ops-init` and `ops-architect` instead.
 
 ## What gets added to the repo
 
@@ -73,9 +73,9 @@ would give you `/ops`, `/ops-init` and `ops-architect` instead.
 </Folder>
 </FileTree>
 
-`.claude/`, `.jarvis/core/` and `.jarvis/scripts/` are framework-owned — `upgrade` replaces
+`.claude/`, `.jarvis/core/` and `.jarvis/scripts/` are framework-owned, and `upgrade` replaces
 them. `jarvis.config.yaml`, `.jarvis/standards/`, `.jarvis/project/` and `CLAUDE.md` are
-yours; nothing in the framework ever overwrites them.
+yours. The framework never overwrites them.
 
 ## Verify the setup
 
@@ -94,9 +94,9 @@ hint: govulncheck → go install golang.org/x/vuln/cmd/govulncheck@latest
 hint: docker → needed for testcontainers integration tests
 ```
 
-A `·` next to a path means it doesn't exist yet in this repo — that's expected before
-`apps/web`/`apps/api` exist. Missing Go tooling only blocks work that actually needs it;
-run `/jarvis-init` next to scan the repo and fill in `.jarvis/project/context.md`.
+A `·` next to a path means it doesn't exist in this repo yet. That's expected before
+`apps/web`/`apps/api` exist. Missing Go tooling only blocks work that needs it. Next, run
+`/jarvis-init` to scan the repo and fill in `.jarvis/project/context.md`.
 
 ## Your first work item
 
@@ -106,18 +106,18 @@ run `/jarvis-init` next to scan the repo and fill in `.jarvis/project/context.md
 /jarvis-init
 ```
 Writes `.jarvis/project/context.md` (stack, repo map, domains, existing patterns,
-glossary) from what's actually in your codebase.
+glossary) from what's in your codebase.
 </Step>
 <Step title="Start a work item">
 ```text
 /jarvis Add OTP login for returning customers
 ```
-The orchestrator classifies the work type, asks up to five intake flag questions in one
-message, then runs the phase sequence on its own — see [Workflows](/docs/workflows) for
-what each work type actually runs.
+The orchestrator classifies the work type and asks up to five intake flag questions in one
+message. Then it runs the phase sequence on its own. See [Workflows](/docs/workflows) for
+the phases each work type runs.
 </Step>
 <Step title="Read the status report">
-Every turn ends with one, whatever happened:
+Every turn ends with a status report, whatever happened:
 ```text
 ── JARVIS ─────────────────────────────
 Item:   FEAT-012 OTP login (feature)
@@ -129,8 +129,8 @@ Warnings: none
 ```
 </Step>
 <Step title="Approve a phase">
-`approve` is human-only — Claude is blocked from running it by `guard.js`. Run the exact
-command the status report gave you:
+`approve` is human-only: `guard.js` blocks Claude from running it. Run the command the
+status report gave you:
 ```text
 ! npm run -s jarvis -- approve FEAT-012 architecture
 ```
@@ -142,6 +142,6 @@ The `!` runs it directly in your terminal rather than asking Claude to. See
 ## Next
 
 <Callout kind="tip">
-`/jarvis-status` shows every active work item and its warnings at any point; `/jarvis-explain <ID>`
-explains exactly why one is blocked and what unblocks it.
+`/jarvis-status` shows every active work item and its warnings at any point. `/jarvis-explain <ID>`
+explains why an item is blocked and what unblocks it.
 </Callout>

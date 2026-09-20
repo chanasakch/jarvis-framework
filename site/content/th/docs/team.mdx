@@ -1,11 +1,11 @@
 ---
 title: การใช้งานแบบทีม
-description: การติดตั้ง Jarvis สำหรับทีม, เกตของ CI, CODEOWNERS และการอัปเกรดโดยไม่สูญเสียไฟล์ของคุณเอง
+description: ติดตั้ง Jarvis ให้ทั้งทีม ตั้ง gate ใน CI และ CODEOWNERS แล้วอัปเกรดโดยไม่ทับไฟล์ของทีม
 ---
 
 ## การติดตั้งสำหรับทีม
 
-สมาชิกทีมทุกคนรันการติดตั้งแบบเดียวกันครั้งเดียวต่อรีโป:
+ทุกคนในทีมติดตั้งแบบเดียวกัน รันครั้งเดียวต่อรีโป
 
 ```bash
 npx jarvis-framework init --name jarvis     # or --name ops, --name sdlc, …
@@ -13,25 +13,25 @@ cd .jarvis && npm install                   # one dependency: yaml
 node .jarvis/scripts/jarvis.js doctor       # tools, paths, error registry
 ```
 
-`--name` กำหนด prefix สำหรับ slash command และ agent — `--name ops` จะได้ `/ops`, `/ops-init`
-และ agent ชื่อ `ops-architect` ส่วน path ภายใน (`.jarvis/`, `jarvis.config.yaml`) จะคงชื่อเดิม
-เสมอไม่ว่า prefix จะเป็นอะไร
+`--name` กำหนด prefix ของ slash command และ agent เช่น `--name ops` จะได้ `/ops`, `/ops-init`
+และ agent ชื่อ `ops-architect` ส่วน path ภายใน (`.jarvis/`, `jarvis.config.yaml`) ใช้ชื่อเดิม
+ไม่ว่าจะตั้ง prefix เป็นอะไร
 
-`init` **จะไม่เขียนทับไฟล์ที่ทีมของคุณเป็นเจ้าของ** รันซ้ำได้อย่างปลอดภัย: ไฟล์ของ framework
-จะถูก refresh ส่วนมาตรฐาน, `jarvis.config.yaml` และ `CLAUDE.md` ของคุณจะไม่ถูกแตะต้อง
-หลังติดตั้งแล้ว ให้ restart Claude Code เพื่อให้โหลด hook, agent และคำสั่งใหม่ จากนั้นรัน
+`init` **ไม่เขียนทับไฟล์ที่เป็นของทีมคุณ** รันซ้ำได้ไม่มีปัญหา ไฟล์ของ framework
+จะอัปเดตเป็นเวอร์ชันล่าสุด ส่วนมาตรฐาน, `jarvis.config.yaml` และ `CLAUDE.md` ของคุณจะอยู่เหมือนเดิม
+ติดตั้งเสร็จแล้วให้ restart Claude Code เพื่อโหลด hook, agent และคำสั่งใหม่ จากนั้นรัน
 `/jarvis-init` เพื่อสแกนรีโปและเขียน `.jarvis/project/context.md`
 
-Commit `.claude/`, `.jarvis/` และ `docs/work/` รวมถึง `.jarvis/state/` ด้วย — state คือไฟล์ JSON
-เล็ก ๆ หนึ่งไฟล์บวก audit log แบบ append-only ต่อ work item หนึ่งรายการ ทำให้สองคนที่ทำงานคนละ
-item ไม่ชนกัน
+ให้ commit `.claude/`, `.jarvis/` และ `docs/work/` รวมทั้ง `.jarvis/state/` ด้วย state ของ work item
+แต่ละรายการเป็นไฟล์ JSON เล็ก ๆ หนึ่งไฟล์กับ audit log ที่เขียนต่อท้ายอย่างเดียว สองคนที่ทำคนละ
+item จึงไม่ชนกัน
 
-## เกตของ CI
+## gate ของ CI
 
-workflow สำเร็จรูป (`project-templates/.github/workflows/jarvis.yml`) รัน job `gate` บนทุก PR
-ที่เข้า `main` พร้อมกับ job ตรวจสอบแยก `backend` และ `frontend` ที่จะรันก็ต่อเมื่อ
-`apps/api/go.mod` หรือ `apps/web/package.json` มีอยู่ หลังจาก checkout และ `npm install` ใน
-`.jarvis/` แล้ว ขั้นตอนบังคับใช้ของ job `gate` คือ:
+workflow สำเร็จรูป (`project-templates/.github/workflows/jarvis.yml`) รัน job `gate` กับทุก PR
+ที่จะเข้า `main` และมี job `backend` กับ `frontend` แยกรันคู่กันไป ซึ่งจะรันก็ต่อเมื่อมีไฟล์
+`apps/api/go.mod` หรือ `apps/web/package.json` หลัง checkout และ `npm install` ใน
+`.jarvis/` แล้ว job `gate` จะตรวจตามขั้นตอนนี้
 
 ```bash
 node .jarvis/scripts/jarvis.js ci --base origin/main
@@ -39,31 +39,31 @@ node .jarvis/scripts/audit.js
 node --test ".jarvis/scripts/test/*.test.js"
 ```
 
-`jarvis.js ci` อ่านชื่อ branch ปัจจุบัน ดึง work item ID จากชื่อนั้น (จับคู่กับ `[A-Z]+-\d{3}`)
-และจะล้มเหลวเมื่อข้อใดข้อหนึ่งต่อไปนี้เป็นจริง:
+`jarvis.js ci` อ่านชื่อ branch ปัจจุบัน ดึง work item ID ออกมา (ตาม pattern `[A-Z]+-\d{3}`)
+แล้วจะ fail ถ้าเข้าข้อใดข้อหนึ่งต่อไปนี้
 
-- work item นั้นมี phase ที่สถานะไม่ใช่ `approved`, `passed`, `forced`, หรือ `skipped`
-- `lint` (รันด้วย `--changed`) เจอการละเมิดระดับ `critical` หรือ `major`
-- `packages/errors/registry.yaml` parse ไม่ผ่าน, ขาด field ที่บังคับ (`code`, `public`,
-  `http`, `level`, `description`) ในรายการใดรายการหนึ่ง หรือมี `code` ซ้ำกัน
+- work item นั้นมี phase ที่สถานะไม่ใช่ `approved`, `passed`, `forced` หรือ `skipped`
+- `lint` (รันแบบ `--changed`) เจอการละเมิดระดับ `critical` หรือ `major`
+- `packages/errors/registry.yaml` parse ไม่ผ่าน, มีรายการที่ขาด field บังคับ (`code`, `public`,
+  `http`, `level`, `description`) หรือมี `code` ซ้ำ
 
-เวอร์ชันสำหรับ GitLab มีให้ที่ `project-templates/ci/gitlab-ci.example.yml`
+ถ้าใช้ GitLab มีไฟล์ให้ที่ `project-templates/ci/gitlab-ci.example.yml`
 
 ## CODEOWNERS
 
-`project-templates/.github/CODEOWNERS` ส่ง review ไปยังกลุ่มที่เป็นเจ้าของสิ่งที่ถูกเปลี่ยนแปลง
-เพื่อไม่ให้การผ่อนปรนมาตรฐานหรือการแก้ framework หลุดผ่านไปด้วยการอนุมัติที่ไม่เกี่ยวข้อง:
+`project-templates/.github/CODEOWNERS` ส่งงานรีวิวไปให้กลุ่มที่ดูแลส่วนที่ถูกแก้
+การผ่อนมาตรฐานหรือการแก้ framework จึงไม่หลุดเข้าไปได้เพราะมีคนที่ไม่เกี่ยวข้องกดอนุมัติ
 
-| Path | Reviewer | Why |
+| Path | Reviewer | เหตุผล |
 |---|---|---|
-| `.jarvis/standards/` | tech leads | การผ่อนปรน rule ต้องมีการเซ็นอนุมัติ ไม่ใช่แค่การ approve ทั่วไป |
-| `.jarvis/core/`, `.jarvis/scripts/`, `.claude/agents/`, `.claude/commands/`, `.claude/settings.json` | tech leads | เป็นของ framework; ปกติจะถูกแทนที่ด้วย `upgrade` ไม่ใช่แก้ไขเอง |
-| `packages/errors/registry.yaml` | tech leads + frontend | การเปลี่ยน public error key เป็น breaking API change สำหรับทุก client |
-| `jarvis.config.yaml` | tech leads | ควบคุมว่าใครมีสิทธิ์ผ่อนปรนเกตได้ |
-| `docs/architecture/query-index-matrix.md` | tech leads + DBA | หลักฐาน index รองรับมาตรฐานฐานข้อมูล |
+| `.jarvis/standards/` | tech leads | การผ่อน rule ต้องให้เจ้าของเซ็นรับ อนุมัติจากใครก็ได้ไม่พอ |
+| `.jarvis/core/`, `.jarvis/scripts/`, `.claude/agents/`, `.claude/commands/`, `.claude/settings.json` | tech leads | เป็นของ framework ปกติจะเปลี่ยนผ่าน `upgrade` ไม่ได้แก้ด้วยมือ |
+| `packages/errors/registry.yaml` | tech leads + frontend | เปลี่ยน public error key เท่ากับเปลี่ยน API แบบ breaking กับทุก client |
+| `jarvis.config.yaml` | tech leads | เป็นตัวกำหนดว่าใครผ่อน gate ได้ |
+| `docs/architecture/query-index-matrix.md` | tech leads + DBA | เป็นหลักฐานเรื่อง index ที่มาตรฐานฐานข้อมูลอ้างถึง |
 
-template มาพร้อมชื่อทีม placeholder (`@your-org/tech-leads`, `@your-org/frontend`,
-`@your-org/dba`) — แทนที่ด้วยชื่อทีมจริงก่อนเปิดใช้งาน branch protection
+template ใส่ชื่อทีมตัวอย่างไว้ (`@your-org/tech-leads`, `@your-org/frontend`,
+`@your-org/dba`) ให้เปลี่ยนเป็นชื่อทีมจริงก่อนเปิด branch protection
 
 ## การอัปเกรด
 
@@ -73,48 +73,48 @@ node .jarvis/scripts/audit.js                 # framework is internally consiste
 node --test ".jarvis/scripts/test/*.test.js"  # scripts still behave
 ```
 
-`upgrade` จะไล่ตรวจทุกไฟล์ที่ framework จัดมาให้ แล้วสำหรับแต่ละไฟล์จะเขียนใหม่ (ถ้าเป็นไฟล์ใหม่),
-แทนที่ (ถ้าเปลี่ยนแปลง) หรือปล่อยไว้เฉย ๆ (ถ้าเหมือนเดิม) — จากนั้นเขียน `.jarvis/VERSION` ใหม่
-มันจะแตะเฉพาะ path ที่ framework เป็นเจ้าของเท่านั้น: `.jarvis/core/`, `.jarvis/scripts/`,
-`.claude/agents/`, `.claude/commands/`, `.claude/settings.json` และจะพิมพ์สรุปว่าอะไรถูกเพิ่ม
-อัปเดต และปล่อยไว้เหมือนเดิม
+`upgrade` ไล่ดูทุกไฟล์ที่มากับ framework ไฟล์ไหนใหม่ก็เขียนลงไป ไฟล์ไหนเปลี่ยนก็แทนที่
+ไฟล์ไหนเหมือนเดิมก็ปล่อยไว้ จากนั้นเขียน `.jarvis/VERSION` ใหม่ คำสั่งนี้แตะเฉพาะ path
+ที่เป็นของ framework คือ `.jarvis/core/`, `.jarvis/scripts/`, `.claude/agents/`,
+`.claude/commands/`, `.claude/settings.json` แล้วพิมพ์สรุปว่าไฟล์ไหนเพิ่ม ไฟล์ไหนอัปเดต
+และไฟล์ไหนไม่เปลี่ยน
 
-ไฟล์ที่โปรเจกต์เป็นเจ้าของจะไม่ถูก `upgrade` แตะต้องเลย: `jarvis.config.yaml`, `CLAUDE.md`,
+`upgrade` ไม่แตะไฟล์ที่เป็นของโปรเจกต์เลย ได้แก่ `jarvis.config.yaml`, `CLAUDE.md`,
 `.jarvis/standards/**`, `.jarvis/project/**` และ `packages/errors/registry.yaml`
 
-ถ้าเวอร์ชันเก่ากว่าเคยมี agent หรือ command ที่เวอร์ชันนี้ไม่มีให้แล้ว `upgrade` จะรายงานไว้ใต้
-"not shipped by this version" แทนที่จะลบทิ้ง — เพราะทีมของคุณอาจต่อยอดจากมันไว้ ดังนั้นการตัดสินใจ
-ลบจึงเป็นของคุณ restart Claude Code หลังจากนั้นเพื่อให้รับรู้การเปลี่ยนแปลง
+ถ้าเวอร์ชันเก่าเคยมี agent หรือ command ที่เวอร์ชันนี้ไม่มีแล้ว `upgrade` จะรายงานไว้ใต้หัวข้อ
+"not shipped by this version" โดยไม่ลบทิ้ง เพราะทีมอาจเอาไปต่อยอดไว้แล้ว จะลบหรือไม่ให้ทีมตัดสินใจเอง
+อัปเกรดเสร็จแล้วให้ restart Claude Code เพื่อให้เห็นการเปลี่ยนแปลง
 
 ## การเสนอเปลี่ยนแปลงมาตรฐาน
 
-มาตรฐานอยู่ในรีโปของคุณเอง ทีมของคุณจึงเปลี่ยนแปลงได้โดยไม่ต้องแตะ framework:
+มาตรฐานอยู่ในรีโปของคุณ ทีมจึงแก้ได้เองโดยไม่ต้องแตะ framework
 
-1. เปิด PR แก้ไขไฟล์ภายใต้ `.jarvis/standards/`
-2. ถ้า rule นั้นตรวจสอบได้ด้วยเครื่องจักร ให้อัปเดต `lint-rules.yaml` ใน PR เดียวกัน
-3. **การผ่อนปรนหรือลบ rule ต้องมี ADR เพิ่มเติม** ใน `docs/adr/` ระบุ rule ID, เหตุผล,
+1. เปิด PR แก้ไฟล์ใน `.jarvis/standards/`
+2. ถ้า rule นั้นตรวจด้วยเครื่องได้ ให้แก้ `lint-rules.yaml` ใน PR เดียวกัน
+3. **ถ้าผ่อนหรือลบ rule ต้องมี ADR เพิ่ม** ไว้ใน `docs/adr/` โดยระบุ rule ID, เหตุผล,
    ขอบเขต และวันหมดอายุ
-4. `CODEOWNERS` จะส่ง PR ไปยังกลุ่มข้างต้นที่เป็นเจ้าของ `.jarvis/standards/`
+4. `CODEOWNERS` จะส่ง PR ไปให้กลุ่มที่ดูแล `.jarvis/standards/` ตามตารางข้างบน
 
-ดู [มาตรฐาน](/docs/standards) สำหรับ rule-ID reference ฉบับเต็มและกลไกข้อยกเว้นเฉพาะจุด
-(`jarvis-ignore` บวก ADR ที่ได้รับการยอมรับแล้ว) สำหรับกรณีที่บรรทัดเดียวต้องเบี่ยงเบนโดยไม่
-เปลี่ยน rule เอง
+รายการ rule ID ทั้งหมดดูได้ที่ [มาตรฐาน](/docs/standards) หน้านั้นอธิบายกลไกขอยกเว้นเป็นกรณีไปด้วย
+(`jarvis-ignore` คู่กับ ADR ที่ได้รับการยอมรับแล้ว) ใช้ตอนที่โค้ดบรรทัดเดียวต้องทำต่างจาก rule
+โดยไม่ต้องแก้ตัว rule
 
 ## แก้ปัญหาเบื้องต้น
 
-| Symptom | Cause | Fix |
+| อาการ | สาเหตุ | วิธีแก้ |
 |---|---|---|
-| `G1 BLOCKED` เมื่อแก้ `.jarvis/core` หรือ `.claude` | path เหล่านั้นเป็นของ framework | กำลังพัฒนาตัว framework เองอยู่ใช่ไหม? เปิด Claude Code ด้วย `JARVIS_DEV=1` |
-| คำสั่งหรือ agent หายไปหลังอัปเกรด | Claude Code อ่านค่าเหล่านี้ตอนเริ่ม session | Restart Claude Code |
-| CI ล้มเหลวโดยไม่มี phase issue ระบุไว้ | การเช็ค `lint` หรือ error registry ล้มเหลว | รัน `jarvis.js lint --changed` ในเครื่องเพื่อดู finding |
+| `G1 BLOCKED` ตอนแก้ `.jarvis/core` หรือ `.claude` | path เหล่านั้นเป็นของ framework | ถ้ากำลังพัฒนาตัว framework เอง ให้เปิด Claude Code ด้วย `JARVIS_DEV=1` |
+| คำสั่งหรือ agent หายไปหลังอัปเกรด | Claude Code โหลดสิ่งเหล่านี้ตอนเริ่ม session | restart Claude Code |
+| CI fail แต่ไม่มี phase ไหนติดปัญหา | `lint` หรือการตรวจ error registry ไม่ผ่าน | รัน `jarvis.js lint --changed` ในเครื่องเพื่อดู finding |
 
 ## ขั้นตอนถัดไป
 
 <Steps>
-<Step title="ทำความเข้าใจว่า CI บังคับใช้อะไรบ้าง">
-โปรโตคอลเกตฉบับเต็มที่ phase หนึ่งต้องผ่านก่อนที่ CI จะเห็นด้วยซ้ำ — ดู [เกต](/docs/gates)
+<Step title="ดูว่า CI บังคับอะไรบ้าง">
+ขั้นตอน gate ทั้งหมดที่ phase ต้องผ่านก่อนจะไปถึง CI ดูที่ [Gate](/docs/gates)
 </Step>
 <Step title="ค้นหา rule ID">
-ไฟล์มาตรฐานทุกไฟล์, prefix ของมัน และวิธีบันทึกข้อยกเว้น — ดู [มาตรฐาน](/docs/standards)
+ไฟล์มาตรฐานทุกไฟล์, prefix ของแต่ละไฟล์ และวิธีบันทึกข้อยกเว้น ดูที่ [มาตรฐาน](/docs/standards)
 </Step>
 </Steps>

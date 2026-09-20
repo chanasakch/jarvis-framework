@@ -5,71 +5,70 @@ description: Common questions about how Jarvis works, day to day.
 
 ## Can Jarvis work with a stack other than Go and React?
 
-Yes. The mechanism — rules with IDs, checked by a deterministic script and a gatekeeper
-agent, gated by phase and severity — is stack-agnostic. The only stack-specific pieces are
-the standards files themselves, `.jarvis/standards/*.md`, which ship written for a Go
-backend and a React + TypeScript frontend against MySQL and MongoDB. Those files are
-project-owned: `init` and `upgrade` never touch them, so a team on a different stack
-replaces their contents (and the matching entries in `.jarvis/standards/lint-rules.yaml`)
-directly and everything downstream — the gate protocol, severities, reviewers, workflows —
-keeps working unchanged. See [Introduction](/docs/introduction) for the "Built for one
-stack, not locked to it" callout.
+Yes. The mechanism is stack-agnostic: rules with IDs, checked by a deterministic script and a
+gatekeeper agent, gated by phase and severity. The only stack-specific pieces are the standards
+files themselves, `.jarvis/standards/*.md`, which ship written for a Go backend and a React +
+TypeScript frontend against MySQL and MongoDB. Those files are project-owned, and `init` and
+`upgrade` never touch them. A team on a different stack replaces their contents (and the matching
+entries in `.jarvis/standards/lint-rules.yaml`) directly. Everything downstream (the gate protocol,
+severities, reviewers, workflows) keeps working unchanged. See [Introduction](/docs/introduction)
+for the "Built for one stack, not locked to it" callout.
 
 ## Why can't Claude approve its own work?
 
-Because that would remove the point of an approval. `approve` (along with `force`, `skip`,
+An approval means nothing if the author can grant it. `approve` (along with `force`, `skip`,
 `reopen` and `park`/`unpark`) is on the human-only list, and `guard.js`'s G2 rule blocks
 any Bash call that tries to run one of them, whether it's `jarvis.js approve` or
 `npm run -s jarvis -- approve`. Claude prints the exact command and asks you to run it
-instead. This is enforced at the hook level rather than left to instructions in a prompt,
-the same way `.jarvis/core/rules/orchestration.md` treats it as a hard rule Claude must
-never violate. See [Gates](/docs/gates) for the full phase-status table.
+instead. This is enforced at the hook level, not left to instructions in a prompt.
+`.jarvis/core/rules/orchestration.md` also lists it as a hard rule Claude must never violate.
+See [Gates](/docs/gates) for the full phase-status table.
 
 ## What happens if I force a gate?
 
-Forcing passes a phase that failed its gate at the retry limit. It's human-only —
-`guard.js` blocks Claude from running it — requires `--reason`, and is never silent: the
-reason, your git `user.name`, a timestamp and the unresolved finding IDs are written to the
-work item's audit log, and a follow-up `chore` work item is created automatically listing
-what's still unresolved. Every later status report shows
+Forcing passes a phase that failed its gate at the retry limit. It's human-only (`guard.js`
+blocks Claude from running it) and requires `--reason`. Every force is recorded: the
+reason, your git `user.name`, a timestamp and the unresolved finding IDs go into the
+work item's audit log. A follow-up `chore` work item listing what's still unresolved is
+created automatically. Every later status report shows
 `⚠️ <ID> has N forced gate(s): <phases>`, and both `qa-report.md` and `release-notes.md`
-get a **Forced Gates** section. Some findings — a critical security finding, or a failed
-acceptance criterion in `qa` — additionally require `--accept-risk` on top of `--reason`.
+get a **Forced Gates** section. Some findings, such as a critical security finding or a failed
+acceptance criterion in `qa`, also require `--accept-risk` on top of `--reason`.
 Full mechanics are in [Gates](/docs/gates).
 
 ## Is state committed to git?
 
 Yes, by design. Each work item gets one JSON state file plus an append-only audit log under
-`.jarvis/state/`, and both are meant to be committed alongside `.claude/`, `.jarvis/` and
+`.jarvis/state/`. Commit both alongside `.claude/`, `.jarvis/` and
 `docs/work/`. Because state lives per work item rather than in one shared file, two people
-working on two different items never conflict on the same lines. You never hand-edit these
-files — the CLI (`node .jarvis/scripts/jarvis.js set|task|flags|...`) is the only writer;
+working on two different items never conflict on the same lines. Never hand-edit these
+files. The CLI (`node .jarvis/scripts/jarvis.js set|task|flags|...`) is the only writer, and
 `guard.js`'s G1 rule blocks direct edits to `.jarvis/state/`.
 
 ## What's the difference between a bugfix and a hotfix?
 
 Both fix a defect, but they're for different situations:
 
-| | Bugfix (`BUG`) | Hotfix (`HOT`) |
+| Aspect | Bugfix (`BUG`) | Hotfix (`HOT`) |
 |---|---|---|
 | Urgency | Not urgent | Production incident |
 | Phases | intake → investigation → plan → implement → test → review → **qa** → release | intake → investigation → implement → test → review → release → **postmortem** |
 | QA phase | Required | Skipped entirely |
-| Postmortem | None | Present, but `deferrable: 3d` — can happen up to 3 days after release |
+| Postmortem | None | Present, but `deferrable: 3d`: can happen up to 3 days after release |
 | Blocking reviewers | All four reviewers | Only `security` and `standards` |
 
-A hotfix trades the full QA phase and an immediate postmortem for speed, but still forces a
-review and still writes the postmortem — just after the incident is resolved, within 3
-days. See `.jarvis/core/workflows/bugfix.yaml` and `.jarvis/core/workflows/hotfix.yaml`.
+A hotfix drops the QA phase and delays the postmortem to ship faster. It still requires a
+review, and it still writes the postmortem, within 3 days after the incident is resolved.
+See `.jarvis/core/workflows/bugfix.yaml` and `.jarvis/core/workflows/hotfix.yaml`.
 
 ## What's a spike, and why does it have no implementation phase?
 
-A spike (`SPK`) is time-boxed research where the deliverable is a decision, not a merge. Its
-workflow has exactly two phases — `intake` and `investigation` — and `investigation`
+A spike (`SPK`) is time-boxed research whose deliverable is a decision, not a merge. Its
+workflow has exactly two phases, `intake` and `investigation`, and `investigation`
 outputs `spike-report.md` plus an ADR draft instead of `investigation.md`. There is no
-`plan`, `implement`, `test`, `review`, `qa` or `release` phase at all: a spike produces no
-production code by design. If the spike concludes you should build something, that becomes
-a separate work item created with `jarvis.js new`, not a continuation of the spike. See
+`plan`, `implement`, `test`, `review`, `qa` or `release` phase: a spike produces no
+production code by design. If the spike concludes you should build something, create
+a separate work item with `jarvis.js new`. It is not a continuation of the spike. See
 [Introduction](/docs/introduction) and `.jarvis/core/workflows/spike.yaml`.
 
 ## Can I use my own model per agent?
@@ -87,26 +86,26 @@ models:
 ```
 
 `default: inherit` means an agent with no override runs on whatever model your Claude Code
-session is using; anything listed under `overrides` runs on that model instead, applied to
-the agent's frontmatter by the installer. See [Configuration](/docs/configuration) for the
+session is using. An agent listed under `overrides` runs on that model instead; the installer
+writes it into the agent's frontmatter. See [Configuration](/docs/configuration) for the
 rest of the config schema.
 
 ## Does upgrading ever touch my standards?
 
-No. `npx jarvis-framework upgrade` replaces framework-owned files only —
-`.jarvis/core/`, `.jarvis/scripts/`, `.claude/agents/` and `.claude/commands/` — and prints
+No. `npx jarvis-framework upgrade` replaces framework-owned files only
+(`.jarvis/core/`, `.jarvis/scripts/`, `.claude/agents/` and `.claude/commands/`) and prints
 what changed. `.jarvis/standards/`, `jarvis.config.yaml`, `.jarvis/project/` and `CLAUDE.md`
-are project-owned and are never overwritten by `init` or `upgrade`, even if the shipped
+are project-owned. `init` and `upgrade` never overwrite them, even when the shipped
 defaults change. See [Team](/docs/team) for the full ownership split.
 
 ## Where to go next
 
 <Steps>
-<Step title="Hit an actual error message?">
-Real guard.js block text and gate-failure output, explained — see
+<Step title="Seeing an error message?">
+Real guard.js block text and gate-failure output, explained. See
 [Troubleshooting](/docs/troubleshooting).
 </Step>
 <Step title="Configure models, gates, or paths">
-The full `jarvis.config.yaml` schema — see [Configuration](/docs/configuration).
+The full `jarvis.config.yaml` schema. See [Configuration](/docs/configuration).
 </Step>
 </Steps>
