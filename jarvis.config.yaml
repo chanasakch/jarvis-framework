@@ -39,7 +39,7 @@ review:
   # Reviewers that only run when an intake flag is set; wired per workflow as
   # `conditional_agents`. Listed here for reference — the workflow YAML is authoritative.
   conditional_reviewers:
-    has_infra_change: [devops]
+    has_infra_change: [devops]  # devops reviewer, added only when the item touches CI, infra or deploy config
 
 staff_review:
   max_age_days: 30              # /jarvis-health report older than this is reported stale by status
