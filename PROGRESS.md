@@ -159,6 +159,22 @@ architecture).
 
 **Website — COMPLETE (S0–S8). Framework — COMPLETE (steps 0–15, 17; 16 deferred).**
 
+### Post-launch site fixes (operator request 2026-09-20)
+| # | Issue | Status | Commit / decision |
+|---|---|---|---|
+| 4 | Generated content auto-discovers new agents/workflows/standards/config/CLI | done | `e60f302`, D-045 |
+| 1 | Layout too narrow / boxed in | done | `b327982`, D-046 |
+| 3 | Animated interactive SDLC diagram | done | `062c849`, D-047 |
+| 2 | AI-sounding copy (EN + TH), TH literal translation + terminology | done | `6748a4b`, D-048 |
+
+All four post-launch fixes are done, verified and committed. Nothing deferred.
+A Thai terminology glossary now applies to all Thai copy (see D-048): body text keeps
+`gate`/`phase`/`agent`/`orchestrator`/`workflow` in English, nav and page titles stay Thai.
+Keep new Thai copy consistent with it.
+
+Verification after every fix: `tsc`, `eslint`, vitest, `npm run build`, `check:links`,
+`playwright test` (axe both themes), Lighthouse mobile on the affected pages.
+
 ## Manual steps for the operator
 
 ### Before the first deploy (required)
