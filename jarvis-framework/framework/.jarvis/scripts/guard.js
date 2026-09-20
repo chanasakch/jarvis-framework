@@ -93,6 +93,33 @@ function isSecret(f) {
   return SECRET_FILES.some((re) => re.test(f)) && !/\.env\.(example|sample|template)$/.test(f);
 }
 
+// A secret file named as a command argument. `.env` is anchored to the start of a path
+// segment, mirroring SECRET_FILES' `(^|\/)\.env(\.|$)`, so a property access such as
+// `process.env.CI` or `import.meta.env` is not mistaken for a file.
+const SECRET_ARG = String.raw`(?:(?<![\w.])\.env(?:\.[\w-]+)?\b|[\w./-]*\.pem\b|(?<![\w.])id_rsa\b|[\w./-]*credentials\.json\b)`;
+const SHELL_SECRET_READ = new RegExp(
+  String.raw`(^|[\s;|&(])(cat|less|more|head|tail|bat|strings|xxd|od|grep|rg|awk|sed|cp|mv|source|\.)\s+[^;|&]*` + SECRET_ARG,
+);
+
+// G5 scans a command's own tokens, not the data it carries. A heredoc body and a quoted
+// sentence are data — a commit message mentioning `process.env.CI`, or a doc line quoting
+// `cat .env`, reads nothing — whereas a quoted path (`cat '.env'`) is still a real read.
+// So heredoc bodies are dropped, and a quoted token is kept only when it has no
+// whitespace, which is what tells a path apart from prose.
+// Known limit: a secret filename containing a space (`cat 'my secrets.env'`) is dropped
+// here. The file-path branch of G5 and the Read deny-list in settings.json still cover it.
+function stripCommandData(cmd) {
+  let s = String(cmd);
+  s = s.replace(/<<-?\s*(['"]?)([A-Za-z_][\w-]*)\1[\s\S]*?^\s*\2\s*$/gm, ' ');
+  // An unterminated heredoc: drop everything after the marker rather than scanning it.
+  s = s.replace(/<<-?\s*(['"]?)([A-Za-z_][\w-]*)\1[\s\S]*$/, ' ');
+  s = s.replace(/'([^']*)'|"([^"]*)"/g, (m, single, double) => {
+    const inner = single !== undefined ? single : double;
+    return /\s/.test(inner) ? ' ' : inner;
+  });
+  return s;
+}
+
 // ---------------------------------------------------------------- rules
 
 function pre(input) {
@@ -108,8 +135,9 @@ function pre(input) {
     block(`G5 BLOCKED: ${file} is a secret file. Jarvis never reads or writes secrets.
 Instead: read the variable NAMES from .env.example or the config schema, and describe the value the user must set.`);
   }
-  if (cmd && /(^|[\s;|&(])(cat|less|more|head|tail|bat|strings|xxd|od|grep|rg|awk|sed|cp|mv|source|\.)\s+[^;|&]*(\.env\b|\.pem\b|id_rsa|credentials\.json)/.test(cmd)
-      && !/\.env\.(example|sample|template)/.test(cmd)) {
+  const cmdArgs = cmd ? stripCommandData(cmd) : '';
+  if (cmdArgs && SHELL_SECRET_READ.test(cmdArgs)
+      && !/\.env\.(example|sample|template)/.test(cmdArgs)) {
     block(`G5 BLOCKED: this command reads or copies a secret file.
 Instead: use .env.example, or ask the user to confirm the value without printing it.`);
   }

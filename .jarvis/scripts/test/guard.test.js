@@ -178,6 +178,44 @@ test('G5 allows .env.example and blocks shell reads of secrets', () => {
   assert.equal(hook(dir, 'pre', bash('grep SECRET apps/api/.env')).code, 2);
 });
 
+test('G5 blocks a secret read however the path is written', () => {
+  const dir = H.makeRepo('g5-paths');
+  for (const c of [
+    'cat .env', "cat '.env'", 'cat ".env"', 'cat .env.local', 'cat ./.env',
+    'source .env', 'cp .env /tmp/x', 'head -5 deploy/id_rsa',
+    'cat certs/server.pem', 'cat credentials.json', 'grep -i token apps/api/.env',
+  ]) {
+    const r = hook(dir, 'pre', bash(c));
+    assert.equal(r.code, 2, `must block: ${c}`);
+    assert.match(r.stderr, /^G5 BLOCKED/);
+  }
+});
+
+// A command carries data as well as arguments. Prose that merely mentions `.env` is not
+// a secret read, and blocking it stopped a real commit (DECISIONS.md D-050/D-051).
+test('G5 ignores .env inside heredoc bodies and quoted prose', () => {
+  const dir = H.makeRepo('g5-prose');
+  for (const c of [
+    "cat >> DECISIONS.md <<'EOF'\nreuseExistingServer: !process.env.CI was always true\nEOF",
+    'git commit -m "fix process.env.CI handling"',
+    'echo "run cat .env to see it"',
+    'sed -i s/process.env.CI/1/ file.js',
+    'node -e "console.log(process.env.CI)"',
+    'grep -r "import.meta.env" src/',
+    'cat notes.md',
+  ]) {
+    const r = hook(dir, 'pre', bash(c));
+    assert.equal(r.code, 0, `must allow: ${c}\n${r.stderr}`);
+  }
+});
+
+// The quoted-token rule must not become a bypass: quoting a path still reads the file.
+test('G5 still blocks a quoted secret path', () => {
+  const dir = H.makeRepo('g5-quoted');
+  assert.equal(hook(dir, 'pre', bash("grep TOKEN 'apps/api/.env'")).code, 2);
+  assert.equal(hook(dir, 'pre', bash('grep TOKEN "apps/api/.env"')).code, 2);
+});
+
 // ---------------- post ----------------
 
 test('post reports lint violations on the edited file with exit 2', () => {
