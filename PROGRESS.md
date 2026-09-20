@@ -2,63 +2,34 @@
 
 Source of truth: JARVIS_SPEC.md · Build order: JARVIS_BUILD_PROMPTS.md (0–15, 17; 16 skipped) then JARVIS_SITE_PROMPTS.md (S0–S8).
 
-## NEXT — Agent coverage expansion (BLOCKED until session starts with `JARVIS_DEV=1`)
+## Agent coverage expansion — COMPLETE (2026-09-20)
 
-Operator request (2026-09-20): audit agents vs PO/PM/QA/SA/FE/Full-stack/DevOps/Lead-Staff,
-fill the gaps. Audit + design done; implementation blocked by guard.js G1 (Write/Edit to
-`.claude/**`, `.jarvis/core/**`, `.jarvis/scripts/**` needs `JARVIS_DEV=1` at session start).
-Do NOT bypass G1 via Bash writes. Source of truth is the dogfood install; after editing run
-`node .jarvis/scripts/pack.js` to regenerate `jarvis-framework/framework/` (add new roles to
-`ROLES` and new commands to `COMMANDS` in pack.js first).
+Operator request: audit agents vs PO/PM/QA/SA/FE/Full-stack/DevOps/Lead-Staff, fill the gaps.
+Audit found 15 of 18 roles covered; DevOps, PM and Lead/Staff were missing. All three are now built.
+See DECISIONS.md D-049 for the design reasoning, including why PM is a CLI command and not an agent.
 
-Design to implement:
-1. **Flag** `has_infra_change` (CI/CD, IaC, Dockerfile, k8s/helm, deploy/monitoring config):
-   add to `FLAGS` in `.jarvis/scripts/lib/state.js`, intake flag list in
-   `.jarvis/core/rules/orchestration.md`, intake template/checklist.
-2. **Engine**: phases gain `conditional_agents: { <flag>: [agent, ...] }`. Change
-   `agentsFor(phase)` → `agentsFor(phase, flags)` in `lib/workflow.js` (only caller: exports;
-   check orchestration.md + jarvis.js handoff for other uses). Add unit tests in
-   `scripts/test/workflow.test.js`. validate/audit must accept the new key.
-3. **Standard** `.jarvis/standards/devops.md`, area `OPS` (add to conventions.md §1 areas and
-   reviewer codes `OPS`): OPS-01 verify-before-deploy · 02 pinned actions/images, no `latest` ·
-   03 explicit minimal CI permissions · 04 secrets only from secret store, never echoed/in tfvars ·
-   05 all infra in IaC, remote locked state · 06 plan in PR, apply only from CI on default branch ·
-   07 reversible deploy, named strategy + rollback · 08 readiness/liveness, health-gated rollout ·
-   09 RED metrics + structured logs + trace propagation · 10 alert per SLO signal, owner + runbook ·
-   11 env config, one artifact promoted · 12 resource requests/limits · 13 deploy concurrency guard,
-   idempotent re-runs · 14 lockfile-based reproducible builds.
-4. **Agent `jarvis-devops`** (modes `design`, `deploy`): architecture phase via
-   `conditional_agents: {has_infra_change: [jarvis-devops]}` → `infra-plan.md` (pipeline changes,
-   IaC resources, deploy strategy, rollback, SLOs/metrics/alerts/dashboards); release phase same
-   flag → `deploy-plan.md` (env promotion, pre/post-deploy checks, rollback drill, alert
-   verification). New templates `infra-plan.md`, `deploy-plan.md`; checklist items ARC-xx / REL-xx.
-   Workflows with architecture: enhancement, feature, migration, performance, refactor, security.
-   Release: all except spike. (chore/bugfix/hotfix have no architecture phase → devops only at
-   release + review.)
-5. **Agent `jarvis-review-devops`**: review phase, `conditional_agents: {has_infra_change:
-   [jarvis-review-devops]}`, `conditional_outputs: {has_infra_change: [review/devops.md]}`,
-   `reviewer_standards.devops: [devops.md, security.md, logging.md]`, findings `F-OPS-NNN`.
-   Structure mirrors jarvis-review-security (draft was written and blocked — regenerate).
-   All 9 workflows with a review phase.
-6. **PM → CLI command, not an agent**: `jarvis.js portfolio [--json]` — every active item's
-   type/phase/status/age/blocked reason/forced gates, open Q- counts, R- risks extracted from
-   brief/tech-spec/investigation, dependency graph, file-overlap warnings between items' plan.md.
-   Plus `jarvis.js link <ID> --depends-on <ID2>` (state field `depends_on`; `status`/`explain`
-   show "waiting on"). Slash command `/jarvis-portfolio` runs it and summarizes. Reason:
-   aggregation is deterministic data already in `.jarvis/state` — a CLI is exact, free and
-   testable; an agent would re-derive it with tokens and could hallucinate status.
-7. **Agent `jarvis-staff`** (Lead/Staff): cross-cutting, not per-diff. Runs via
-   `/jarvis-health` (on demand), and is due when the last report is older than
-   `staff_review.max_age_days` (config, default 30) — `/jarvis-status` warns; release checklist
-   item for minor/major version releases requires a fresh report or a recorded waiver.
-   Outputs `docs/architecture/health/<YYYY-MM-DD>.md` (drift from ADRs/tech-specs, cross-feature
-   inconsistency, standards erosion trends, hotspots by churn, findings `F-ARCH-NNN`) and
-   maintains `docs/architecture/tech-debt.md` register (`TD-NNN`, impact, effort, proposed
-   REF-/PERF- work item). Read-only on code; Bash limited to git log/show/diff + grep.
-8. Update JARVIS_SPEC.md (agents list, workflows, flags, standards areas, CLI commands),
-   site content regenerates automatically from source; add EN+TH docs mentions if needed.
-9. DECISIONS.md entries; run `cd .jarvis && npm test`, `node .jarvis/scripts/audit.js`,
-   `node .jarvis/scripts/jarvis.js validate` (if exists), site `npm run build` + e2e; commit.
+| Role | Built | Files |
+|---|---|---|
+| DevOps (design/deploy) | `jarvis-devops` agent | `.claude/agents/jarvis-devops.md`, templates `infra-plan.md` + `deploy-plan.md`, checklist ARC-14..17 / REL-10..12 |
+| DevOps (review) | `jarvis-review-devops` agent | `.claude/agents/jarvis-review-devops.md`, standard `.jarvis/standards/devops.md` (area `OPS`, 14 rules) |
+| PM (portfolio) | `jarvis.js portfolio` + `link` CLI | `.jarvis/scripts/jarvis.js`, `.claude/commands/jarvis-portfolio.md` |
+| Lead/Staff | `jarvis-staff` agent | `.claude/agents/jarvis-staff.md`, `.claude/commands/jarvis-health.md`, templates `architecture-health.md` + `tech-debt.md`, checklist REL-13 |
+
+Engine and plumbing:
+- New intake flag `has_infra_change` (`FLAGS` in `lib/state.js`, orchestration.md, intake template).
+- Phases support `conditional_agents: { <flag>: [agent] }`; `agentsFor(phase, flags)` resolves it and
+  `next` returns `agents_resolved`. `reviewersFor(phase, flags)` makes `validate.js` and
+  `merge-review` flag-aware so a conditional reviewer is never demanded where it did not run.
+- New config keys `review.conditional_reviewers` and `staff_review.max_age_days` (default 30).
+- New state field `depends_on`; `status`/`next` warnings name what an item waits on.
+- `conventions.md` gains area `OPS`, reviewer code `OPS`, and ID formats `F-ARCH-NNN` / `TD-NNN`.
+- Wired into all 6 architecture, 9 review and 9 release phases; JARVIS_SPEC.md §4.3, §4.4, §10.3,
+  §11, §12, §14, §16.1 updated.
+- `pack.js` ROLES += devops, review-devops, staff; COMMANDS += -portfolio, -health;
+  `docs/architecture/tech-debt.md` and `health/README.md` ship to new installs.
+
+Verified: 72/72 script tests (9 new), audit 9/9, `pack.js` regenerated, site content regenerates
+with no site edit (D-045's auto-discovery).
 
 ## Framework — COMPLETE (steps 0–15, 17; 16 skipped — needs a real project)
 

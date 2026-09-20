@@ -210,7 +210,11 @@ team:
 ### 4.3 Intake flags
 
 Set during intake (orchestrator asks the user, max 5 questions, batched):
-`has_ui`, `has_api_change`, `has_db_change`, `has_mysql`, `has_mongo`, `changes_flow`, `design_change`, `touches_auth`, `touches_pii`.
+`has_ui`, `has_api_change`, `has_db_change`, `has_mysql`, `has_mongo`, `changes_flow`, `design_change`, `touches_auth`, `touches_pii`, `has_infra_change`.
+
+`has_infra_change` is true when the item touches CI/CD workflows, infrastructure-as-code, Dockerfiles,
+k8s/Helm manifests, or deploy, monitoring or alerting config. It gates `jarvis-devops` into the
+architecture and release phases and `jarvis-review-devops` into review.
 
 ### 4.4 Workflow YAML schema (`.jarvis/core/workflows/<type>.yaml`)
 
@@ -244,12 +248,23 @@ phases:
     deterministic_checks: [backend.format, backend.lint, backend.test, frontend.lint, frontend.typecheck, frontend.test, jarvis_lint]
   - id: review
     agents: [jarvis-review-standards, jarvis-review-performance, jarvis-review-security, jarvis-review-database]
+    conditional_agents:            # appended only when the flag is true
+      has_infra_change: [jarvis-review-devops]
+    conditional_outputs:
+      has_infra_change: [review/devops.md]
     parallel: true
     blocking_reviewers: all        # or list, e.g. [security, standards] for hotfix
     on_fail: implement
+    reviewer_standards:
+      devops: [devops.md, security.md, logging.md]
 ```
 
 `approval` defaults come from `gates.human_approval`; a workflow may override per phase.
+
+`conditional_agents: { <flag>: [agent, ...] }` appends an agent to a phase only when that intake flag
+is true. `jarvis.js next` resolves it and returns the result as `agents_resolved`, which is what the
+orchestrator delegates to; `validate` and `merge-review` use the same resolution, so a conditional
+reviewer is never demanded on an item where it did not run.
 
 ---
 
@@ -517,6 +532,10 @@ Never modifies source code.
 - ADR for every significant decision or standard exception
 - Migration mode: migration-plan.md (forward, rollback, backfill, index build strategy, lock impact, dry-run steps)
 
+**jarvis-devops** — tools: Read, Write, Glob, Grep. Modes: design, deploy. Runs only when `has_infra_change` is true, alongside `jarvis-architect` in architecture and alongside `jarvis-release` in release. Plans infrastructure; never writes CI files, IaC or manifests.
+- design → `infra-plan.md`: current pipeline/IaC/manifest inventory (each cited `file:line`), pipeline stages with triggers, blocking dependencies `[OPS-01]` and permission scopes `[OPS-03]`, IaC resources and remote locked state `[OPS-05]`, deploy strategy with readiness gate `[OPS-08]`, concurrency group `[OPS-13]` and reversing command `[OPS-07]`, secrets by name and store only `[OPS-04]`, RED metrics/log fields/trace propagation `[OPS-09]`, one alert row per SLO signal with owner and runbook `[OPS-10]`, resource requests and limits `[OPS-12]`.
+- deploy → `deploy-plan.md`: promoted artifact and its rollback target, environment promotion order `[OPS-11]`, pre-deploy checks with pass criteria, post-deploy checks (`error_code` log query, p95 vs `quality.perf_budget`), rollback drill with its real result or an explicit "unverified", alert verification.
+
 **jarvis-planner** — tools: Read, Write, Glob, Grep. Writes plan.md: tasks `T-xxx` with `layer` (backend|frontend|shared), story refs, files/areas, `depends_on`, size S/M/L, done criteria, test expectations. Order: error registry & migrations → repository → service → handler → API client → UI. One layer per task; ≤ `quality.max_task_loc` changed lines; every US covered by ≥ 1 task.
 
 **jarvis-dev-backend** — tools: Read, Write, Edit, MultiEdit, Glob, Grep, Bash. Implements exactly one task. Reads: structure, coding-go, api, database, caching, error-handling, logging, security, performance, testing.
@@ -538,11 +557,16 @@ Every finding cites a rule ID and file:line. Reviewers never edit code.
 - **jarvis-review-standards:** structure & layering, coding-go / coding-react rules, error registry usage, logging completeness at boundaries, test presence, naming, dead code, duplication.
 - **jarvis-review-performance:** Big-O of changed functions, redundant loops/passes, N+1 and calls in loops, missing cache per spec, unbounded results (pagination), allocations in hot paths, goroutine leaks and bounded concurrency, React re-renders, bundle size, perf budgets.
 - **jarvis-review-security:** validation of every external input, sanitization (SQL params, Mongo operator injection, XSS), authn/authz on every endpoint, IDOR, secrets, internal error leakage, PII in logs, rate limiting on sensitive endpoints, CORS/CSRF/security headers, dependency scan results (govulncheck, npm audit), crypto usage.
+- **jarvis-review-devops:** runs only when `has_infra_change` is true; scope is limited to CI/CD, IaC, Dockerfiles, k8s/Helm and deploy/monitoring config. Deploy gated on verification `[OPS-01]`, pinned actions and images `[OPS-02]`, explicit minimal CI permissions `[OPS-03]`, no committed or echoed secret `[OPS-04]`, resources in IaC with remote locked state `[OPS-05]`, apply only from CI on the default branch `[OPS-06]`, reversible deploy `[OPS-07]`, distinct probes gating the rollout `[OPS-08]`, RED metrics and trace propagation `[OPS-09]`, alerts with owner and runbook `[OPS-10]`, one promoted artifact `[OPS-11]`, resource limits `[OPS-12]`, concurrency guard `[OPS-13]`, lockfile-based install `[OPS-14]`. Findings are `F-OPS-NNN`.
 - **jarvis-review-database:** no JOIN / `$lookup`, every query index-covered (compare Query-Index Matrix vs code vs migrations), `SELECT *`, migration reversibility, lock/long DDL risk, transaction scope, Mongo schema validation, TTL indexes, cross-DB write consistency.
 
 **jarvis-qa** — tools: Read, Write, Glob, Grep, Bash (test commands only). Writes qa-report.md: traceability matrix FR → US → AC → TC → result → code refs; every Must FR covered; every AC has a passing TC; no open critical/major findings or defects (forced ones listed under Forced Gates); NFR evidence (perf numbers); parity evidence for refactor; Go/No-Go decision.
 
 **jarvis-release** — tools: Read, Write, Glob, Grep, Bash (git log only). Writes release-notes.md, runbook.md, CHANGELOG entry (Keep a Changelog): deploy steps, migration order, feature flags, config/env changes, log queries and metrics to watch, rollback steps, Forced Gates section, suggested updates to `project/context.md` and API docs.
+
+**jarvis-staff** — tools: Read, Write, Glob, Grep, Bash (`git log`, `git show`, `git diff`, `grep` only). Modes: full, delta, area. The only agent with no work item and no gate: it reviews the codebase as a whole over time, where the four reviewers each judge one diff. Runs on demand via `/jarvis-health`, when the newest report exceeds `staff_review.max_age_days`, and before a minor or major release (`REL-13`).
+Writes `docs/architecture/health/<YYYY-MM-DD>.md`: scope (paths examined and skipped, sampling method), ADR drift (every accepted ADR held or drifted, cited on both sides), cross-feature consistency (majority pattern vs each divergence), standards erosion (lint counts now vs the previous report, both dates), churn hotspots (measured with `git log`), coupling and layer-crossing imports `[STR-01]`, coverage trend vs `quality.coverage_min`, findings `F-ARCH-NNN`.
+Maintains `docs/architecture/tech-debt.md`: one `TD-NNN` per finding at major or above with impact, effort and a proposed work item type; resolved entries are marked resolved with evidence and kept, never deleted. Proposes work items; never runs `jarvis new`; never edits source.
 
 ---
 
@@ -561,6 +585,8 @@ Frontmatter fields: `description`, `argument-hint`, `allowed-tools`, `model` (op
 | `/jarvis-gate <ID> <phase>` | Re-run gates only |
 | `/jarvis-explain <ID>` | Explain why blocked and what is needed |
 | `/jarvis-help` | List commands and human-only CLI commands |
+| `/jarvis-portfolio` | Cross-work-item view: roadmap status, dependencies, risks, file conflicts. Summarizes `jarvis.js portfolio --json` |
+| `/jarvis-health [full \| delta \| area <path>]` | Delegate to `jarvis-staff` for the cross-cutting codebase health review. Not a work item, no gate |
 
 Human-only CLI (run by the user with `! npm run -s jarvis -- <cmd>`): `approve`, `force`, `skip`, `reopen`, `park`, `unpark`.
 
@@ -633,6 +659,9 @@ English, concise, tables over prose, Mermaid only, IDs everywhere, templates def
 
 ### git.md
 Branch `<type>/<ID>-<slug>`; Conventional Commits `feat(otp): add verify endpoint [FEAT-012][T-003]`; roughly one task per commit; PR template includes work item ID and gate status.
+
+### devops.md
+Area `OPS`, 14 MUST rules, read by `jarvis-devops` and `jarvis-review-devops` and applied to any file the `has_infra_change` flag covers (CI/CD, IaC, Dockerfiles, k8s/Helm, deploy and monitoring config). OPS-01 verify before deploy · 02 pin every action, image and tool version · 03 explicit minimal CI permissions · 04 secrets from a secret store, never the repo · 05 all infrastructure in code with locked remote state · 06 plan in the PR, apply only from CI on the default branch · 07 reversible deploy with a named strategy and rollback · 08 readiness and liveness probes gate the rollout · 09 RED metrics, structured logs and trace propagation · 10 one alert per SLO signal, each with an owner and a runbook · 11 config per environment, one artifact promoted · 12 resource requests and limits on every workload · 13 deploy concurrency guard, idempotent re-runs · 14 reproducible, lockfile-based builds.
 
 ### lint-rules.yaml (machine-checkable, run by `jarvis.js lint`)
 ```yaml
@@ -730,6 +759,10 @@ Every template starts with the front matter from 6.2. Required headings are mark
 | spike-report.md | Questions, Time-box, Options Compared, Findings, Recommendation, ADR Draft, Follow-ups |
 | tech-spec.md | Context, Architecture Diagrams, FR → Component Mapping, Layering, API Changes, Data Design, Query-Index Matrix, Cache Design, Validation Rules, Error Codes, Logging Plan, Complexity Notes, Security, Performance Budget, Risks, Alternatives, ADRs |
 | adr.md | Status, Context, Options, Decision, Consequences, Standard Exceptions (rule IDs) |
+| infra-plan.md | Current State, Pipeline Changes, Infrastructure Resources, Deploy Strategy, Secrets and Config, Observability, SLOs and Alerts, Resource Sizing, Performance Budget, Risks, Open Questions |
+| deploy-plan.md | Artifact, Promotion Order, Pre-deploy Checks, Deploy Steps, Post-deploy Checks, Rollback Drill, Alert Verification, Open Questions |
+| architecture-health.md | Scope, Headline, ADR Drift, Cross-Feature Consistency, Standards Erosion, Churn Hotspots, Coupling and Boundaries, Test and Coverage Trend, Findings, Tech Debt Register Changes, Proposed Work Items, Open Questions |
+| tech-debt.md | Open (TD table: impact, effort, source, proposed item), Resolved (kept with evidence), Trend |
 | migration-plan.md | Change Summary, Forward Steps, Rollback Steps, Backfill, Index Build Strategy, Lock/Downtime Impact, Dry-Run Procedure, Verification Queries |
 | plan.md | Task table: ID, layer, title, story refs, files/areas, depends_on, size, done criteria, test expectations; Dependency Order |
 | impl-log.md | Entry per task: task, files changed, decisions, complexity notes, deviations |
@@ -782,6 +815,9 @@ Node 18+, single dependency `yaml`. All commands support `--json`. Exit codes: 0
 | `lint [--changed] [--path p]` | any | Apply lint-rules.yaml with ADR-backed suppressions |
 | `check <backend\|frontend\|all>` | any | Run configured commands, summarize |
 | `doctor` | any | Verify tools, config paths, registry |
+| `portfolio` | any | Cross-item view: phase, age, idle days, forced gates, Q-/R- counts, dependencies, plan.md file overlaps |
+| `link <ID> --depends-on <ID> [--remove]` | Claude/human | Record a cross-item dependency; refuses self-links and cycles |
+| `health [--strict]` | any | Age of the newest `docs/architecture/health/` report vs `staff_review.max_age_days` |
 | `approve <ID> <phase>` | **human** | passed → approved |
 | `force <ID> <phase> --reason "" [--accept-risk]` | **human** | Force with audit + follow-up CHR item |
 | `skip <ID> <phase> --reason ""` | **human** | Optional phases only |
