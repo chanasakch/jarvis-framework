@@ -33,7 +33,9 @@ function merge(root, id) {
   if (!ph) throw new Error(`${state.type} has no review phase`);
 
   const folder = S.workFolder(root, state);
-  const reviewers = cfg.review.reviewers;
+  // Flag-aware: conditional reviewers (devops) only count when their intake flag is set.
+  const resolved = W.reviewersFor(ph, state.flags);
+  const reviewers = resolved.length ? resolved : cfg.review.reviewers;
   const blocking = ph.blocking_reviewers === 'all' || !ph.blocking_reviewers
     ? reviewers.slice()
     : ph.blocking_reviewers;

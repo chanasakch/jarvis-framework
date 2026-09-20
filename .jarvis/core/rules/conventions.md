@@ -17,7 +17,9 @@ Every agent, checklist and script references this file instead of redefining the
 | Task | `T-<NNN>` | `T-011` |
 | Fix task from review | `FIX-<finding-id>` | `FIX-F-SEC-001` |
 | Test case | `TC-<NNN>` | `TC-021` |
-| Review finding | `F-<REVIEWER>-<NNN>` | `F-SEC-001`, `F-PERF-002`, `F-STD-004`, `F-DB-003` |
+| Review finding | `F-<REVIEWER>-<NNN>` | `F-SEC-001`, `F-PERF-002`, `F-STD-004`, `F-DB-003`, `F-OPS-001` |
+| Codebase health finding | `F-ARCH-<NNN>` | `F-ARCH-002` |
+| Tech debt entry (repo-wide) | `TD-<NNN>` | `TD-014` |
 | Defect | `D-<NNN>` | `D-005` |
 | Risk | `R-<NNN>` | `R-002` |
 | Open question | `Q-<NNN>` | `Q-001` |
@@ -25,14 +27,16 @@ Every agent, checklist and script references this file instead of redefining the
 | Standards rule | `<AREA>-<NN>` | `GO-03`, `DB-01`, `SEC-07` |
 | Checklist item | `<PHASE>-<NN>` | `REQ-03`, `ARC-11` |
 
-Reviewer codes: `STD` (standards), `PERF` (performance), `SEC` (security), `DB` (database).
+Reviewer codes: `STD` (standards), `PERF` (performance), `SEC` (security), `DB` (database),
+`OPS` (devops, only when `has_infra_change` is true). `ARCH` is not a reviewer — it is the
+cross-cutting codebase-health finding code used by `jarvis-staff`, outside any work item's review.
 
 Work item prefixes: `FEAT` feature · `ENH` enhancement · `BUG` bugfix · `HOT` hotfix · `REF` refactor ·
 `PERF` performance · `SEC` security · `MIG` migration · `SPK` spike · `CHR` chore.
 
 Standards areas: `STR` structure · `GO` coding-go · `RX` coding-react · `API` api · `DB` database ·
 `CACHE` caching · `PERF` performance · `SEC` security · `ERR` error-handling · `LOG` logging ·
-`TEST` testing · `DOC` documentation · `GIT` git.
+`TEST` testing · `DOC` documentation · `GIT` git · `OPS` devops.
 
 **Cross-reference format in prose and tables:** square brackets — `[US-003]`, `[AC-003-01]`, `[ADR-0007]`, `[DB-01]`.
 All IDs scoped to a work item are unique inside that work item only. `ADR-` IDs are unique repo-wide.

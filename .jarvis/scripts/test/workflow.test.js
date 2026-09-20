@@ -118,3 +118,73 @@ test('task status is tracked and implement waits for every task', () => {
   st = H.cliJson(dir, ['status', 'CHR-001']).json;
   assert.equal(st.tasks['T-001'], 'done');
 });
+
+// --- conditional_agents: flag-gated agents (devops) -------------------------
+
+// `requirements`, `architecture` and `release` need human approval to unlock, so a test
+// walking past them must approve, not just pass.
+function advance(dir, id, phases) {
+  const APPROVE = new Set(['requirements', 'ux', 'architecture', 'release']);
+  for (const p of phases) {
+    H.cli(dir, ['set', id, p, 'passed']);
+    if (APPROVE.has(p)) H.cli(dir, ['approve', id, p]);
+  }
+}
+
+test('conditional agents are absent when their flag is false', () => {
+  const dir = H.makeRepo('cond-off');
+  H.cliJson(dir, ['new', 'feature', 'Plain feature', '--flags', 'has_infra_change=false']);
+  advance(dir, 'FEAT-001', ['intake', 'brief', 'requirements', 'business-flow', 'architecture', 'plan', 'implement', 'test']);
+  const n = H.cliJson(dir, ['next', 'FEAT-001']).json;
+  assert.equal(n.phase, 'review');
+  assert.ok(!n.agents_resolved.includes('jarvis-review-devops'), 'devops reviewer must not run');
+  assert.equal(n.agents_resolved.length, 4);
+  assert.ok(!n.outputs.some((o) => o.endsWith('review/devops.md')), 'no devops report is expected');
+});
+
+test('conditional agents and outputs appear when their flag is true', () => {
+  const dir = H.makeRepo('cond-on');
+  H.cliJson(dir, ['new', 'feature', 'Infra feature', '--flags', 'has_infra_change=true']);
+  advance(dir, 'FEAT-001', ['intake', 'brief', 'requirements', 'business-flow']);
+
+  let n = H.cliJson(dir, ['next', 'FEAT-001']).json;
+  assert.equal(n.phase, 'architecture');
+  assert.ok(n.agents_resolved.includes('jarvis-devops'), 'devops designs alongside the architect');
+  assert.ok(n.outputs.some((o) => o.endsWith('infra-plan.md')), 'infra-plan.md is a required output');
+  assert.ok(n.standards.includes('.jarvis/standards/devops.md'));
+
+  advance(dir, 'FEAT-001', ['architecture', 'plan', 'implement', 'test']);
+  n = H.cliJson(dir, ['next', 'FEAT-001']).json;
+  assert.equal(n.phase, 'review');
+  assert.ok(n.agents_resolved.includes('jarvis-review-devops'), 'devops reviewer must run');
+  assert.equal(n.agents_resolved.length, 5);
+  assert.ok(n.outputs.some((o) => o.endsWith('review/devops.md')));
+});
+
+test('release requires a deploy plan only when has_infra_change is true', () => {
+  const dir = H.makeRepo('cond-release');
+  H.cliJson(dir, ['new', 'chore', 'Pin CI actions', '--flags', 'has_infra_change=true']);
+  advance(dir, 'CHR-001', ['intake', 'plan', 'implement', 'test', 'review']);
+  const n = H.cliJson(dir, ['next', 'CHR-001']).json;
+  assert.equal(n.phase, 'release');
+  assert.ok(n.agents_resolved.includes('jarvis-devops'));
+  assert.ok(n.outputs.some((o) => o.endsWith('deploy-plan.md')));
+});
+
+test('every workflow with a review phase gates the devops reviewer on has_infra_change', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const YAML = require('yaml');
+  const dir = path.resolve(__dirname, '..', '..', 'core', 'workflows');
+  let checked = 0;
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.yaml'))) {
+    const wf = YAML.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    const review = wf.phases.find((p) => p.id === 'review');
+    if (!review) continue;
+    checked++;
+    assert.deepEqual(review.conditional_agents, { has_infra_change: ['jarvis-review-devops'] }, f);
+    assert.deepEqual(review.conditional_outputs, { has_infra_change: ['review/devops.md'] }, f);
+    assert.ok(review.reviewer_standards.devops, `${f} has no devops reviewer_standards`);
+  }
+  assert.equal(checked, 9, 'every workflow but spike has a review phase');
+});

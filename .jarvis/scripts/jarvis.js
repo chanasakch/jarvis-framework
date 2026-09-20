@@ -17,7 +17,7 @@ const review = require('./lib/review');
 const HUMAN_ONLY = ['approve', 'force', 'skip', 'reopen', 'park', 'unpark'];
 // Reviewer name -> finding ID code, used to match gates.non_forceable entries such as
 // `review.security.critical` against recorded issues like `[F-SEC-001][critical] ...`.
-const REVIEWER_CODE = { security: 'f-sec-', performance: 'f-perf-', standards: 'f-std-', database: 'f-db-' };
+const REVIEWER_CODE = { security: 'f-sec-', performance: 'f-perf-', standards: 'f-std-', database: 'f-db-', devops: 'f-ops-' };
 
 function parseArgs(argv) {
   const positional = [];
