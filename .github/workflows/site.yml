@@ -12,6 +12,10 @@ on:
       - ".claude/**"
       - ".jarvis/**"
       - "CHANGELOG.md"
+      # This workflow itself: without it, a change to the pipeline is never exercised
+      # until some later, unrelated push happens to touch one of the paths above — so a
+      # broken or untested workflow edit sits green by never having run at all.
+      - ".github/workflows/site.yml"
   release:
     types: [published]
   workflow_dispatch:
