@@ -183,6 +183,9 @@ function warningLines(state) {
   if (forced.length) {
     out.unshift(`${state.id} has ${forced.length} forced gate(s): ${forced.map((f) => f.phase).join(', ')}`);
   }
+  if ((state.depends_on || []).length) {
+    out.push(`${state.id} depends on: ${state.depends_on.join(', ')} — see jarvis.js portfolio`);
+  }
   return out;
 }
 

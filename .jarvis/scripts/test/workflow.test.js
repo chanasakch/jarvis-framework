@@ -188,3 +188,68 @@ test('every workflow with a review phase gates the devops reviewer on has_infra_
   }
   assert.equal(checked, 9, 'every workflow but spike has a review phase');
 });
+
+// --- portfolio / link: the cross-work-item (PM) view ------------------------
+
+test('link records a dependency and refuses a cycle', () => {
+  const dir = H.makeRepo('link');
+  H.cliJson(dir, ['new', 'feature', 'OTP login']);
+  H.cliJson(dir, ['new', 'chore', 'Pin CI actions']);
+  const ok = H.cliJson(dir, ['link', 'CHR-001', '--depends-on', 'FEAT-001']);
+  assert.equal(ok.code, 0);
+  assert.deepEqual(ok.json.depends_on, ['FEAT-001']);
+
+  const cyc = H.cli(dir, ['link', 'FEAT-001', '--depends-on', 'CHR-001']);
+  assert.equal(cyc.code, 2, 'a cycle must be refused');
+  assert.match(cyc.stderr, /cycle/);
+
+  const self = H.cli(dir, ['link', 'FEAT-001', '--depends-on', 'FEAT-001']);
+  assert.equal(self.code, 2, 'self-dependency must be refused');
+
+  const gone = H.cliJson(dir, ['link', 'CHR-001', '--depends-on', 'FEAT-001', '--remove']);
+  assert.deepEqual(gone.json.depends_on, []);
+});
+
+test('portfolio reports dependencies, risks and plan file overlaps', () => {
+  const fs = require('fs');
+  const dir = H.makeRepo('portfolio');
+  H.cliJson(dir, ['new', 'feature', 'OTP login']);
+  H.cliJson(dir, ['new', 'bugfix', 'Avatar 500']);
+  H.cli(dir, ['link', 'BUG-001', '--depends-on', 'FEAT-001']);
+
+  // Two items whose plans touch the same file.
+  fs.writeFileSync(`${dir}/docs/work/FEAT-001-otp-login/plan.md`,
+    '| T-001 | backend | apps/api/internal/user/repo.go |\n');
+  fs.writeFileSync(`${dir}/docs/work/FEAT-001-otp-login/brief.md`,
+    '| Q-001 | which provider | brief |\n| R-001 | provider outage | high |\n');
+  fs.writeFileSync(`${dir}/docs/work/BUG-001-avatar-500/plan.md`,
+    '| T-001 | backend | apps/api/internal/user/repo.go |\n');
+
+  const p = H.cliJson(dir, ['portfolio']).json;
+  assert.equal(p.counts.active, 2);
+  const feat = p.items.find((i) => i.id === 'FEAT-001');
+  assert.deepEqual(feat.open_questions, ['Q-001']);
+  assert.deepEqual(feat.risks, ['R-001']);
+
+  const bug = p.items.find((i) => i.id === 'BUG-001');
+  assert.deepEqual(bug.depends_on, ['FEAT-001']);
+  assert.deepEqual(bug.blocked_by, ['FEAT-001'], 'FEAT-001 is not finished, so BUG-001 waits');
+
+  assert.deepEqual(p.overlaps, [{ file: 'apps/api/internal/user/repo.go', items: ['BUG-001', 'FEAT-001'] }]);
+  assert.ok(p.attention.some((a) => a.includes('waiting on FEAT-001')));
+  assert.ok(p.attention.some((a) => a.includes('both plan to change')));
+});
+
+test('portfolio separates parked from active and is empty-safe', () => {
+  const dir = H.makeRepo('portfolio-empty');
+  const empty = H.cliJson(dir, ['portfolio']).json;
+  assert.equal(empty.counts.total, 0);
+  assert.deepEqual(empty.attention, []);
+
+  H.cliJson(dir, ['new', 'feature', 'OTP login']);
+  H.cli(dir, ['park', 'FEAT-001', '--reason', 'waiting on vendor']);
+  const p = H.cliJson(dir, ['portfolio']).json;
+  assert.equal(p.counts.active, 0);
+  assert.equal(p.counts.parked, 1);
+  assert.equal(p.items[0].parked, 'waiting on vendor');
+});
