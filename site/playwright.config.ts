@@ -4,11 +4,17 @@ export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
   reporter: "list",
-  use: { baseURL: "http://127.0.0.1:3000" },
+  // A dedicated port, never 3000: `next dev` owns 3000, and with `reuseExistingServer`
+  // a running dev server would silently be tested instead of the static export — a dev
+  // build hydrates differently, redirects `/docs/workflows` to a trailing slash, and
+  // serves whatever was compiled when it started, so the suite would report on code that
+  // is not the artifact being shipped. This suite exists to test the built `out/`
+  // directory that goes to GitHub Pages, so it always starts its own server for it.
+  use: { baseURL: "http://127.0.0.1:4321" },
   webServer: {
-    command: "npx serve out -l 3000",
-    url: "http://127.0.0.1:3000",
-    reuseExistingServer: !process.env.CI,
+    command: "npx serve out -l 4321",
+    url: "http://127.0.0.1:4321",
+    reuseExistingServer: false,
   },
   // Two projects, not a manual theme toggle inside every test: next-themes respects
   // prefers-color-scheme when no stored preference exists (defaultTheme="system"), so a
