@@ -17,7 +17,7 @@ const review = require('./lib/review');
 const HUMAN_ONLY = ['approve', 'force', 'skip', 'reopen', 'park', 'unpark'];
 // Reviewer name -> finding ID code, used to match gates.non_forceable entries such as
 // `review.security.critical` against recorded issues like `[F-SEC-001][critical] ...`.
-const REVIEWER_CODE = { security: 'f-sec-', performance: 'f-perf-', standards: 'f-std-', database: 'f-db-' };
+const REVIEWER_CODE = { security: 'f-sec-', performance: 'f-perf-', standards: 'f-std-', database: 'f-db-', devops: 'f-ops-' };
 
 function parseArgs(argv) {
   const positional = [];
@@ -113,7 +113,10 @@ const commands = {
         const f = S.forcedGates(s);
         return `${s.id} ${s.title} · ${s.current_phase}:${S.phaseStatus(s, s.current_phase)}${f.length ? ` ⚠️ ${f.length} forced` : ''}`;
       });
-      return out({ items: lines.length, lines }, () => (lines.length ? `── JARVIS ──\n${lines.join('\n')}` : '── JARVIS ── no active work items'));
+      // Codebase health is repo-wide, so it is reported here rather than per item.
+      const h = healthState(root);
+      if (h.stale && h.newest) lines.push(`⚠️ codebase health report is ${h.newest.age_days} days old — /{{name}}-health`);
+      return out({ items: lines.length, lines, health: h }, () => (lines.length ? `── JARVIS ──\n${lines.join('\n')}` : '── JARVIS ── no active work items'));
     }
     out({
       items: items.map((s) => ({
@@ -122,6 +125,100 @@ const commands = {
         warnings: W.warningLines(s), forced_gates: S.forcedGates(s),
       })),
     }, () => (items.length ? items.map(statusLine).join('\n') : 'no work items'));
+  },
+
+  // Cross-work-item dependency edge. The PM view is built from these plus state.
+  link(root, { positional, flags }) {
+    const [id] = positional;
+    const dep = typeof flags['depends-on'] === 'string' ? flags['depends-on'] : null;
+    if (!id || !dep) fail('usage: jarvis link <ID> --depends-on <ID> [--remove]', 2);
+    if (id === dep) fail('a work item cannot depend on itself', 2);
+    const state = requireState(root, id);
+    requireState(root, dep);
+    const before = (state.depends_on || []).slice();
+    const set = new Set(before);
+    if (flags.remove) set.delete(dep); else set.add(dep);
+    state.depends_on = [...set].sort();
+
+    const cycle = dependencyCycle(root, state);
+    if (cycle) {
+      fail(`that link creates a dependency cycle: ${cycle.join(' → ')}`, 2);
+    }
+    S.writeState(root, state);
+    S.audit(root, id, { actor: S.gitUser(root), action: 'link', phase: state.current_phase, from: before, to: state.depends_on, detail: { dep, removed: !!flags.remove } });
+    out({ ok: true, id, depends_on: state.depends_on },
+      (o) => `${o.id} depends on: ${o.depends_on.join(', ') || 'nothing'}`);
+  },
+
+  // Codebase-health reports (the Lead/Staff view). Reports live outside any work item,
+  // so this command only locates them and reports staleness; {{name}}-staff writes them.
+  health(root, { flags }) {
+    const res = healthState(root);
+    out(res, (o) => o.message);
+    if (flags.strict && res.stale) process.exit(1);
+  },
+
+  // Portfolio / roadmap view across every active work item (the PM view).
+  // Every number here is read from .jarvis/state and the work folders — nothing is inferred.
+  portfolio(root, { flags }) {
+    const cfg = S.loadConfig(root);
+    const all = S.listIds(root).map((i) => S.readState(root, i)).filter(Boolean);
+    const now = Date.now();
+    const byId = new Map(all.map((s) => [s.id, s]));
+
+    const items = all.map((state) => {
+      const wf = (() => { try { return W.load(root, state.type); } catch { return null; } })();
+      const phase = state.current_phase;
+      const status = S.phaseStatus(state, phase);
+      const done = wf ? wf.phases.every((p) => S.isUnlocked(S.phaseStatus(state, p.id), W.approvalRequired(cfg, p))) : false;
+      const folder = S.workFolder(root, state);
+      const blockedBy = (state.depends_on || []).filter((d) => {
+        const dep = byId.get(d);
+        if (!dep) return true;
+        const dwf = (() => { try { return W.load(root, dep.type); } catch { return null; } })();
+        return !dwf || !dwf.phases.every((p) => S.isUnlocked(S.phaseStatus(dep, p.id), W.approvalRequired(cfg, p)));
+      });
+      return {
+        id: state.id,
+        title: state.title,
+        type: state.type,
+        phase,
+        status,
+        done,
+        parked: state.parked ? state.parked.reason : null,
+        age_days: Math.floor((now - new Date(state.created_at).getTime()) / 86400000),
+        idle_days: idleDays(root, state, now),
+        forced_gates: S.forcedGates(state).map((f) => f.phase),
+        open_questions: scanIds(folder, /\bQ-\d{3}\b/g),
+        risks: scanIds(folder, /\bR-\d{3}\b/g),
+        depends_on: state.depends_on || [],
+        blocked_by: blockedBy,
+        files: planFiles(folder),
+      };
+    });
+
+    const active = items.filter((i) => !i.done && !i.parked);
+    const overlaps = fileOverlaps(active);
+    const attention = [];
+    for (const i of active) {
+      if (i.blocked_by.length) attention.push(`${i.id} is waiting on ${i.blocked_by.join(', ')}`);
+      if (i.forced_gates.length) attention.push(`${i.id} has ${i.forced_gates.length} forced gate(s): ${i.forced_gates.join(', ')}`);
+      if (i.status === 'blocked') attention.push(`${i.id} is blocked at ${i.phase}`);
+      if (i.idle_days >= 14) attention.push(`${i.id} has not moved in ${i.idle_days} days`);
+    }
+    for (const o of overlaps) attention.push(`${o.items.join(' and ')} both plan to change ${o.file}`);
+
+    const res = {
+      generated_at: new Date().toISOString(),
+      counts: {
+        total: items.length,
+        active: active.length,
+        parked: items.filter((i) => i.parked).length,
+        done: items.filter((i) => i.done).length,
+      },
+      items, overlaps, attention,
+    };
+    out(res, () => renderPortfolio(res));
   },
 
   set(root, { positional }) {
@@ -414,6 +511,9 @@ const commands = {
       '  flags <ID> k=v ...                       set intake flags',
       '  next <ID>                                resolve the next action',
       '  status [ID] [--brief]                    status, warnings, forced gates',
+      '  portfolio                                every active item: phase, age, deps, risks, overlaps',
+      '  link <ID> --depends-on <ID> [--remove]   record a cross-item dependency',
+      '  health [--strict]                        codebase health report age (see /{{name}}-health)',
       '  set <ID> <phase> <status>                in_progress | passed | gate_failed | blocked',
       '  task <ID> <T-xxx> <status>               update a task',
       '  validate <ID> <phase>                    script gate',
@@ -433,6 +533,135 @@ const commands = {
     out({ commands: Object.keys(commands).filter((c) => !c.startsWith('__')), human_only: HUMAN_ONLY, usage: text }, text);
   },
 };
+
+// ---------------- codebase health ----------------
+
+// Locates the dated reports {{name}}-staff writes and decides whether the newest is stale.
+// A repo that has never run one is reported, but not warned about on every status.
+function healthState(root) {
+  const cfg = S.loadConfig(root);
+  const maxAge = (cfg.staff_review && cfg.staff_review.max_age_days) || 30;
+  const dir = path.join(root, 'docs', 'architecture', 'health');
+  const reports = (fs.existsSync(dir) ? fs.readdirSync(dir) : [])
+    .filter((f) => /^\d{4}-\d{2}-\d{2}\.md$/.test(f))
+    .sort()
+    .reverse()
+    .map((f) => {
+      const date = f.replace(/\.md$/, '');
+      return {
+        date,
+        path: `docs/architecture/health/${f}`,
+        age_days: Math.floor((Date.now() - new Date(`${date}T00:00:00Z`).getTime()) / 86400000),
+      };
+    });
+  const newest = reports[0] || null;
+  const stale = !newest || newest.age_days > maxAge;
+  return {
+    ok: !stale,
+    stale,
+    max_age_days: maxAge,
+    newest,
+    reports,
+    register: fs.existsSync(path.join(root, 'docs/architecture/tech-debt.md')) ? 'docs/architecture/tech-debt.md' : null,
+    message: !newest ? 'no codebase health report yet — run /{{name}}-health'
+      : stale ? `newest health report is ${newest.age_days} days old (max ${maxAge}) — run /{{name}}-health`
+        : `health report ${newest.date} is ${newest.age_days} days old`,
+  };
+}
+
+// ---------------- portfolio helpers ----------------
+
+// Depth-first walk over depends_on, returning the cycle if the proposed state creates one.
+function dependencyCycle(root, proposed) {
+  const load = (id) => (id === proposed.id ? proposed : S.readState(root, id));
+  const seen = new Map();
+  let cycle = null;
+  const visit = (id, stack) => {
+    if (cycle) return;
+    if (seen.get(id) === 'done') return;
+    if (seen.get(id) === 'open') { cycle = [...stack.slice(stack.indexOf(id)), id]; return; }
+    seen.set(id, 'open');
+    const st = load(id);
+    for (const d of (st && st.depends_on) || []) visit(d, [...stack, id]);
+    seen.set(id, 'done');
+  };
+  visit(proposed.id, []);
+  return cycle;
+}
+
+// Days since the most recent phase transition; falls back to creation.
+function idleDays(root, state, now) {
+  let last = new Date(state.created_at).getTime();
+  for (const p of Object.values(state.phases || {})) {
+    for (const k of ['approved_at', 'forced_at', 'at', 'updated_at']) {
+      const t = p[k] ? new Date(p[k]).getTime() : NaN;
+      if (!Number.isNaN(t) && t > last) last = t;
+    }
+  }
+  try {
+    const f = S.P.auditFile(root, state.id);
+    const lines = fs.readFileSync(f, 'utf8').trim().split('\n');
+    const t = new Date(JSON.parse(lines[lines.length - 1]).ts).getTime();
+    if (!Number.isNaN(t) && t > last) last = t;
+  } catch { /* no audit log yet */ }
+  return Math.floor((now - last) / 86400000);
+}
+
+// Distinct IDs of a kind across a work folder's artifacts.
+function scanIds(folder, re) {
+  const out = new Set();
+  if (!fs.existsSync(folder)) return [];
+  for (const f of fs.readdirSync(folder)) {
+    if (!f.endsWith('.md')) continue;
+    for (const m of fs.readFileSync(path.join(folder, f), 'utf8').matchAll(re)) out.add(m[0]);
+  }
+  return [...out].sort();
+}
+
+// Source files a work item's plan.md says it will touch, for overlap warnings.
+function planFiles(folder) {
+  const f = path.join(folder, 'plan.md');
+  if (!fs.existsSync(f)) return [];
+  const out = new Set();
+  const text = fs.readFileSync(f, 'utf8');
+  for (const m of text.matchAll(/\b((?:apps|packages|internal|cmd|src|infra|deploy)\/[A-Za-z0-9._\/-]+\.[A-Za-z]{1,5})\b/g)) out.add(m[1]);
+  return [...out].sort();
+}
+
+function fileOverlaps(items) {
+  const owners = new Map();
+  for (const i of items) for (const f of i.files) {
+    if (!owners.has(f)) owners.set(f, []);
+    owners.get(f).push(i.id);
+  }
+  return [...owners.entries()]
+    .filter(([, ids]) => ids.length > 1)
+    .map(([file, ids]) => ({ file, items: ids.sort() }))
+    .sort((a, b) => a.file.localeCompare(b.file));
+}
+
+function renderPortfolio(res) {
+  const pad = (s, n) => String(s).padEnd(n);
+  const lines = ['── PORTFOLIO ──────────────────────────────────────────────'];
+  const active = res.items.filter((i) => !i.done && !i.parked);
+  if (!active.length) lines.push('no active work items');
+  else {
+    lines.push(`${pad('ID', 10)} ${pad('type', 12)} ${pad('phase', 15)} ${pad('status', 12)} ${pad('age', 5)} waiting on`);
+    for (const i of active) {
+      lines.push(`${pad(i.id, 10)} ${pad(i.type, 12)} ${pad(i.phase, 15)} ${pad(i.status, 12)} ${pad(i.age_days + 'd', 5)} ${i.blocked_by.join(', ') || '—'}`);
+    }
+  }
+  const parked = res.items.filter((i) => i.parked);
+  if (parked.length) {
+    lines.push('', 'Parked:');
+    for (const i of parked) lines.push(`  ${i.id} — ${i.parked}`);
+  }
+  lines.push('', `Totals: ${res.counts.active} active · ${res.counts.parked} parked · ${res.counts.done} done`);
+  lines.push('', res.attention.length ? 'Needs attention:' : 'Needs attention: none');
+  for (const a of res.attention) lines.push(`  ⚠️  ${a}`);
+  lines.push('───────────────────────────────────────────────────────────');
+  return lines.join('\n');
+}
 
 function currentBranch(root) {
   try {

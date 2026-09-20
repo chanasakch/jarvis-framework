@@ -36,6 +36,13 @@ gates:
 review:
   block_on: [critical, major]
   reviewers: [standards, performance, security, database]
+  # Reviewers that only run when an intake flag is set; wired per workflow as
+  # `conditional_agents`. Listed here for reference — the workflow YAML is authoritative.
+  conditional_reviewers:
+    has_infra_change: [devops]
+
+staff_review:
+  max_age_days: 30              # /{{name}}-health report older than this is reported stale by status
 
 quality:
   coverage_min: { backend: 80, frontend: 70 }
@@ -61,6 +68,7 @@ models:                         # applied to agent frontmatter by installer
     {{name}}-gatekeeper: opus
     {{name}}-architect: opus
     {{name}}-review-security: opus
+    {{name}}-staff: opus
     {{name}}-release: haiku
 
 team:

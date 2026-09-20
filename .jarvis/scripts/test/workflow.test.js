@@ -253,3 +253,47 @@ test('portfolio separates parked from active and is empty-safe', () => {
   assert.equal(p.counts.parked, 1);
   assert.equal(p.items[0].parked, 'waiting on vendor');
 });
+
+// --- health: the cross-cutting (Lead/Staff) view ---------------------------
+
+test('health reports staleness against staff_review.max_age_days', () => {
+  const fs = require('fs');
+  const dir = H.makeRepo('health');
+  const hdir = `${dir}/docs/architecture/health`;
+  fs.mkdirSync(hdir, { recursive: true });
+
+  const none = H.cliJson(dir, ['health']).json;
+  assert.equal(none.stale, true);
+  assert.equal(none.newest, null);
+  assert.match(none.message, /no codebase health report yet/);
+
+  const day = (back) => new Date(Date.now() - back * 86400000).toISOString().slice(0, 10);
+  fs.writeFileSync(`${hdir}/${day(45)}.md`, '# old\n');
+  const old = H.cliJson(dir, ['health']).json;
+  assert.equal(old.stale, true, '45 days > the configured 30');
+  assert.equal(old.newest.age_days, 45);
+  assert.equal(H.cli(dir, ['health', '--strict']).code, 1, '--strict exits non-zero when stale');
+
+  fs.writeFileSync(`${hdir}/${day(2)}.md`, '# fresh\n');
+  const fresh = H.cliJson(dir, ['health']).json;
+  assert.equal(fresh.stale, false);
+  assert.equal(fresh.newest.age_days, 2);
+  assert.equal(fresh.reports.length, 2, 'older reports are kept and listed');
+  assert.equal(H.cli(dir, ['health', '--strict']).code, 0);
+});
+
+test('status --brief warns when the health report has gone stale', () => {
+  const fs = require('fs');
+  const dir = H.makeRepo('health-warn');
+  const hdir = `${dir}/docs/architecture/health`;
+  fs.mkdirSync(hdir, { recursive: true });
+  H.cliJson(dir, ['new', 'feature', 'OTP login']);
+
+  const quiet = H.cliJson(dir, ['status', '--brief']).json;
+  assert.ok(!quiet.lines.some((l) => l.includes('health')), 'a repo with no report yet is not nagged');
+
+  const old = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+  fs.writeFileSync(`${hdir}/${old}.md`, '# old\n');
+  const warned = H.cliJson(dir, ['status', '--brief']).json;
+  assert.ok(warned.lines.some((l) => l.includes('health report is 60 days old')));
+});

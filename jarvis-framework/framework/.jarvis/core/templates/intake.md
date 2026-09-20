@@ -17,7 +17,7 @@ refs: []
 Type: FEAT — new capability (OTP login does not exist today, no bug to fix).
 
 ## Flags <!-- required -->
-<!-- List all nine flags with their resolved value and the source of that value. -->
+<!-- List all ten flags with their resolved value and the source of that value. -->
 | flag | value | source |
 |---|---|---|
 | has_ui | true | new login screen required |
@@ -29,6 +29,7 @@ Type: FEAT — new capability (OTP login does not exist today, no bug to fix).
 | design_change | true | new UX screens for code entry |
 | touches_auth | true | modifies login/session issuance |
 | touches_pii | true | phone number used for delivery |
+| has_infra_change | true | new SMS provider secret and rate-limit rule in the deploy config |
 
 ## Initial Scope <!-- required -->
 <!-- One bullet per item explicitly in scope for this work item. -->

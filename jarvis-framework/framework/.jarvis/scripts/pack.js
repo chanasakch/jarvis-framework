@@ -17,16 +17,18 @@ const path = require('path');
 const R = process.cwd();
 const PKG = path.join(R, 'jarvis-framework');
 
+// Each role is matched as the whole token `jarvis-<role>`, so `review-devops`, `devops`
+// and `dev-backend` cannot shadow each other and the order here is presentational.
 const ROLES = [
   'gatekeeper', 'analyst', 'po', 'ba', 'ux', 'investigator', 'architect', 'planner',
   'dev-backend', 'dev-frontend', 'tester',
-  'review-standards', 'review-performance', 'review-security', 'review-database',
-  'qa', 'release',
+  'review-standards', 'review-performance', 'review-security', 'review-database', 'review-devops',
+  'qa', 'release', 'devops', 'staff',
 ];
 
 // Slash command suffixes. Bare /{{name}} is handled separately, with a guard so that
 // `/jarvis-ignore` and `scripts/jarvis.js` are left alone.
-const COMMANDS = ['-explain', '-status', '-review', '-init', '-help', '-gate', '-new', '-run'];
+const COMMANDS = ['-explain', '-status', '-review', '-init', '-help', '-gate', '-new', '-run', '-portfolio', '-health'];
 
 const FRAMEWORK = [
   '.claude/agents', '.claude/commands',
@@ -36,6 +38,8 @@ const PROJECT = [
   'jarvis.config.yaml', 'CLAUDE.md',
   '.jarvis/standards', '.jarvis/project/context.md',
   'packages/errors/registry.yaml', 'docs/architecture/query-index-matrix.md',
+  // Seeded empty; {{name}}-staff appends to both from /{{name}}-health onwards.
+  'docs/architecture/tech-debt.md', 'docs/architecture/health/README.md',
 ];
 // Written by hand inside the package, never copied back from this repo.
 const PACKAGE_OWNED = new Set(['framework/.claude/settings.json']);

@@ -118,3 +118,182 @@ test('task status is tracked and implement waits for every task', () => {
   st = H.cliJson(dir, ['status', 'CHR-001']).json;
   assert.equal(st.tasks['T-001'], 'done');
 });
+
+// --- conditional_agents: flag-gated agents (devops) -------------------------
+
+// `requirements`, `architecture` and `release` need human approval to unlock, so a test
+// walking past them must approve, not just pass.
+function advance(dir, id, phases) {
+  const APPROVE = new Set(['requirements', 'ux', 'architecture', 'release']);
+  for (const p of phases) {
+    H.cli(dir, ['set', id, p, 'passed']);
+    if (APPROVE.has(p)) H.cli(dir, ['approve', id, p]);
+  }
+}
+
+test('conditional agents are absent when their flag is false', () => {
+  const dir = H.makeRepo('cond-off');
+  H.cliJson(dir, ['new', 'feature', 'Plain feature', '--flags', 'has_infra_change=false']);
+  advance(dir, 'FEAT-001', ['intake', 'brief', 'requirements', 'business-flow', 'architecture', 'plan', 'implement', 'test']);
+  const n = H.cliJson(dir, ['next', 'FEAT-001']).json;
+  assert.equal(n.phase, 'review');
+  assert.ok(!n.agents_resolved.includes('{{name}}-review-devops'), 'devops reviewer must not run');
+  assert.equal(n.agents_resolved.length, 4);
+  assert.ok(!n.outputs.some((o) => o.endsWith('review/devops.md')), 'no devops report is expected');
+});
+
+test('conditional agents and outputs appear when their flag is true', () => {
+  const dir = H.makeRepo('cond-on');
+  H.cliJson(dir, ['new', 'feature', 'Infra feature', '--flags', 'has_infra_change=true']);
+  advance(dir, 'FEAT-001', ['intake', 'brief', 'requirements', 'business-flow']);
+
+  let n = H.cliJson(dir, ['next', 'FEAT-001']).json;
+  assert.equal(n.phase, 'architecture');
+  assert.ok(n.agents_resolved.includes('{{name}}-devops'), 'devops designs alongside the architect');
+  assert.ok(n.outputs.some((o) => o.endsWith('infra-plan.md')), 'infra-plan.md is a required output');
+  assert.ok(n.standards.includes('.jarvis/standards/devops.md'));
+
+  advance(dir, 'FEAT-001', ['architecture', 'plan', 'implement', 'test']);
+  n = H.cliJson(dir, ['next', 'FEAT-001']).json;
+  assert.equal(n.phase, 'review');
+  assert.ok(n.agents_resolved.includes('{{name}}-review-devops'), 'devops reviewer must run');
+  assert.equal(n.agents_resolved.length, 5);
+  assert.ok(n.outputs.some((o) => o.endsWith('review/devops.md')));
+});
+
+test('release requires a deploy plan only when has_infra_change is true', () => {
+  const dir = H.makeRepo('cond-release');
+  H.cliJson(dir, ['new', 'chore', 'Pin CI actions', '--flags', 'has_infra_change=true']);
+  advance(dir, 'CHR-001', ['intake', 'plan', 'implement', 'test', 'review']);
+  const n = H.cliJson(dir, ['next', 'CHR-001']).json;
+  assert.equal(n.phase, 'release');
+  assert.ok(n.agents_resolved.includes('{{name}}-devops'));
+  assert.ok(n.outputs.some((o) => o.endsWith('deploy-plan.md')));
+});
+
+test('every workflow with a review phase gates the devops reviewer on has_infra_change', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const YAML = require('yaml');
+  const dir = path.resolve(__dirname, '..', '..', 'core', 'workflows');
+  let checked = 0;
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.yaml'))) {
+    const wf = YAML.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    const review = wf.phases.find((p) => p.id === 'review');
+    if (!review) continue;
+    checked++;
+    assert.deepEqual(review.conditional_agents, { has_infra_change: ['{{name}}-review-devops'] }, f);
+    assert.deepEqual(review.conditional_outputs, { has_infra_change: ['review/devops.md'] }, f);
+    assert.ok(review.reviewer_standards.devops, `${f} has no devops reviewer_standards`);
+  }
+  assert.equal(checked, 9, 'every workflow but spike has a review phase');
+});
+
+// --- portfolio / link: the cross-work-item (PM) view ------------------------
+
+test('link records a dependency and refuses a cycle', () => {
+  const dir = H.makeRepo('link');
+  H.cliJson(dir, ['new', 'feature', 'OTP login']);
+  H.cliJson(dir, ['new', 'chore', 'Pin CI actions']);
+  const ok = H.cliJson(dir, ['link', 'CHR-001', '--depends-on', 'FEAT-001']);
+  assert.equal(ok.code, 0);
+  assert.deepEqual(ok.json.depends_on, ['FEAT-001']);
+
+  const cyc = H.cli(dir, ['link', 'FEAT-001', '--depends-on', 'CHR-001']);
+  assert.equal(cyc.code, 2, 'a cycle must be refused');
+  assert.match(cyc.stderr, /cycle/);
+
+  const self = H.cli(dir, ['link', 'FEAT-001', '--depends-on', 'FEAT-001']);
+  assert.equal(self.code, 2, 'self-dependency must be refused');
+
+  const gone = H.cliJson(dir, ['link', 'CHR-001', '--depends-on', 'FEAT-001', '--remove']);
+  assert.deepEqual(gone.json.depends_on, []);
+});
+
+test('portfolio reports dependencies, risks and plan file overlaps', () => {
+  const fs = require('fs');
+  const dir = H.makeRepo('portfolio');
+  H.cliJson(dir, ['new', 'feature', 'OTP login']);
+  H.cliJson(dir, ['new', 'bugfix', 'Avatar 500']);
+  H.cli(dir, ['link', 'BUG-001', '--depends-on', 'FEAT-001']);
+
+  // Two items whose plans touch the same file.
+  fs.writeFileSync(`${dir}/docs/work/FEAT-001-otp-login/plan.md`,
+    '| T-001 | backend | apps/api/internal/user/repo.go |\n');
+  fs.writeFileSync(`${dir}/docs/work/FEAT-001-otp-login/brief.md`,
+    '| Q-001 | which provider | brief |\n| R-001 | provider outage | high |\n');
+  fs.writeFileSync(`${dir}/docs/work/BUG-001-avatar-500/plan.md`,
+    '| T-001 | backend | apps/api/internal/user/repo.go |\n');
+
+  const p = H.cliJson(dir, ['portfolio']).json;
+  assert.equal(p.counts.active, 2);
+  const feat = p.items.find((i) => i.id === 'FEAT-001');
+  assert.deepEqual(feat.open_questions, ['Q-001']);
+  assert.deepEqual(feat.risks, ['R-001']);
+
+  const bug = p.items.find((i) => i.id === 'BUG-001');
+  assert.deepEqual(bug.depends_on, ['FEAT-001']);
+  assert.deepEqual(bug.blocked_by, ['FEAT-001'], 'FEAT-001 is not finished, so BUG-001 waits');
+
+  assert.deepEqual(p.overlaps, [{ file: 'apps/api/internal/user/repo.go', items: ['BUG-001', 'FEAT-001'] }]);
+  assert.ok(p.attention.some((a) => a.includes('waiting on FEAT-001')));
+  assert.ok(p.attention.some((a) => a.includes('both plan to change')));
+});
+
+test('portfolio separates parked from active and is empty-safe', () => {
+  const dir = H.makeRepo('portfolio-empty');
+  const empty = H.cliJson(dir, ['portfolio']).json;
+  assert.equal(empty.counts.total, 0);
+  assert.deepEqual(empty.attention, []);
+
+  H.cliJson(dir, ['new', 'feature', 'OTP login']);
+  H.cli(dir, ['park', 'FEAT-001', '--reason', 'waiting on vendor']);
+  const p = H.cliJson(dir, ['portfolio']).json;
+  assert.equal(p.counts.active, 0);
+  assert.equal(p.counts.parked, 1);
+  assert.equal(p.items[0].parked, 'waiting on vendor');
+});
+
+// --- health: the cross-cutting (Lead/Staff) view ---------------------------
+
+test('health reports staleness against staff_review.max_age_days', () => {
+  const fs = require('fs');
+  const dir = H.makeRepo('health');
+  const hdir = `${dir}/docs/architecture/health`;
+  fs.mkdirSync(hdir, { recursive: true });
+
+  const none = H.cliJson(dir, ['health']).json;
+  assert.equal(none.stale, true);
+  assert.equal(none.newest, null);
+  assert.match(none.message, /no codebase health report yet/);
+
+  const day = (back) => new Date(Date.now() - back * 86400000).toISOString().slice(0, 10);
+  fs.writeFileSync(`${hdir}/${day(45)}.md`, '# old\n');
+  const old = H.cliJson(dir, ['health']).json;
+  assert.equal(old.stale, true, '45 days > the configured 30');
+  assert.equal(old.newest.age_days, 45);
+  assert.equal(H.cli(dir, ['health', '--strict']).code, 1, '--strict exits non-zero when stale');
+
+  fs.writeFileSync(`${hdir}/${day(2)}.md`, '# fresh\n');
+  const fresh = H.cliJson(dir, ['health']).json;
+  assert.equal(fresh.stale, false);
+  assert.equal(fresh.newest.age_days, 2);
+  assert.equal(fresh.reports.length, 2, 'older reports are kept and listed');
+  assert.equal(H.cli(dir, ['health', '--strict']).code, 0);
+});
+
+test('status --brief warns when the health report has gone stale', () => {
+  const fs = require('fs');
+  const dir = H.makeRepo('health-warn');
+  const hdir = `${dir}/docs/architecture/health`;
+  fs.mkdirSync(hdir, { recursive: true });
+  H.cliJson(dir, ['new', 'feature', 'OTP login']);
+
+  const quiet = H.cliJson(dir, ['status', '--brief']).json;
+  assert.ok(!quiet.lines.some((l) => l.includes('health')), 'a repo with no report yet is not nagged');
+
+  const old = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+  fs.writeFileSync(`${hdir}/${old}.md`, '# old\n');
+  const warned = H.cliJson(dir, ['status', '--brief']).json;
+  assert.ok(warned.lines.some((l) => l.includes('health report is 60 days old')));
+});

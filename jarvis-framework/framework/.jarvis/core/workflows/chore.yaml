@@ -43,12 +43,16 @@ phases:
 
   - id: review
     agents: [{{name}}-review-standards, {{name}}-review-performance, {{name}}-review-security, {{name}}-review-database]
+    conditional_agents:
+      has_infra_change: [{{name}}-review-devops]
     parallel: true
     blocking_reviewers: all
     on_fail: implement
     requires: [test]
     inputs: [plan.md, test-report.md]
     outputs: [review/standards.md, review/performance.md, review/security.md, review/database.md, review-report.md]
+    conditional_outputs:
+      has_infra_change: [review/devops.md]
     template: [review-report.md]
     checklist: review.md
     reviewer_standards:
@@ -56,15 +60,19 @@ phases:
       performance: [performance.md, caching.md, coding-go.md, coding-react.md]
       security: [security.md, error-handling.md, logging.md, api.md]
       database: [database.md, caching.md, performance.md]
+      devops: [devops.md, security.md, logging.md]
 
   - id: release
     agent: {{name}}-release
+    conditional_agents:
+      has_infra_change: [{{name}}-devops]
     requires: [review]
     inputs: [plan.md, review-report.md]
     outputs: [release-notes.md]
     conditional_outputs:
       has_db_change: [runbook.md]
-    template: [release-notes.md, runbook.md]
+      has_infra_change: [deploy-plan.md]
+    template: [release-notes.md, runbook.md, deploy-plan.md]
     checklist: release.md
-    standards: [git.md, documentation.md]
+    standards: [git.md, documentation.md, devops.md]
     approval: none

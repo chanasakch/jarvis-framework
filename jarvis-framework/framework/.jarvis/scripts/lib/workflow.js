@@ -26,11 +26,27 @@ function approvalRequired(cfg, phase) {
   return (cfg.gates.human_approval || []).includes(phase.id);
 }
 
-function agentsFor(phase) {
-  if (phase.agent) return [phase.agent];
-  if (Array.isArray(phase.agents)) return phase.agents.slice();
-  if (phase.agents && typeof phase.agents === 'object') return Object.values(phase.agents);
-  return [];
+// Agents that run for a phase. `conditional_agents: { <flag>: [agent, ...] }` appends an
+// agent only when that intake flag is true, so a flag-gated reviewer (devops) is absent
+// from the run entirely rather than running and reporting "nothing to review".
+function agentsFor(phase, flags) {
+  const base = phase.agent ? [phase.agent]
+    : Array.isArray(phase.agents) ? phase.agents.slice()
+      : phase.agents && typeof phase.agents === 'object' ? Object.values(phase.agents)
+        : [];
+  for (const [flag, list] of Object.entries(phase.conditional_agents || {})) {
+    if (!flags || flags[flag] !== true) continue;
+    for (const a of list) if (!base.includes(a)) base.push(a);
+  }
+  return base;
+}
+
+// Reviewer short names for a review phase, flag-aware: `{{name}}-review-security` -> `security`.
+// This is what must have produced a report, not the static jarvis.config.yaml list.
+function reviewersFor(phase, flags) {
+  return agentsFor(phase, flags)
+    .filter((a) => a.includes('-review-'))
+    .map((a) => a.replace(/^.*-review-/, ''));
 }
 
 function expectedOutputs(phase, flags) {
@@ -132,6 +148,9 @@ function next(root, id) {
       owner: phase.owner || null,
       agent: phase.agent || null,
       agents: phase.agents || null,
+      conditional_agents: phase.conditional_agents || null,
+      // Flag-resolved: what the orchestrator actually delegates to this phase.
+      agents_resolved: agentsFor(phase, state.flags),
       mode: phase.mode || null,
       loop: phase.loop || null,
       parallel: !!phase.parallel,
@@ -164,6 +183,9 @@ function warningLines(state) {
   if (forced.length) {
     out.unshift(`${state.id} has ${forced.length} forced gate(s): ${forced.map((f) => f.phase).join(', ')}`);
   }
+  if ((state.depends_on || []).length) {
+    out.push(`${state.id} depends on: ${state.depends_on.join(', ')} — see jarvis.js portfolio`);
+  }
   return out;
 }
 
@@ -172,6 +194,6 @@ function summarize(state) {
 }
 
 module.exports = {
-  load, phaseOrder, getPhase, approvalRequired, agentsFor, expectedOutputs,
+  load, phaseOrder, getPhase, approvalRequired, agentsFor, reviewersFor, expectedOutputs,
   inputPaths, standardPaths, next, warningLines, summarize, toRel, pendingTasks,
 };

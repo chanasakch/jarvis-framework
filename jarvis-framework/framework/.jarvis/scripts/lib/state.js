@@ -10,7 +10,7 @@ const YAML = require('yaml');
 const UNLOCKING = new Set(['approved', 'forced', 'skipped']);
 const SETTABLE = new Set(['in_progress', 'passed', 'gate_failed', 'blocked']);
 const ALL_STATUSES = ['pending', 'in_progress', 'gate_failed', 'passed', 'approved', 'forced', 'skipped', 'blocked', 'parked'];
-const FLAGS = ['has_ui', 'has_api_change', 'has_db_change', 'has_mysql', 'has_mongo', 'changes_flow', 'design_change', 'touches_auth', 'touches_pii'];
+const FLAGS = ['has_ui', 'has_api_change', 'has_db_change', 'has_mysql', 'has_mongo', 'changes_flow', 'design_change', 'touches_auth', 'touches_pii', 'has_infra_change'];
 
 function repoRoot(from) {
   let dir = from || process.env.JARVIS_ROOT || process.cwd();

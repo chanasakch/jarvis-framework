@@ -361,7 +361,10 @@ function validate(root, id, phase, opts = {}) {
     },
     review: () => {
       const cfg = S.loadConfig(root);
-      for (const r of cfg.review.reviewers) {
+      // Flag-aware: a conditional reviewer (devops) is only required when its flag is set,
+      // and must not be demanded when it never ran.
+      const resolved = W.reviewersFor(ph, state.flags);
+      for (const r of (resolved.length ? resolved : cfg.review.reviewers)) {
         const f = path.join(folder, 'review', `${r}.md`);
         if (!fs.existsSync(f)) { add('REV-01', `${rel}/review/${r}.md`, `reviewer ${r} produced no report`); continue; }
         const text = fs.readFileSync(f, 'utf8');

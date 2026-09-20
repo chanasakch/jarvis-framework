@@ -16,6 +16,10 @@
 - [ ] ARC-11 (auto) OpenAPI delta is valid YAML — Evidence: `api-contract.yaml` parses as YAML without error
 - [ ] ARC-12 Migration plan with rollback exists when the item has a DB change — Evidence: `migration-plan.md` present with an "up" and "down"/rollback section, only required when intake.md `has_db_change` is true
 - [ ] ARC-13 (auto) No `TBD`/`TODO`/`???` in tech-spec.md — Evidence: full-text scan of tech-spec.md
+- [ ] ARC-14 [ADDED] Every pipeline stage and infrastructure resource in infra-plan.md cites the file it lives in [OPS-05] — Evidence: `## Current State`, `## Pipeline Changes` and `## Infrastructure Resources` file columns, only required when intake.md `has_infra_change` is true
+- [ ] ARC-15 [ADDED] Deploy strategy, readiness gate and the exact reversing command are stated [OPS-07] [OPS-08] — Evidence: infra-plan.md `## Deploy Strategy`, only required when `has_infra_change` is true
+- [ ] ARC-16 [ADDED] Every alert row carries a threshold, an owner and a runbook link [OPS-10] — Evidence: infra-plan.md `## SLOs and Alerts` owner and runbook columns, only required when `has_infra_change` is true
+- [ ] ARC-17 [ADDED] No secret value appears in infra-plan.md; secrets are named with their store only [OPS-04] — Evidence: infra-plan.md `## Secrets and Config` source column
 
 ## Advisory
 - [ ] ARC-50 [ADDED] Every ADR referenced in tech-spec.md actually exists in `docs/adr/` — Evidence: `## ADRs` table `ADR` column IDs match filenames under `docs/adr/`

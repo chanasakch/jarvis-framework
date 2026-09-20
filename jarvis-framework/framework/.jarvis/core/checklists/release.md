@@ -12,6 +12,10 @@
 - [ ] REL-07 [ADDED] every deploy step is a copy-pasteable command with its expected result — Evidence: runbook.md Deploy Steps list
 - [ ] REL-08 [ADDED] a runbook exists when the item has a DB change or is a migration-type item — Evidence: state file `flags.has_db_change` vs runbook.md file existence
 - [ ] REL-09 [ADDED] suggested updates to `.jarvis/project/context.md` are listed — Evidence: release-notes.md Notes/Summary section
+- [ ] REL-10 [ADDED] deploy-plan.md promotes one artifact across environments rather than rebuilding per environment [OPS-11] — Evidence: deploy-plan.md `## Artifact` and `## Promotion Order`, only required when intake.md `has_infra_change` is true
+- [ ] REL-11 [ADDED] the rollback drill records a real result, or is explicitly marked unverified [OPS-07] — Evidence: deploy-plan.md `## Rollback Drill` drilled and result rows, only required when `has_infra_change` is true
+- [ ] REL-12 [ADDED] post-deploy checks name the `error_code` log query and the p95 check against the config budget — Evidence: deploy-plan.md `## Post-deploy Checks`, only required when `has_infra_change` is true
+- [ ] REL-13 [ADDED] a fresh codebase-health report exists, or a waiver is recorded, for a minor or major version release — Evidence: newest `docs/architecture/health/<YYYY-MM-DD>.md` age vs `staff_review.max_age_days`
 
 ## Advisory
 - [ ] REL-50 Known Issues table lists open defects or advisory findings shipping with this release — Evidence: release-notes.md Known Issues table

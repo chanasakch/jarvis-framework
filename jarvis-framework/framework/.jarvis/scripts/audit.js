@@ -54,8 +54,9 @@ const FW=[...walk('.jarvis/core'),...walk('.jarvis/standards'),...walk('.claude'
     '{{name}}-dev-backend':'Read, Write, Edit, Glob, Grep, Bash','{{name}}-dev-frontend':'Read, Write, Edit, Glob, Grep, Bash',
     '{{name}}-tester':'Read, Write, Edit, Glob, Grep, Bash','{{name}}-review-standards':'Read, Grep, Glob, Bash',
     '{{name}}-review-performance':'Read, Grep, Glob, Bash','{{name}}-review-security':'Read, Grep, Glob, Bash',
-    '{{name}}-review-database':'Read, Grep, Glob, Bash','{{name}}-qa':'Read, Write, Glob, Grep, Bash','{{name}}-release':'Read, Write, Glob, Grep, Bash'};
-  const MODELS={'{{name}}-gatekeeper':'opus','{{name}}-architect':'opus','{{name}}-review-security':'opus','{{name}}-release':'haiku'};
+    '{{name}}-review-database':'Read, Grep, Glob, Bash','{{name}}-qa':'Read, Write, Glob, Grep, Bash','{{name}}-release':'Read, Write, Glob, Grep, Bash',
+    '{{name}}-devops':'Read, Write, Glob, Grep','{{name}}-review-devops':'Read, Grep, Glob, Bash','{{name}}-staff':'Read, Write, Glob, Grep, Bash'};
+  const MODELS={'{{name}}-gatekeeper':'opus','{{name}}-architect':'opus','{{name}}-review-security':'opus','{{name}}-release':'haiku','{{name}}-staff':'opus'};
   for(const [a,tools] of Object.entries(SPEC_TOOLS)){
     if(!agents.has(a)){bad.push('missing agent file '+a);continue;}
     const t=read('.claude/agents/'+a+'.md');
@@ -109,7 +110,7 @@ const FW=[...walk('.jarvis/core'),...walk('.jarvis/standards'),...walk('.claude'
   const defined=new Set();
   for(const s of fs.readdirSync(path.join(R,'.jarvis/standards')).filter(f=>f.endsWith('.md')))
     for(const m of read('.jarvis/standards/'+s).matchAll(/^###\s+([A-Z]+-\d{2})\s/gm)) defined.add(m[1]);
-  const PREFIX=/^(STR|GO|RX|API|DB|CACHE|PERF|SEC|ERR|LOG|TEST|DOC|GIT)$/;
+  const PREFIX=/^(STR|GO|RX|API|DB|CACHE|PERF|SEC|ERR|LOG|TEST|DOC|GIT|OPS)$/;
   const bad=[];
   for(const f of [...walk('.claude'),...walk('.jarvis/core/checklists')].filter(x=>x.endsWith('.md'))){
     for(const m of read(f).matchAll(/\[([A-Z]+)-(\d{2})\]/g)){

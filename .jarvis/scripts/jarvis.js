@@ -113,7 +113,10 @@ const commands = {
         const f = S.forcedGates(s);
         return `${s.id} ${s.title} · ${s.current_phase}:${S.phaseStatus(s, s.current_phase)}${f.length ? ` ⚠️ ${f.length} forced` : ''}`;
       });
-      return out({ items: lines.length, lines }, () => (lines.length ? `── JARVIS ──\n${lines.join('\n')}` : '── JARVIS ── no active work items'));
+      // Codebase health is repo-wide, so it is reported here rather than per item.
+      const h = healthState(root);
+      if (h.stale && h.newest) lines.push(`⚠️ codebase health report is ${h.newest.age_days} days old — /jarvis-health`);
+      return out({ items: lines.length, lines, health: h }, () => (lines.length ? `── JARVIS ──\n${lines.join('\n')}` : '── JARVIS ── no active work items'));
     }
     out({
       items: items.map((s) => ({
@@ -145,6 +148,14 @@ const commands = {
     S.audit(root, id, { actor: S.gitUser(root), action: 'link', phase: state.current_phase, from: before, to: state.depends_on, detail: { dep, removed: !!flags.remove } });
     out({ ok: true, id, depends_on: state.depends_on },
       (o) => `${o.id} depends on: ${o.depends_on.join(', ') || 'nothing'}`);
+  },
+
+  // Codebase-health reports (the Lead/Staff view). Reports live outside any work item,
+  // so this command only locates them and reports staleness; jarvis-staff writes them.
+  health(root, { flags }) {
+    const res = healthState(root);
+    out(res, (o) => o.message);
+    if (flags.strict && res.stale) process.exit(1);
   },
 
   // Portfolio / roadmap view across every active work item (the PM view).
@@ -502,6 +513,7 @@ const commands = {
       '  status [ID] [--brief]                    status, warnings, forced gates',
       '  portfolio                                every active item: phase, age, deps, risks, overlaps',
       '  link <ID> --depends-on <ID> [--remove]   record a cross-item dependency',
+      '  health [--strict]                        codebase health report age (see /jarvis-health)',
       '  set <ID> <phase> <status>                in_progress | passed | gate_failed | blocked',
       '  task <ID> <T-xxx> <status>               update a task',
       '  validate <ID> <phase>                    script gate',
@@ -521,6 +533,41 @@ const commands = {
     out({ commands: Object.keys(commands).filter((c) => !c.startsWith('__')), human_only: HUMAN_ONLY, usage: text }, text);
   },
 };
+
+// ---------------- codebase health ----------------
+
+// Locates the dated reports jarvis-staff writes and decides whether the newest is stale.
+// A repo that has never run one is reported, but not warned about on every status.
+function healthState(root) {
+  const cfg = S.loadConfig(root);
+  const maxAge = (cfg.staff_review && cfg.staff_review.max_age_days) || 30;
+  const dir = path.join(root, 'docs', 'architecture', 'health');
+  const reports = (fs.existsSync(dir) ? fs.readdirSync(dir) : [])
+    .filter((f) => /^\d{4}-\d{2}-\d{2}\.md$/.test(f))
+    .sort()
+    .reverse()
+    .map((f) => {
+      const date = f.replace(/\.md$/, '');
+      return {
+        date,
+        path: `docs/architecture/health/${f}`,
+        age_days: Math.floor((Date.now() - new Date(`${date}T00:00:00Z`).getTime()) / 86400000),
+      };
+    });
+  const newest = reports[0] || null;
+  const stale = !newest || newest.age_days > maxAge;
+  return {
+    ok: !stale,
+    stale,
+    max_age_days: maxAge,
+    newest,
+    reports,
+    register: fs.existsSync(path.join(root, 'docs/architecture/tech-debt.md')) ? 'docs/architecture/tech-debt.md' : null,
+    message: !newest ? 'no codebase health report yet — run /jarvis-health'
+      : stale ? `newest health report is ${newest.age_days} days old (max ${maxAge}) — run /jarvis-health`
+        : `health report ${newest.date} is ${newest.age_days} days old`,
+  };
+}
 
 // ---------------- portfolio helpers ----------------
 

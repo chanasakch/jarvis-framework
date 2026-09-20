@@ -31,7 +31,9 @@ Read by `/{{name}}` in the main session. The orchestrator delegates; it never do
 2. Ask the flag questions — **max 5, numbered, in one message**. Only ask flags that the type actually uses;
    infer the obvious ones from the request and state the inference instead of asking.
    Flags: `has_ui`, `has_api_change`, `has_db_change`, `has_mysql`, `has_mongo`, `changes_flow`,
-   `design_change`, `touches_auth`, `touches_pii`.
+   `design_change`, `touches_auth`, `touches_pii`, `has_infra_change`.
+   `has_infra_change` is true when the item touches CI/CD workflows, infrastructure-as-code,
+   Dockerfiles, k8s/Helm manifests, or deploy, monitoring or alerting config.
 3. `node .jarvis/scripts/jarvis.js new <type> "<title>" --flags k=v,k=v --json`.
 4. Write `docs/work/<ID>-<slug>/intake.md` from `.jarvis/core/templates/intake.md`.
 5. Gate it like any other phase (§5).
@@ -53,7 +55,9 @@ Read by `/{{name}}` in the main session. The orchestrator delegates; it never do
 
 Repeat until approval is required, a gate fails past `max_retries`, an agent is BLOCKED, or the item is done.
 
-1. `jarvis.js next <ID> --json` → `{action, phase, agent|agents, mode, requires, inputs, outputs, templates, checklist, standards, approval}`.
+1. `jarvis.js next <ID> --json` → `{action, phase, agent|agents, agents_resolved, mode, requires, inputs, outputs, templates, checklist, standards, approval}`.
+   `agents_resolved` is the flag-aware list — it already includes any `conditional_agents` whose
+   flag is true. Delegate to `agents_resolved`, never to the raw `agents` key.
    - `action: awaiting_approval` → print the approval command, stop.
    - `action: done` → print the summary, stop.
    - `action: blocked` → print what is missing, stop.
@@ -64,8 +68,9 @@ Repeat until approval is required, a gate fails past `max_retries`, an agent is 
      task `layer` (backend → `{{name}}-dev-backend`, frontend → `{{name}}-dev-frontend`). After each task run
      `jarvis.js check <layer>` and `jarvis.js lint --changed`, then `jarvis.js task <ID> <T-xxx> done`.
      Gate the phase only after every task is done.
-   - **review:** invoke all reviewers from `review.reviewers` **in parallel — multiple Task calls in a single
-     message**. Each writes `docs/work/<ID>-<slug>/review/<reviewer>.md`. Then `jarvis.js merge-review <ID>`.
+   - **review:** invoke every reviewer in `agents_resolved` **in parallel — multiple Task calls in a single
+     message**. That is `review.reviewers` plus `{{name}}-review-devops` when `has_infra_change` is true.
+     Each writes `docs/work/<ID>-<slug>/review/<reviewer>.md`. Then `jarvis.js merge-review <ID>`.
      Verdict `fail` → set the phase back to `implement` with each blocking finding as a `FIX-<finding-id>` task.
 4. Agent returns `BLOCKED` with `open_questions` → ask the user (numbered, one message) → re-send the same
    Handoff Brief with `user_answers` filled in.

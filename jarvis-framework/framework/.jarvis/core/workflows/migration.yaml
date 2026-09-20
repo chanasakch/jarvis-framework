@@ -22,13 +22,17 @@ phases:
 
   - id: architecture
     agent: {{name}}-architect
+    conditional_agents:
+      has_infra_change: [{{name}}-devops]
     mode: migration
     requires: [requirements]
     inputs: [prd.md, intake.md]
     outputs: [tech-spec.md, migration-plan.md]
-    template: [tech-spec.md, adr.md, migration-plan.md]
+    conditional_outputs:
+      has_infra_change: [infra-plan.md]
+    template: [tech-spec.md, adr.md, migration-plan.md, infra-plan.md]
     checklist: architecture.md
-    standards: [structure.md, api.md, database.md, caching.md, security.md, error-handling.md, logging.md, performance.md, documentation.md]
+    standards: [structure.md, api.md, database.md, caching.md, security.md, error-handling.md, logging.md, performance.md, documentation.md, devops.md]
     approval: human
 
   - id: plan
@@ -64,12 +68,16 @@ phases:
 
   - id: review
     agents: [{{name}}-review-standards, {{name}}-review-performance, {{name}}-review-security, {{name}}-review-database]
+    conditional_agents:
+      has_infra_change: [{{name}}-review-devops]
     parallel: true
     blocking_reviewers: [database, security, standards]
     on_fail: implement
     requires: [test]
     inputs: [tech-spec.md, migration-plan.md, plan.md, test-report.md]
     outputs: [review/standards.md, review/performance.md, review/security.md, review/database.md, review-report.md]
+    conditional_outputs:
+      has_infra_change: [review/devops.md]
     template: [review-report.md]
     checklist: review.md
     reviewer_standards:
@@ -77,6 +85,7 @@ phases:
       performance: [performance.md, caching.md, coding-go.md, coding-react.md]
       security: [security.md, error-handling.md, logging.md, api.md]
       database: [database.md, caching.md, performance.md]
+      devops: [devops.md, security.md, logging.md]
 
   - id: qa
     agent: {{name}}-qa
@@ -89,10 +98,14 @@ phases:
 
   - id: release
     agent: {{name}}-release
+    conditional_agents:
+      has_infra_change: [{{name}}-devops]
     requires: [qa]
     inputs: [tech-spec.md, migration-plan.md, qa-report.md, review-report.md]
     outputs: [release-notes.md, runbook.md]
-    template: [release-notes.md, runbook.md]
+    conditional_outputs:
+      has_infra_change: [deploy-plan.md]
+    template: [release-notes.md, runbook.md, deploy-plan.md]
     checklist: release.md
-    standards: [git.md, documentation.md]
+    standards: [git.md, documentation.md, devops.md]
     approval: human
