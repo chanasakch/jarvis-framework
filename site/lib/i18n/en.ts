@@ -92,8 +92,6 @@ export const en: Dictionary = {
       getStarted: "Get started",
       viewOnGithub: "View on GitHub",
       copyInstall: "Copy install command",
-      hudPause: "Pause background animation",
-      hudPlay: "Play background animation",
       copied: "Copied",
     },
     problem: {

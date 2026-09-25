@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { HeroHud } from "@/components/landing/hero-hud";
 import { GithubIcon } from "@/components/layout/github-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,7 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   const meta = getMeta();
 
   return (
-    <section className="relative isolate overflow-clip">
-      <div className={cn(CONTAINER, "max-w-3xl pt-16 pb-12 text-center sm:pt-24")}>
+    <section className={cn(CONTAINER, "max-w-3xl pt-16 pb-12 text-center sm:pt-24")}>
       <Badge variant="neutral" className="mb-4">
         v{meta.version}
       </Badge>
@@ -49,8 +47,6 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
           </a>
         </Button>
       </div>
-      </div>
-      <HeroHud pauseLabel={dict.landing.hero.hudPause} playLabel={dict.landing.hero.hudPlay} />
     </section>
   );
 }

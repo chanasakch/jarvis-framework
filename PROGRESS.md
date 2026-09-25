@@ -214,6 +214,3 @@ Verification after every fix: `tsc`, `eslint`, vitest, `npm run build`, `check:l
 - `jarvis.js doctor --list --json` — blocked by this repo's own `guard.js` hooks
   protecting `.jarvis/scripts/**` outside `JARVIS_DEV=1`; non-blocking, worked around in
   the site by parsing `doctor()`'s source directly (`parse-requirements.ts`).
-
-## Hero HUD backdrop (D-059)
-- Landing hero (EN and TH) has a faint, looping HUD drawing behind it, with a pause button. Committed locally, not pushed.

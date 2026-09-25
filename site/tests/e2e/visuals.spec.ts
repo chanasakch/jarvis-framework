@@ -464,16 +464,15 @@ test.describe("motion discipline across the new visuals", () => {
         document
           .getAnimations()
           .filter((a) => a.effect?.getTiming().iterations === Infinity)
-          // getAttribute, not className: on an SVG element className is an object.
           .map((a) =>
-            String(
-              (a.effect as KeyframeEffect).target?.getAttribute("class") ?? "",
-            ).slice(0, 50),
+            String((a.effect as KeyframeEffect).target?.className ?? "").slice(
+              0,
+              50,
+            ),
           ),
       );
-      // Two deliberate exceptions, both on the landing page and both with a pause button: the
-      // lifecycle hub's ping, and the hero's HUD backdrop (D-059, tests/e2e/hero-hud.spec.ts).
-      expect(infinite.filter((c) => !/animate-ping|hud-/.test(c))).toEqual([]);
+      // The lifecycle hub's ping (landing page) is the one deliberate exception; it has a pause button.
+      expect(infinite.filter((c) => !/animate-ping/.test(c))).toEqual([]);
     });
   }
 });

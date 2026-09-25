@@ -110,8 +110,6 @@ export interface Dictionary {
       getStarted: string;
       viewOnGithub: string;
       copyInstall: string;
-      hudPause: string;
-      hudPlay: string;
       copied: string;
     };
     problem: {
