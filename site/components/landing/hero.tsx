@@ -23,7 +23,7 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
       </h1>
       <p className="mt-4 text-base text-muted-foreground sm:text-lg">{dict.landing.hero.subhead}</p>
 
-      <div className="mx-auto mt-8 flex max-w-md items-center justify-between gap-2 rounded-lg border border-border bg-muted px-4 py-2.5">
+      <div className="mx-auto mt-8 flex max-w-xl items-center justify-between gap-2 rounded-lg border border-border bg-muted px-4 py-2.5">
         {/* tabIndex: same WCAG 2.1.1/2.1.3 fix as the docs code blocks, in case the
             install command is ever longer than the container on a narrow viewport. */}
         <code tabIndex={0} className="overflow-x-auto font-mono text-sm whitespace-nowrap">

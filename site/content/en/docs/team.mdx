@@ -8,7 +8,7 @@ description: Installing Jarvis for a team, the CI gate, CODEOWNERS, and upgradin
 Every teammate runs the same install once per repo:
 
 ```bash
-npx jarvis-framework init --name jarvis     # or --name ops, --name sdlc, …
+npx github:chanasakch/jarvis-framework init --name jarvis     # or --name ops, --name sdlc, …
 cd .jarvis && npm install                   # one dependency: yaml
 node .jarvis/scripts/jarvis.js doctor       # tools, paths, error registry
 ```
@@ -69,7 +69,7 @@ The template ships placeholder team names (`@your-org/tech-leads`, `@your-org/fr
 ## Upgrading
 
 ```bash
-npx jarvis-framework upgrade
+npx github:chanasakch/jarvis-framework upgrade
 node .jarvis/scripts/audit.js                 # framework is internally consistent
 node --test ".jarvis/scripts/test/*.test.js"  # scripts still behave
 ```

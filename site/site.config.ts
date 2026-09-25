@@ -9,9 +9,11 @@ export const siteConfig = {
   get githubUrl() {
     return `https://github.com/${this.githubOrg}/${this.githubRepo}`;
   },
-  /** Matches the real installer syntax in jarvis-framework/bin/cli.js. */
+  /** Matches the real installer syntax in jarvis-framework/bin/cli.js. The package is not
+   *  on the npm registry (its package.json is private), so `npx <name>` would fail; the
+   *  repo root's package.json exposes the installer as a bin, which `npx github:` runs. */
   get installCommand() {
-    return `npx ${this.githubRepo} init --name jarvis`;
+    return `npx github:${this.githubOrg}/${this.githubRepo} init --name jarvis`;
   },
   /** Base path used by EditOnGithub for hand-written MDX under site/content/. */
   get editBaseUrl() {

@@ -12,7 +12,7 @@ a human, and nothing moves to the next phase until it passes.
 
 | Path | What |
 |---|---|
-| `jarvis-framework/` | The publishable npm package (`npx jarvis-framework init`) — CLI, agents, commands, hooks, project templates. |
+| `jarvis-framework/` | The installable package (`npx github:chanasakch/jarvis-framework init`) — CLI, agents, commands, hooks, project templates. |
 | `site/` | This repo's documentation site (Next.js, static export, deployed to GitHub Pages by `.github/workflows/site.yml`). |
 | `.jarvis/`, `.claude/`, `jarvis.config.yaml`, `CLAUDE.md` | This repo's own dogfooded install of the framework, used to build itself. |
 | `docs/`, `packages/` | Artifacts and error registry produced by running Jarvis on this repo's own work items. |
@@ -22,7 +22,7 @@ a human, and nothing moves to the next phase until it passes.
 ## Install the framework in your own project
 
 ```bash
-npx jarvis-framework init --name jarvis     # or --name ops, --name sdlc, …
+npx github:chanasakch/jarvis-framework init --name jarvis     # or --name ops, --name sdlc, …
 cd .jarvis && npm install                   # one dependency: yaml
 node .jarvis/scripts/jarvis.js doctor        # tools, paths, error registry
 ```

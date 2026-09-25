@@ -23,7 +23,7 @@ Three layers, in order:
 ## Install
 
 ```bash
-npx jarvis-framework init --name jarvis     # or --name ops, --name sdlc, …
+npx github:chanasakch/jarvis-framework init --name jarvis     # or --name ops, --name sdlc, …
 cd .jarvis && npm install                   # one dependency: yaml
 node .jarvis/scripts/jarvis.js doctor        # tools, paths, error registry
 ```
@@ -139,7 +139,7 @@ a lint rule is violated, or when the error registry is invalid. Ready-made jobs:
 ## Upgrading
 
 ```bash
-npx jarvis-framework upgrade
+npx github:chanasakch/jarvis-framework upgrade
 node .jarvis/scripts/audit.js                  # framework is internally consistent
 node --test ".jarvis/scripts/test/*.test.js"   # scripts still behave
 ```
