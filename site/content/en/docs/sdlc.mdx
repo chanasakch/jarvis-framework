@@ -1,0 +1,140 @@
+---
+title: SDLC process
+description: The software development lifecycle in six stages, who does each step on a normal team, and where Jarvis puts an agent, a gate or a human approval.
+---
+
+## The lifecycle at a glance
+
+Every work item Jarvis handles goes around the same loop: understand the request, define it,
+design it, build it, verify it, ship it. What changes between work types is which phases run.
+A hotfix skips design, and a spike stops after investigation. The diagram below is the
+`feature` work type. Every agent, output and approval in it is read from the framework's own
+workflow files, so it cannot drift from what Jarvis actually does.
+
+<SdlcLifecycle />
+
+Pick a stage, or let the walkthrough play. It pauses while you hover over it or focus it,
+stops for good when you pick a stage, and the pause button is always there.
+
+## What the process is for
+
+A software development lifecycle (SDLC) is the set of steps that turns a request into running
+software. Teams that skip the steps still get software, but the decisions end up in chat
+threads, requirements drift between the first message and the last commit, and a review
+depends on who happens to be free.
+
+Jarvis gives every step three things:
+
+- **An owner.** One agent is responsible for the step, and it only reads the files it was
+  handed.
+- **An artifact.** The step ends in a file under `docs/work/<ID>-<slug>/`, in git, with an
+  ID that later steps refer back to.
+- **A check.** A script and a gatekeeper agent test the artifact against a checklist before
+  the next step can start. See [Gates](/docs/gates).
+
+## Who does what
+
+Read the list as a mapping from the team you would hire to the agent that covers each role.
+A small team has one engineer wearing several of these hats. Jarvis still keeps the hats
+apart, so each one has its own checklist.
+
+<RoleMap />
+
+[Agents](/docs/agents) lists each agent's tools, inputs and outputs. The project manager role
+is covered by a command, because the data it reports is already exact state on disk. A
+script reads it, so a model never has to guess a status.
+
+## Where you stay in charge
+
+Jarvis never approves its own work. The default configuration stops for a human at four
+points, set by `gates.human_approval` in `jarvis.config.yaml`:
+
+| Approval | What you sign off | Applies when |
+|---|---|---|
+| `requirements` | The PRD and user stories, including every acceptance criterion | Always |
+| `ux` | Screens, states, validation and accessibility | The item has a UI |
+| `architecture` | The tech spec, API contract and ADRs | Always |
+| `release` | The release notes, runbook and rollback plan | Always |
+
+Approval is a command you run, and Claude cannot run it. `guard.js` blocks `approve`,
+`force`, `skip`, `reopen`, `park` and `unpark` before the call is made.
+
+```bash
+npm run -s jarvis -- approve FEAT-012 requirements
+```
+
+Add `plan` to `gates.human_approval` if you also want to read the task list before any code
+is written.
+
+## One request, end to end
+
+This is what a single request looks like from your side. The item is `FEAT-012`, and every
+file lands in `docs/work/FEAT-012-otp-login/`.
+
+<Steps>
+<Step title="Start">
+You type `/jarvis` followed by the request. The orchestrator sorts it into a work type, asks
+up to five flag questions, and writes `intake.md`. The analyst then writes `brief.md`.
+</Step>
+<Step title="Define">
+The product owner agent writes `prd.md` and `stories.md`, and the business analyst adds
+`business-flow.md`. The run stops and asks you to approve `requirements`. If the item has a
+UI, `ux-spec.md` follows and needs its own approval.
+</Step>
+<Step title="Design">
+The architect writes `tech-spec.md`, `api-contract.yaml` and an ADR for each significant decision, plus a
+`migration-plan.md` when the schema changes and an `infra-plan.md` when the item sets
+`has_infra_change`. You approve `architecture`. The planner then writes `plan.md`.
+</Step>
+<Step title="Build">
+Each task in `plan.md` goes to the backend or frontend agent, one task per call. After each
+one the CLI runs the layer's checks and appends the result to `impl-log.md`.
+</Step>
+<Step title="Verify">
+The tester writes `test-plan.md` and `test-report.md`. The reviewers run in parallel and
+write `review/<reviewer>.md`, which the CLI merges into `review-report.md`. A blocking
+finding becomes a `FIX-` task and the item returns to build. QA then writes `qa-report.md`
+with the traceability matrix and a Go/No-Go.
+</Step>
+<Step title="Ship">
+The release agent writes `release-notes.md`, adds a `runbook.md` when the item has a
+database change, and adds a CHANGELOG entry. You approve `release`.
+</Step>
+</Steps>
+
+## Traceability from request to release
+
+Every requirement, story, criterion, test and finding has an ID, and every later artifact
+refers back to the earlier ones. That is what lets QA prove coverage instead of asserting it.
+
+<TraceChain />
+
+The chain is what `qa-report.md` records as its traceability matrix. The script gate reads
+it as well: a Must requirement no story mentions, an acceptance criterion with no test case,
+and a matrix row that is not passing each fail the phase.
+
+## The loops that make it a cycle
+
+The lifecycle is a loop. These are the ways work goes back around in Jarvis:
+
+| Loop | What triggers it | What happens |
+|---|---|---|
+| Gate retry | A script check or the gatekeeper fails a phase | The same agent gets the issues back and tries again, up to `gates.max_retries` (3 by default). Then you choose: retry, fix it by hand, force it past with a reason, or park the item. |
+| Review loop-back | A reviewer reports a finding at a blocking severity | The item returns to build with one `FIX-` task per finding. |
+| Reopen | An approved phase turns out to be wrong | You run `reopen`, which resets that phase and everything after it. |
+| Postmortem | A hotfix ships | The postmortem phase records a blameless timeline, and its action items become follow-up work items. |
+| Codebase health | The newest report is older than `staff_review.max_age_days` (30 by default) | The status line warns, and `/jarvis-health` reviews architecture drift and tech debt across the whole repo. |
+| Portfolio | More than one work item is active | `/jarvis-portfolio` shows each item's phase, what it waits on and any files two items both plan to change. |
+
+<Callout kind="note" title="Forcing is recorded, never silent">
+When a gate is forced, Jarvis stores who forced it, when and why, opens a follow-up chore
+item for the unresolved findings, and lists the forced gate in both `qa-report.md` and
+`release-notes.md`.
+</Callout>
+
+## Where to go next
+
+- [Workflows](/docs/workflows) shows all ten work types and their phase sequences.
+- [Gates](/docs/gates) explains the three-layer gate, severities and the force rules.
+- [Agents](/docs/agents) lists every agent with its tools, inputs and outputs.
+- [Getting started](/docs/getting-started) installs Jarvis and runs a first work item.

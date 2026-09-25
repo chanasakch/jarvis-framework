@@ -1,6 +1,7 @@
 import { FeatureGrid } from "@/components/landing/feature-grid";
 import { FinalCta } from "@/components/landing/final-cta";
 import { Hero } from "@/components/landing/hero";
+import { LifecycleSection } from "@/components/landing/lifecycle-section";
 import { ProblemApproach } from "@/components/landing/problem-approach";
 import { SdlcPipeline } from "@/components/landing/sdlc-pipeline";
 import { TerminalReplay } from "@/components/landing/terminal-replay";
@@ -18,6 +19,7 @@ export function LandingPage({ locale, dict }: { locale: Locale; dict: Dictionary
     <main id="main-content">
       <Hero locale={locale} dict={dict} />
       <ProblemApproach dict={dict} />
+      <LifecycleSection locale={locale} dict={dict} />
       <SdlcPipeline dict={dict} workflows={workflows} />
       <FeatureGrid dict={dict} />
       <TerminalReplay dict={dict} />

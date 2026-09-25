@@ -6,9 +6,12 @@ import { StatusBadge } from "@/components/mdx/status-badge";
 import { Callout } from "@/components/mdx/callout";
 import { File, Folder, FileTree } from "@/components/mdx/file-tree";
 import { Step, Steps } from "@/components/mdx/steps";
+import { RoleMap } from "@/components/sdlc/role-map";
+import { SdlcLifecycle } from "@/components/sdlc/sdlc-lifecycle";
+import { TraceChain } from "@/components/sdlc/trace-chain";
 import { StandardsIndex } from "@/components/reference/standards-index";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { localizeHref, type Locale } from "@/lib/i18n";
+import { getDictionary, localizeHref, type Locale } from "@/lib/i18n";
 
 /**
  * MDX authoring convention: files never include an H1 — the page title comes from
@@ -84,5 +87,8 @@ export function getMdxComponents(locale: Locale) {
   TabsTrigger,
   TabsContent,
   StandardsIndex: () => <StandardsIndex locale={locale} />,
+  SdlcLifecycle: () => <SdlcLifecycle dict={getDictionary(locale)} />,
+  RoleMap: () => <RoleMap dict={getDictionary(locale)} />,
+  TraceChain: () => <TraceChain dict={getDictionary(locale)} />,
   };
 }

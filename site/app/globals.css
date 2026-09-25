@@ -99,6 +99,9 @@
   --motion-fast: 150ms;
   --motion-base: 200ms;
   --motion-stagger: 30ms;
+  /* A marker gliding from one lifecycle stage to the next: long enough to follow by eye,
+     short enough that autoplay never feels like it is waiting on the animation. */
+  --motion-travel: 700ms;
 
   --radius: 0.625rem;
 
@@ -297,6 +300,69 @@
 }
 .pipeline-stagger {
   animation-delay: calc(var(--i, 0) * var(--motion-stagger));
+}
+
+/* SDLC lifecycle ring. Connectors reuse .pipeline-segment (draw-in along the order); the
+   only new rule is the colour transition when a stage is reached. */
+.lifecycle-arc {
+  transition: stroke var(--motion-base);
+}
+
+/* Traceability chain (FR -> US -> AC -> TC -> QA matrix). Each link is a ::after on its
+   node, so a node added in markup brings its own connector. The links are fully drawn by
+   default (no-JS, before the section scrolls into view); once the component sets
+   data-seen="true" they redraw in sequence. --i is the node index; 6 x --motion-stagger
+   spaces the links so each one starts as the previous one finishes. */
+@keyframes trace-draw-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes trace-draw-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.trace-node {
+  position: relative;
+}
+.trace-node:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  background: var(--brand);
+  border-radius: 9999px;
+  /* Narrow: a vertical link down the left edge, under the icon circle. */
+  top: 2.75rem;
+  bottom: -1rem;
+  left: 1.25rem;
+  width: 2px;
+  transform-origin: top;
+}
+@media (min-width: 48rem) {
+  .trace-node:not(:last-child)::after {
+    top: 1.25rem;
+    bottom: auto;
+    left: calc(50% + 1.75rem);
+    right: calc(-50% + 1.75rem);
+    width: auto;
+    height: 2px;
+    transform-origin: left;
+  }
+}
+[data-seen="true"] .trace-node:not(:last-child)::after {
+  animation: trace-draw-y var(--motion-travel) ease-out both;
+  animation-delay: calc(var(--i, 0) * 6 * var(--motion-stagger));
+}
+@media (min-width: 48rem) {
+  [data-seen="true"] .trace-node:not(:last-child)::after {
+    animation-name: trace-draw-x;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,3 +1,5 @@
+import type { RoleId, StageId } from "@/lib/sdlc/model";
+
 export const LOCALES = ["en", "th"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
@@ -80,6 +82,7 @@ export interface Dictionary {
    *  the slug list and ordering; titles live here so they're localized). */
   docsNav: {
     introduction: string;
+    sdlc: string;
     "getting-started": string;
     concepts: string;
     commands: string;
@@ -171,6 +174,56 @@ export interface Dictionary {
       heading: string;
       body: string;
       cta: string;
+    };
+  };
+
+  /** The SDLC lifecycle diagram (landing teaser + /docs/sdlc). Stage and role IDs come
+   *  from lib/sdlc/model.ts, so adding one there is a type error here until it is
+   *  translated. What each stage *contains* (agents, outputs, approvals) is read from the
+   *  generated workflow JSON, not written here. */
+  sdlc: {
+    teaser: { heading: string; subhead: string; cta: string };
+    lifecycle: {
+      ringLabel: string;
+      stageOf: string;
+      play: string;
+      pause: string;
+      hubTitle: string;
+      hubSubtitle: string;
+      legendApproval: string;
+      legendLoop: string;
+      legendNext: string;
+      loopLabel: string;
+      whoLabel: string;
+      agentsLabel: string;
+      producesLabel: string;
+      gateLabel: string;
+      addsLabel: string;
+      phasesLabel: string;
+      approvalOn: string;
+      noApproval: string;
+      gateChecklist: string;
+      conditionalWhen: string;
+      optionalWhen: string;
+      workTypeNote: string;
+      stages: Record<StageId, { tagline: string; who: string; adds: string }>;
+    };
+    roles: {
+      agentsLabel: string;
+      commandsLabel: string;
+      noAgent: string;
+      items: Record<RoleId, { name: string; note: string }>;
+    };
+    trace: {
+      ariaLabel: string;
+      note: string;
+      steps: {
+        requirement: { label: string; caption: string };
+        story: { label: string; caption: string };
+        criterion: { label: string; caption: string };
+        test: { label: string; caption: string };
+        report: { label: string; caption: string };
+      };
     };
   };
 

@@ -1,0 +1,129 @@
+---
+title: กระบวนการ SDLC
+description: วงจรการพัฒนาซอฟต์แวร์ 6 ขั้น ใครทำอะไรในทีมทั่วไป และตรงไหนที่ Jarvis วาง agent, gate หรือการอนุมัติจากคน
+---
+
+## ภาพรวมของวงจร
+
+ทุก work item ที่ Jarvis รับไปทำจะวนรอบเดียวกัน คือทำความเข้าใจคำขอ ระบุให้ชัด ออกแบบ ลงมือสร้าง
+พิสูจน์ว่าใช้ได้ แล้วปล่อยงาน สิ่งที่ต่างกันระหว่างประเภทงานคือ phase ไหนถูกรัน hotfix ข้ามขั้นออกแบบ
+ส่วน spike จบหลัง investigation แผนภาพด้านล่างวาดตามงานประเภท `feature` ทุก agent ทุกผลลัพธ์
+และทุกจุดอนุมัติในภาพอ่านมาจากไฟล์ workflow ของ framework เอง จึงไม่เพี้ยนไปจากสิ่งที่ Jarvis ทำจริง
+
+<SdlcLifecycle />
+
+เลือกขั้นที่อยากดู หรือปล่อยให้ตัวอย่างเล่นเอง ตัวอย่างจะหยุดชั่วคราวเมื่อเอาเมาส์วางหรือโฟกัสที่ภาพ
+หยุดถาวรเมื่อเลือกขั้นเอง และมีปุ่มหยุดให้กดได้ตลอด
+
+## กระบวนการนี้มีไว้ทำไม
+
+SDLC (software development lifecycle) คือชุดขั้นตอนที่เปลี่ยนคำขอให้เป็นซอฟต์แวร์ที่ใช้งานได้
+ทีมที่ข้ามขั้นตอนพวกนี้ก็ยังได้ซอฟต์แวร์ แต่การตัดสินใจไปกระจายอยู่ในแชท requirement เพี้ยนไปเรื่อย ๆ
+ตั้งแต่ข้อความแรกจนถึง commit สุดท้าย และคุณภาพของ review ขึ้นอยู่กับว่าวันนั้นใครว่าง
+
+Jarvis ให้ทุกขั้นมีสามอย่าง
+
+- **เจ้าของ** มี agent หนึ่งตัวรับผิดชอบขั้นนั้น และอ่านเฉพาะไฟล์ที่ได้รับมอบหมาย
+- **ผลลัพธ์** ทุกขั้นจบด้วยไฟล์ใน `docs/work/<ID>-<slug>/` อยู่ใน git และมี ID ที่ขั้นถัดไปอ้างกลับมาได้
+- **การตรวจ** สคริปต์กับ gatekeeper agent ตรวจผลลัพธ์กับ checklist ก่อนที่ขั้นถัดไปจะเริ่มได้
+  ดู [เกต](/docs/gates)
+
+## ใครทำอะไร
+
+อ่านรายการนี้เป็นการจับคู่ระหว่างทีมที่คุณจะจ้าง กับ agent ที่ครอบคลุมแต่ละบทบาท
+ทีมเล็กมักมีวิศวกรคนเดียวสวมหลายหมวก Jarvis ยังแยกหมวกออกจากกัน แต่ละหมวกจึงมี checklist ของตัวเอง
+
+<RoleMap />
+
+[เอเจนต์](/docs/agents) รวม tools, inputs และ outputs ของทุก agent ไว้ บทบาท project manager
+ครอบคลุมด้วยคำสั่ง เพราะข้อมูลที่รายงานเป็นสถานะจริงที่อยู่บนดิสก์อยู่แล้ว สคริปต์อ่านให้
+โมเดลจึงไม่ต้องเดาสถานะเอง
+
+## จุดที่คุณยังคุมอยู่
+
+Jarvis ไม่อนุมัติงานของตัวเอง ค่าเริ่มต้นจะหยุดรอคน 4 จุด กำหนดด้วย `gates.human_approval` ใน `jarvis.config.yaml`
+
+| การอนุมัติ | สิ่งที่คุณรับรอง | ใช้เมื่อ |
+|---|---|---|
+| `requirements` | PRD และ user story รวมถึง acceptance criterion ทุกข้อ | เสมอ |
+| `ux` | หน้าจอ สถานะ การตรวจสอบข้อมูล และ accessibility | งานนั้นมี UI |
+| `architecture` | tech spec, API contract และ ADR | เสมอ |
+| `release` | release notes, runbook และแผน rollback | เสมอ |
+
+การอนุมัติเป็นคำสั่งที่คุณต้องรันเอง Claude รันไม่ได้ `guard.js` บล็อก `approve`, `force`, `skip`,
+`reopen`, `park` และ `unpark` ตั้งแต่ก่อนคำสั่งถูกเรียก
+
+```bash
+npm run -s jarvis -- approve FEAT-012 requirements
+```
+
+ถ้าอยากอ่านรายการ task ก่อนเริ่มเขียนโค้ด ให้เพิ่ม `plan` ใน `gates.human_approval`
+
+## หนึ่งคำขอตั้งแต่ต้นจนจบ
+
+นี่คือหน้าตาของหนึ่งคำขอจากฝั่งคุณ item นี้คือ `FEAT-012` และทุกไฟล์อยู่ใน `docs/work/FEAT-012-otp-login/`
+
+<Steps>
+<Step title="เริ่ม">
+คุณพิมพ์ `/jarvis` ตามด้วยคำขอ orchestrator จัดคำขอเข้าประเภทงาน ถามคำถามเรื่อง flag ไม่เกิน 5 ข้อ
+แล้วเขียน `intake.md` จากนั้น analyst เขียน `brief.md`
+</Step>
+<Step title="ระบุให้ชัด">
+agent ฝั่ง product owner เขียน `prd.md` และ `stories.md` ส่วน business analyst เพิ่ม `business-flow.md`
+ระบบจะหยุดให้คุณอนุมัติ `requirements` ถ้างานมี UI จะมี `ux-spec.md` ตามมาและต้องอนุมัติแยกอีกครั้ง
+</Step>
+<Step title="ออกแบบ">
+architect เขียน `tech-spec.md`, `api-contract.yaml` และ ADR สำหรับทุกการตัดสินใจสำคัญ
+พร้อม `migration-plan.md` เมื่อมีการแก้ schema และ `infra-plan.md` เมื่อ item ตั้ง `has_infra_change`
+คุณอนุมัติ `architecture` จากนั้น planner เขียน `plan.md`
+</Step>
+<Step title="สร้าง">
+ทุก task ใน `plan.md` ส่งให้ agent ฝั่ง backend หรือ frontend ครั้งละหนึ่ง task พอจบแต่ละ task
+CLI จะรัน check ของ layer นั้นและบันทึกผลต่อท้าย `impl-log.md`
+</Step>
+<Step title="พิสูจน์">
+tester เขียน `test-plan.md` และ `test-report.md` reviewer รันพร้อมกันและเขียน `review/<reviewer>.md`
+ซึ่ง CLI รวมเป็น `review-report.md` finding ที่บล็อกจะกลายเป็น task แบบ `FIX-` แล้วงานย้อนกลับไป build
+จากนั้น QA เขียน `qa-report.md` พร้อม traceability matrix และคำตัดสิน Go/No-Go
+</Step>
+<Step title="ปล่อยงาน">
+release agent เขียน `release-notes.md` เพิ่ม `runbook.md` เมื่องานแก้ฐานข้อมูล และเพิ่มรายการใน CHANGELOG
+คุณอนุมัติ `release`
+</Step>
+</Steps>
+
+## ย้อนรอยจากคำขอถึง release
+
+ทุก requirement, story, criterion, test และ finding มี ID และทุกผลลัพธ์ที่ตามมาอ้างกลับไปหาของก่อนหน้า
+นี่คือสิ่งที่ทำให้ QA พิสูจน์ได้ว่าครอบคลุม แทนที่จะแค่บอกว่าครอบคลุม
+
+<TraceChain />
+
+สายนี้คือสิ่งที่ `qa-report.md` บันทึกเป็น traceability matrix และ script gate ก็อ่านมันด้วย
+Must requirement ที่ไม่มี story อ้างถึง, acceptance criterion ที่ไม่มี test case และแถวใน matrix ที่ไม่ผ่าน
+แต่ละกรณีทำให้ phase ไม่ผ่าน
+
+## วงที่ทำให้เป็นวงจร
+
+วงจรนี้คือการวน ต่อไปนี้คือทางที่งานวนกลับมาใน Jarvis
+
+| วง | อะไรเป็นตัวกระตุ้น | เกิดอะไรขึ้น |
+|---|---|---|
+| Gate retry | script check หรือ gatekeeper ตัดสินว่า phase ไม่ผ่าน | agent ตัวเดิมได้รับรายการปัญหากลับไปแก้ ซ้ำได้ถึง `gates.max_retries` (ค่าเริ่มต้น 3) จากนั้นคุณเลือกได้ว่าจะ retry, แก้เอง, force ผ่านพร้อมเหตุผล หรือ park item |
+| Review loop-back | reviewer รายงาน finding ที่ระดับบล็อก | item กลับไป build พร้อม task แบบ `FIX-` หนึ่งตัวต่อหนึ่ง finding |
+| Reopen | phase ที่อนุมัติไปแล้วพบว่าผิด | คุณรัน `reopen` ซึ่งรีเซ็ต phase นั้นและทุก phase หลังจากนั้น |
+| Postmortem | ปล่อย hotfix แล้ว | phase postmortem บันทึก timeline แบบไม่กล่าวโทษใคร และ action item กลายเป็น work item ตามงาน |
+| Codebase health | report ล่าสุดเก่ากว่า `staff_review.max_age_days` (ค่าเริ่มต้น 30 วัน) | status line เตือน และ `/jarvis-health` ตรวจ architecture drift กับ tech debt ทั้ง repo |
+| Portfolio | มี work item ที่ยังทำอยู่มากกว่าหนึ่งตัว | `/jarvis-portfolio` แสดง phase ของแต่ละ item สิ่งที่มันรออยู่ และไฟล์ที่สอง item วางแผนจะแก้ตรงกัน |
+
+<Callout kind="note" title="การ force ถูกบันทึกไว้เสมอ">
+เมื่อ gate ถูก force Jarvis จะเก็บว่าใครสั่ง เมื่อไร และเพราะอะไร เปิด chore item ตามงานสำหรับ finding ที่ยังค้าง
+และระบุ gate ที่ถูก force ไว้ทั้งใน `qa-report.md` และ `release-notes.md`
+</Callout>
+
+## ไปต่อที่ไหน
+
+- [เวิร์กโฟลว์](/docs/workflows) แสดงงานทั้ง 10 ประเภทพร้อมลำดับ phase
+- [เกต](/docs/gates) อธิบาย gate สามชั้น ระดับความรุนแรง และกฎการ force
+- [เอเจนต์](/docs/agents) รวม agent ทุกตัวพร้อม tools, inputs และ outputs
+- [เริ่มต้นใช้งาน](/docs/getting-started) ติดตั้ง Jarvis และรัน work item แรก

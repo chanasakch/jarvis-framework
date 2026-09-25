@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-test("the SDLC pipeline is keyboard operable: arrow keys move between phases", async ({ page }) => {
+test("the SDLC pipeline is keyboard operable: arrow keys move between phases", async ({
+  page,
+}) => {
   await page.goto("/");
   // The default work-type tab is alphabetically first (bugfix), not "feature" — select
   // it explicitly so the phase list this test asserts on is the one it expects.
@@ -12,10 +14,15 @@ test("the SDLC pipeline is keyboard operable: arrow keys move between phases", a
   await page.keyboard.press("ArrowRight");
   const secondPhaseTab = page.getByRole("tab", { name: "brief" });
   await expect(secondPhaseTab).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByText("jarvis-analyst")).toBeVisible();
+  // Scoped to the pipeline: the lifecycle section above it also names this agent (its
+  // Discover stage), so an unscoped text match would be ambiguous.
+  const pipeline = page.locator("section", { has: firstPhaseTab });
+  await expect(pipeline.getByText("jarvis-analyst")).toBeVisible();
 });
 
-test("switching work-type tabs updates the visible phase list", async ({ page }) => {
+test("switching work-type tabs updates the visible phase list", async ({
+  page,
+}) => {
   await page.goto("/");
   // The default work-type tab is alphabetically first (bugfix, not "feature") — select
   // "feature" explicitly to establish a known baseline before switching away from it.
@@ -25,7 +32,9 @@ test("switching work-type tabs updates the visible phase list", async ({ page })
   await expect(page.getByRole("tab", { name: "postmortem" })).toBeVisible();
 });
 
-test("reduced motion renders the terminal replay's final frame statically, with no play controls", async ({ page }) => {
+test("reduced motion renders the terminal replay's final frame statically, with no play controls", async ({
+  page,
+}) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   // The last frame's content (the forced-gate output) should already be visible with no interaction.
@@ -34,9 +43,14 @@ test("reduced motion renders the terminal replay's final frame statically, with 
   await expect(page.getByRole("button", { name: "Play" })).toHaveCount(0);
 });
 
-test("the terminal replay does not shift layout as frames reveal", async ({ page }) => {
+test("the terminal replay does not shift layout as frames reveal", async ({
+  page,
+}) => {
   await page.goto("/");
-  const terminal = page.locator("text=jarvis — session").locator("..").locator("..");
+  const terminal = page
+    .locator("text=jarvis — session")
+    .locator("..")
+    .locator("..");
   const initialBox = await terminal.boundingBox();
   await page.waitForTimeout(2500); // one frame tick
   const laterBox = await terminal.boundingBox();
@@ -56,11 +70,17 @@ test("pipeline connectors fill up to the selected phase", async ({ page }) => {
   await page.getByRole("tab", { name: "feature", exact: true }).click();
   await page.getByRole("tab", { name: "architecture", exact: true }).click();
   // architecture is phase 6 → the 5 connectors before it are filled.
-  await expect(page.locator("line.pipeline-segment.stroke-brand")).toHaveCount(5);
-  await expect(page.getByRole("heading", { name: "architecture", level: 3 })).toBeVisible();
+  await expect(page.locator("line.pipeline-segment.stroke-brand")).toHaveCount(
+    5,
+  );
+  await expect(
+    page.getByRole("heading", { name: "architecture", level: 3 }),
+  ).toBeVisible();
 });
 
-test("reduced motion: pipeline nodes and connectors render with no stagger or duration", async ({ page }) => {
+test("reduced motion: pipeline nodes and connectors render with no stagger or duration", async ({
+  page,
+}) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   const timing = await page
@@ -74,12 +94,17 @@ test("reduced motion: pipeline nodes and connectors render with no stagger or du
   expect(timing[1]).toBeLessThan(0.001);
 });
 
-test("on narrow screens the phase list is vertical and ArrowDown moves the selection", async ({ page }) => {
+test("on narrow screens the phase list is vertical and ArrowDown moves the selection", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/");
   const phases = page.getByRole("tablist", { name: "Phases" });
   await expect(phases).toHaveAttribute("aria-orientation", "vertical");
   await phases.getByRole("tab").first().focus();
   await page.keyboard.press("ArrowDown");
-  await expect(phases.getByRole("tab").nth(1)).toHaveAttribute("aria-selected", "true");
+  await expect(phases.getByRole("tab").nth(1)).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
 });

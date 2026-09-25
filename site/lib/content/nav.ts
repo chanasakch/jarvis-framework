@@ -4,7 +4,7 @@ import type { Dictionary } from "@/lib/i18n";
  *  Titles are localized — resolved from Dictionary["docsNav"]/["docsNavGroups"] by the
  *  sidebar component, not hardcoded here. */
 export const DOCS_NAV: { group: keyof Dictionary["docsNavGroups"]; items: (keyof Dictionary["docsNav"])[] }[] = [
-  { group: "start", items: ["introduction", "getting-started", "concepts"] },
+  { group: "start", items: ["introduction", "sdlc", "getting-started", "concepts"] },
   { group: "reference", items: ["commands", "agents", "workflows", "gates", "standards", "configuration"] },
   { group: "team", items: ["team", "troubleshooting", "faq"] },
 ];
