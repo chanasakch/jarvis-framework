@@ -29,6 +29,10 @@ A failed script or agent gate sends the issues back to the same agent and increm
 attempt counter. At `gates.max_retries` (default 3), the orchestrator stops and prints the
 Gate Failure Menu instead of retrying.
 
+Try it yourself: choose whether each gate passes or fails, and watch the phase move.
+
+<GateSimulator />
+
 ## The Gate Failure Menu
 
 The orchestrator prints this menu, copied here verbatim:
@@ -52,6 +56,8 @@ If you ask Claude to force a gate at any other point, it prints the same menu wi
 current issues. It never runs `force` itself.
 
 ## Phase statuses
+
+<StatusMachine />
 
 | Status | Meaning | Set by |
 |---|---|---|

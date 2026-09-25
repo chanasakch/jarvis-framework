@@ -1,3 +1,5 @@
+import { Reveal } from "@/components/ui/reveal";
+import { stagger } from "@/lib/reveal";
 import generatedTh from "@/content/i18n/generated.th.json";
 import { getStandards } from "@/lib/generated/loaders";
 import { translate } from "@/lib/generated/translatable";
@@ -11,12 +13,12 @@ export function StandardsIndex({ locale }: { locale: Locale }) {
   const standards = getStandards();
 
   return (
-    <div className="not-prose my-6 space-y-3">
-      {standards.map((s) => {
+    <Reveal className="not-prose my-6 space-y-3">
+      {standards.map((s, i) => {
         const must = s.rules.filter((r) => r.level === "MUST").length;
         const should = s.rules.length - must;
         return (
-          <div key={s.id} id={`std-${s.id}`} className="scroll-mt-24 rounded-lg border border-border p-4">
+          <div key={s.id} id={`std-${s.id}`} style={stagger(i)} className="reveal scroll-mt-24 rounded-lg border border-border p-4">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <code className="font-mono text-sm font-medium">{s.file}</code>
               <span className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs">{s.area}-</span>
@@ -41,6 +43,6 @@ export function StandardsIndex({ locale }: { locale: Locale }) {
           </div>
         );
       })}
-    </div>
+    </Reveal>
   );
 }

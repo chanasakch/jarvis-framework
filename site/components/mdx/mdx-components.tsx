@@ -13,11 +13,17 @@ import { JarvisBridge } from "@/components/sdlc/jarvis-bridge";
 import { DoraMetrics } from "@/components/sdlc/metrics";
 import { ModelsCompare } from "@/components/sdlc/models-compare";
 import { WhoWhen } from "@/components/sdlc/who-when";
+import { FlowDiagram } from "@/components/viz/flow-diagram";
+import { OwnershipMap } from "@/components/viz/ownership-map";
+import { StandardsMap } from "@/components/viz/standards-map";
+import { GateSimulator } from "@/components/viz/gate-simulator";
+import { StatusMachine } from "@/components/viz/status-machine";
 import { RoleMap } from "@/components/sdlc/role-map";
 import { SdlcLifecycle } from "@/components/sdlc/sdlc-lifecycle";
 import { TraceChain } from "@/components/sdlc/trace-chain";
 import { StandardsIndex } from "@/components/reference/standards-index";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getStandards } from "@/lib/generated/loaders";
 import { getDictionary, localizeHref, type Locale } from "@/lib/i18n";
 
 /**
@@ -104,5 +110,10 @@ export function getMdxComponents(locale: Locale) {
   WhoWhen: () => <WhoWhen dict={getDictionary(locale)} />,
   DoraMetrics: () => <DoraMetrics dict={getDictionary(locale)} />,
   JarvisBridge: () => <JarvisBridge dict={getDictionary(locale)} />,
+  GateSimulator: () => <GateSimulator dict={getDictionary(locale)} />,
+  StatusMachine: () => <StatusMachine dict={getDictionary(locale)} />,
+  OwnershipMap: () => <OwnershipMap dict={getDictionary(locale)} />,
+  StandardsMap: () => <StandardsMap dict={getDictionary(locale)} standards={getStandards()} />,
+  FlowDiagram: ({ flow }: { flow: "overview" | "handoff" | "guard" }) => <FlowDiagram dict={getDictionary(locale)} flow={flow} />,
   };
 }

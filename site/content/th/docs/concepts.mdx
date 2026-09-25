@@ -148,12 +148,16 @@ state ของ work item แต่ละตัวเก็บอยู่ใน
 ถ้า `guard.js` มีบั๊กเอง จะ fail open คือปล่อยให้ tool call ผ่านไป แทนที่จะทำให้ session พังใช้ต่อไม่ได้
 guard ที่ error จึงไม่ทำให้คุณทำงานต่อไม่ได้
 
+<FlowDiagram flow="guard" />
+
 ## การส่งต่องานแบบ file-based
 
 agent ส่ง path ของไฟล์ให้กัน ไม่แปะเนื้อหาส่งต่อกัน artifact ทุกชิ้นที่ phase สร้างขึ้นจะเก็บอยู่ใน
 `docs/work/<ID>-<slug>/` (ผลรีวิวอยู่ในโฟลเดอร์ย่อย `review/`) agent ตัวถัดไปจะได้ path เหล่านี้ในรายการ
 `read` ของ Handoff Brief ไม่ได้ข้อความตัวจริง วิธีนี้ทำให้ context เล็ก แต่ละ artifact รีวิวแยกกันใน git ได้
 และ orchestrator ก็ส่งงานให้ agent ตัวใหม่ได้ทุก phase (และทุก task ระหว่าง implement) โดยไม่มีข้อมูลตกหล่น
+
+<FlowDiagram flow="handoff" />
 
 ## ขั้นตอนถัดไป
 

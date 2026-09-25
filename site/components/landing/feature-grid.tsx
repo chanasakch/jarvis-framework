@@ -1,6 +1,8 @@
 import { Ban, FileCode2, GitBranch, Hash, ShieldCheck, Users2, type LucideIcon } from "lucide-react";
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { stagger } from "@/lib/reveal";
 import type { Dictionary } from "@/lib/i18n";
 import { CONTAINER } from "@/lib/layout";
 import { cn } from "@/lib/utils";
@@ -25,11 +27,11 @@ export function FeatureGrid({ dict }: { dict: Dictionary }) {
         <p className="mt-2 text-sm text-muted-foreground">{features.subhead}</p>
       </div>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map(([key, item]) => {
+      <Reveal className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map(([key, item], i) => {
           const Icon = ICONS[key];
           return (
-            <Card key={key}>
+            <Card key={key} style={stagger(i)} className="reveal">
               <CardHeader>
                 <Icon aria-hidden="true" className="mb-2 size-5 text-brand" />
                 <CardTitle>{item.title}</CardTitle>
@@ -38,7 +40,7 @@ export function FeatureGrid({ dict }: { dict: Dictionary }) {
             </Card>
           );
         })}
-      </div>
+      </Reveal>
     </section>
   );
 }

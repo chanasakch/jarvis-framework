@@ -453,6 +453,14 @@
   animation: fade-in-soft var(--motion-chart) ease-out both;
   animation-delay: 350ms;
 }
+/* Horizontal bars (the standards chart): each grows from the left, a little after the last. */
+.bar-fill {
+  transform-origin: left center;
+}
+[data-seen="true"] .bar-fill {
+  animation: bar-grow 700ms ease-out both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
 /* Delivery-model diagrams: each has one small sequence of its own. */
 .model-bar {
   transform-box: fill-box;
@@ -475,6 +483,46 @@
   /* Two laps of the loop, about 3.8s in all, then it rests. */
   animation: dot-travel 1900ms linear 2 both;
   animation-delay: 300ms;
+}
+
+/* Steps (docs procedures): the number pops and the line to the next step draws down, once. */
+.step-line {
+  transform-origin: top;
+  /* Drawn by default, so a step's line is visible before it scrolls in and without JS. */
+}
+[data-seen="true"].step .step-number {
+  animation: reveal-pop var(--motion-base) ease-out both;
+}
+[data-seen="true"].step .step-line {
+  animation: trace-draw-y var(--motion-travel) ease-out both;
+  animation-delay: 120ms;
+}
+
+/* Count-up numbers. The final value is the resting state (`--num` = `--n`), so without
+ * animation support, and before the section scrolls in, the real number is shown. Where
+ * @property is supported, --num is an integer and animates from 0, so the counter ticks.
+ * Where it is not, the custom property flips at the midpoint of the animation instead.
+ * Either way it ends on the real number and never shows a wrong one at rest. */
+@property --num {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
+@keyframes stat-count {
+  from {
+    --num: 0;
+  }
+}
+.stat-num {
+  --num: var(--n, 0);
+  counter-reset: stat var(--num);
+}
+.stat-num::after {
+  content: counter(stat);
+}
+[data-seen="true"] .stat-num {
+  animation: stat-count var(--motion-chart) ease-out both;
+  animation-delay: calc(var(--i, 0) * 5 * var(--motion-stagger));
 }
 
 @media (prefers-reduced-motion: reduce) {

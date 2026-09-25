@@ -27,6 +27,10 @@ architecture และ release) แต่ละ workflow กำหนดค่�
 ถ้า script gate หรือ agent gate ไม่ผ่าน ปัญหาที่เจอจะถูกส่งกลับไปให้ agent ตัวเดิม และตัวนับจำนวนครั้งจะเพิ่มขึ้น
 เมื่อครบ `gates.max_retries` (ค่าเริ่มต้น 3) orchestrator จะหยุดลองใหม่และแสดง Gate Failure Menu แทน
 
+ลองเล่นดูเอง เลือกว่าแต่ละ gate ผ่านหรือไม่ผ่าน แล้วดู phase เคลื่อนไป
+
+<GateSimulator />
+
 ## Gate Failure Menu
 
 orchestrator แสดงเมนูนี้ออกมาตามนี้ทุกตัวอักษร
@@ -50,6 +54,8 @@ Options:
 Claude ไม่รัน `force` เองเด็ดขาด
 
 ## สถานะของ phase
+
+<StatusMachine />
 
 | Status | ความหมาย | ใครเป็นคนตั้ง |
 |---|---|---|

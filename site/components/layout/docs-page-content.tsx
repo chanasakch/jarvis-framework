@@ -5,6 +5,8 @@ import { AgentsCatalog } from "@/components/reference/agents-catalog";
 import { CommandsExplorer } from "@/components/reference/commands-explorer";
 import { ConfigReference } from "@/components/reference/config-reference";
 import { SdlcPipeline } from "@/components/landing/sdlc-pipeline";
+import { CommandMap } from "@/components/viz/command-map";
+import { WorkflowMatrix } from "@/components/viz/workflow-matrix";
 import { DOCS_SLUGS, type DocSlug } from "@/lib/content/nav";
 import { docExists, loadDoc } from "@/lib/content/mdx";
 import { getAgents, getCli, getCommands, getConfigKeys, getWorkflows } from "@/lib/generated/loaders";
@@ -38,9 +40,26 @@ export function docsMetadata(locale: Locale, slugParts: string[]): Metadata {
 }
 
 function ReferenceBody({ locale, dict, slug }: { locale: Locale; dict: Dictionary; slug: string }) {
-  if (slug === "commands") return <CommandsExplorer locale={locale} dict={dict} commands={getCommands()} cli={getCli()} />;
+  if (slug === "commands") {
+    const commands = getCommands();
+    const cli = getCli();
+    return (
+      <>
+        <CommandMap dict={dict} commands={commands} cli={cli} />
+        <CommandsExplorer locale={locale} dict={dict} commands={commands} cli={cli} />
+      </>
+    );
+  }
   if (slug === "agents") return <AgentsCatalog locale={locale} dict={dict} agents={getAgents()} />;
-  if (slug === "workflows") return <SdlcPipeline dict={dict} workflows={getWorkflows()} embedded />;
+  if (slug === "workflows") {
+    const workflows = getWorkflows();
+    return (
+      <>
+        <WorkflowMatrix dict={dict} workflows={workflows} />
+        <SdlcPipeline dict={dict} workflows={workflows} embedded />
+      </>
+    );
+  }
   return <ConfigReference locale={locale} dict={dict} configKeys={getConfigKeys()} />;
 }
 

@@ -150,6 +150,8 @@ above at the tool level instead of relying on an agent to follow its instruction
 A bug inside `guard.js` fails open: it allows the call rather than bricking the session. A
 guard error never stops you from working.
 
+<FlowDiagram flow="guard" />
+
 ## File-based handoff
 
 Agents exchange file paths, never pasted content. Every artifact a phase produces lives
@@ -158,6 +160,8 @@ chain receives those paths in its Handoff Brief's `read` list, not the text itse
 context small and makes every artifact reviewable on its own in git. It also lets the
 orchestrator hand off to a fresh agent per phase (and per task during implement) without
 losing anything.
+
+<FlowDiagram flow="handoff" />
 
 ## Where to go next
 

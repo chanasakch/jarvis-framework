@@ -7,6 +7,9 @@ const basePath = process.env.SITE_BASE_PATH ?? "";
 
 const nextConfig: NextConfig = {
   output: "export",
+  // Chrome (unlike Safari) sends Origin on /_next CSS/JS when the page is opened
+  // through a tunnel. Next.js 16 blocks those in `next dev` unless listed here.
+  allowedDevOrigins: ["*.ngrok-free.dev", "*.ngrok-free.app"],
   basePath: basePath || undefined,
   // Next asks for this to also apply to non-HTML assets when basePath is set.
   assetPrefix: basePath ? `${basePath}/` : undefined,

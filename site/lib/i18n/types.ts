@@ -1,3 +1,4 @@
+import type { OwnedPath } from "@/lib/viz/ownership";
 import type { BridgeId, CostPointId, MetricId, ModelId, RoleId, StageId, WhoId } from "@/lib/sdlc/model";
 
 export const LOCALES = ["en", "th"] as const;
@@ -275,6 +276,97 @@ export interface Dictionary {
         report: { label: string; caption: string };
       };
     };
+  };
+
+  /** Data-driven diagrams and other visual explainers outside the SDLC page. */
+  viz: {
+    stats: {
+      heading: string;
+      items: { agents: string; workTypes: string; rules: string; commands: string };
+    };
+    workflowMatrix: {
+      intro: string;
+      caption: string;
+      workTypeHeader: string;
+      phasesHeader: string;
+      approvalsHeader: string;
+      run: string;
+      approval: string;
+      optional: string;
+      conditional: string;
+      none: string;
+      legendRun: string;
+      legendApproval: string;
+      legendOptional: string;
+      legendConditional: string;
+    };
+    gateSim: {
+      intro: string;
+      approvalToggle: string;
+      trackLabel: string;
+      nodes: { agent: string; script: string; gatekeeper: string; approval: string; next: string };
+      captions: { agent: string; script: string; gatekeeper: string; approval: string; next: string };
+      attempts: string;
+      returned: string;
+      now: { agent: string; script: string; gatekeeper: string; approval: string; menu: string; next: string; parked: string };
+      actions: { done: string; pass: string; fail: string; approve: string; retry: string; force: string; park: string; restart: string };
+      menu: { title: string; o1: string; o2: string; o3: string; o4: string };
+      log: {
+        title: string;
+        empty: string;
+        entries: { agentDone: string; scriptPass: string; scriptFail: string; gatePass: string; gateFail: string; approved: string; menu: string; retry: string; forced: string; parked: string };
+      };
+      humanOnly: string;
+    };
+    statusMachine: {
+      intro: string;
+      lanes: { cli: string; claude: string; you: string };
+      unlock: string;
+      skippedNote: string;
+    };
+    flows: {
+      replay: string;
+      overview: {
+        ariaLabel: string;
+        returned: string;
+        steps: Record<"request" | "orchestrator" | "agent" | "gate" | "next", { title: string; caption: string }>;
+      };
+      handoff: {
+        ariaLabel: string;
+        steps: Record<"brief" | "read" | "write" | "result" | "gate", { title: string; caption: string }>;
+      };
+      guard: {
+        ariaLabel: string;
+        allow: string;
+        block: string;
+        steps: Record<"call" | "guard" | "outcome" | "post", { title: string; caption: string }>;
+      };
+    };
+    ownership: {
+      intro: string;
+      framework: { title: string; note: string };
+      project: { title: string; note: string };
+      runtime: { title: string; note: string };
+      paths: Record<OwnedPath, string>;
+    };
+    commandMap: {
+      intro: string;
+      claude: string;
+      slash: string;
+      cli: string;
+      you: string;
+      barrier: string;
+      note: string;
+    };
+    standardsMap: {
+      intro: string;
+      total: string;
+      must: string;
+      should: string;
+      jump: string;
+    };
+    changelog: { latest: string; sectionLabels: string };
+    // viz:end
   };
 
   changelog: {

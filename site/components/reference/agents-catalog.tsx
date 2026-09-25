@@ -1,5 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Reveal } from "@/components/ui/reveal";
+import { stagger } from "@/lib/reveal";
 import generatedTh from "@/content/i18n/generated.th.json";
 import type { Agent } from "@/lib/generated/schemas";
 import { translate } from "@/lib/generated/translatable";
@@ -10,9 +12,9 @@ export function AgentsCatalog({ locale, dict, agents }: { locale: Locale; dict: 
   const t = dict.reference.agents;
 
   return (
-    <div className="not-prose grid gap-4 sm:grid-cols-2">
-      {agents.map((a) => (
-        <Card key={a.id}>
+    <Reveal className="not-prose grid gap-4 sm:grid-cols-2">
+      {agents.map((a, i) => (
+        <Card key={a.id} style={stagger(i)} className="reveal">
           <CardHeader>
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="font-mono text-sm">{a.id}</CardTitle>
@@ -42,6 +44,6 @@ export function AgentsCatalog({ locale, dict, agents }: { locale: Locale; dict: 
           </CardContent>
         </Card>
       ))}
-    </div>
+    </Reveal>
   );
 }

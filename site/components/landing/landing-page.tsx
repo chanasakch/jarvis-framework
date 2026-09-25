@@ -3,6 +3,7 @@ import { FinalCta } from "@/components/landing/final-cta";
 import { Hero } from "@/components/landing/hero";
 import { LifecycleSection } from "@/components/landing/lifecycle-section";
 import { ProblemApproach } from "@/components/landing/problem-approach";
+import { StatsStrip } from "@/components/landing/stats-strip";
 import { SdlcPipeline } from "@/components/landing/sdlc-pipeline";
 import { TerminalReplay } from "@/components/landing/terminal-replay";
 import { getWorkflows } from "@/lib/generated/loaders";
@@ -18,6 +19,7 @@ export function LandingPage({ locale, dict }: { locale: Locale; dict: Dictionary
   return (
     <main id="main-content">
       <Hero locale={locale} dict={dict} />
+      <StatsStrip dict={dict} />
       <ProblemApproach dict={dict} />
       <LifecycleSection locale={locale} dict={dict} />
       <SdlcPipeline dict={dict} workflows={workflows} />
