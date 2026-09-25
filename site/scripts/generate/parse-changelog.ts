@@ -5,6 +5,7 @@ import type { ChangelogEntry } from "@/lib/generated/schemas";
 const VERSION_RE = /^## \[(.+?)\] - (\d{4}-\d{2}-\d{2})\s*$/;
 const SECTION_RE = /^### (.+?)\s*$/;
 const ITEM_RE = /^- (.+)$/;
+const CONTINUATION_RE = /^\s{2,}(\S.*)$/;
 
 /** Parses root CHANGELOG.md's Keep a Changelog-style entries. Throws on a file with no
  *  recognizable version heading rather than silently shipping an empty changelog page. */
@@ -34,6 +35,16 @@ export function parseChangelog(filePath: string): ChangelogEntry[] {
     const itemMatch = line.match(ITEM_RE);
     if (itemMatch && currentSection) {
       currentSection.items.push(itemMatch[1]!);
+      continue;
+    }
+
+    // A bullet wrapped onto the next lines: Keep a Changelog files break long bullets at about
+    // 90 columns and indent the rest. Without this only the first line of each bullet survived,
+    // so a release note ended mid-sentence.
+    const continuation = line.match(CONTINUATION_RE);
+    if (continuation && currentSection && currentSection.items.length > 0) {
+      const last = currentSection.items.length - 1;
+      currentSection.items[last] = `${currentSection.items[last]} ${continuation[1]!.trim()}`;
     }
   }
 
