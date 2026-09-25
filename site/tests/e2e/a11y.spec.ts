@@ -27,6 +27,16 @@ for (const path of PAGES) {
     // observers a moment to fire, then wait until nothing finite is still running. This
     // does not hide a real contrast problem: axe then measures the final colours a reader
     // actually sees.
+    //
+    // Content that plays itself is the other source. The landing page's terminal replay swaps
+    // in a new frame every 2.2s and fades it in, and text caught mid-fade is half transparent:
+    // axe read one line as #959595 on #f5f5f5, 2.74:1, on a slower CI runner (a 200ms window
+    // that a fast laptop rarely lands in, so it passed locally). Freezing a frame mid-fade
+    // reproduces the same class of violation on demand; pausing the replay first, as a reader
+    // can with its pause control, and then settling is clean even when begun at the worst moment.
+    const pauses = page.getByRole("button", { name: /^(Pause|หยุด)/ });
+    for (let n = 0; n < 5 && (await pauses.count()) > 0; n++)
+      await pauses.first().click();
     await page.waitForTimeout(300);
     await page.waitForFunction(
       () =>
