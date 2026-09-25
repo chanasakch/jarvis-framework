@@ -6,7 +6,6 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 
 import { StatusBadge } from "@/components/mdx/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import type { Workflow, WorkflowPhase } from "@/lib/generated/schemas";
 import type { Dictionary } from "@/lib/i18n";
 import { CONTAINER } from "@/lib/layout";
@@ -187,21 +186,34 @@ function WorkflowPipeline({ workflow, pipeline }: { workflow: Workflow; pipeline
   const [selected, setSelected] = useState(phases[0]?.id ?? "");
   const selectedIndex = Math.max(0, phases.findIndex((p) => p.id === selected));
   const wide = useIsWide();
-  const reducedMotion = useReducedMotion();
   const listRef = useRef<HTMLDivElement>(null);
-  const firstRender = useRef(true);
+  // Set when the reader picks a phase, consumed by the effect below. Scrolling the strip is a
+  // response to that pick and to nothing else, so it can never run on load: not in development,
+  // where React runs effects twice, and not for a reader whose reduced-motion preference is read
+  // after mount. (An earlier version guarded with a "first render" flag and a reducedMotion
+  // dependency; the second effect run and the preference change both got past it and scrolled
+  // the whole page, DECISIONS.md D-057.)
+  const userPicked = useRef(false);
   const approvals = phases.filter((p) => p.approval === "human").length;
 
-  // Keep the selected node visible when the track scrolls horizontally (narrow containers).
+  const pick = (id: string) => {
+    userPicked.current = true;
+    setSelected(id);
+  };
+
+  // Keep the picked phase in view when the strip scrolls sideways (narrow containers). This moves
+  // the strip's own scroller only. scrollIntoView would also scroll every ancestor, and the page
+  // is one of them.
   useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
-    listRef.current
-      ?.querySelector<HTMLElement>('[role="tab"][data-state="active"]')
-      ?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: reducedMotion ? "auto" : "smooth" });
-  }, [selected, reducedMotion]);
+    if (!userPicked.current) return;
+    userPicked.current = false;
+    const strip = listRef.current;
+    const scroller = strip?.parentElement;
+    const tab = strip?.querySelector<HTMLElement>('[role="tab"][data-state="active"]');
+    if (!scroller || !tab || scroller.scrollWidth <= scroller.clientWidth) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    scroller.scrollTo({ left: tab.offsetLeft + tab.offsetWidth / 2 - scroller.clientWidth / 2, behavior: reduce ? "auto" : "smooth" });
+  }, [selected]);
 
   const stateOf = (i: number): NodeState => (i < selectedIndex ? "done" : i === selectedIndex ? "current" : "upcoming");
 
@@ -212,7 +224,7 @@ function WorkflowPipeline({ workflow, pipeline }: { workflow: Workflow; pipeline
         <p className="text-xs text-muted-foreground">{fill(pipeline.summary, { phases: phases.length, approvals })}</p>
       </div>
 
-      <TabsPrimitive.Root value={selected} onValueChange={setSelected} orientation={wide ? "horizontal" : "vertical"}>
+      <TabsPrimitive.Root value={selected} onValueChange={pick} orientation={wide ? "horizontal" : "vertical"}>
         <div className="md:-mx-1 md:overflow-x-auto md:px-1 md:pt-2 md:pb-3">
           <TabsPrimitive.List
             ref={listRef}
