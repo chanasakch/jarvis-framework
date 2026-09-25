@@ -20,31 +20,54 @@ for (const path of PAGES) {
     await page.goto(path);
     // Check the settled page: an element mid fade-in (e.g. the pipeline's staggered
     // entrance) has partial opacity and would report a transient contrast failure.
-    await page.evaluate(() =>
-      Promise.all(
+    //
+    // Some sections only start animating once an IntersectionObserver reports them on
+    // screen (the SDLC explainer's reveals), which happens a frame or two AFTER load. A
+    // single snapshot of getAnimations() taken straight away misses those, so give the
+    // observers a moment to fire, then wait until nothing finite is still running. This
+    // does not hide a real contrast problem: axe then measures the final colours a reader
+    // actually sees.
+    await page.waitForTimeout(300);
+    await page.waitForFunction(
+      () =>
         document
           .getAnimations()
-          .filter((a) => a.effect?.getTiming().iterations !== Infinity)
-          .map((a) => a.finished.catch(() => undefined)),
-      ),
+          .every(
+            (a) =>
+              a.effect?.getTiming().iterations === Infinity ||
+              a.playState === "finished",
+          ),
+      undefined,
+      { polling: 100, timeout: 10_000 },
     );
-    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
-    expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa"])
+      .analyze();
+    expect(
+      results.violations,
+      JSON.stringify(results.violations, null, 2),
+    ).toEqual([]);
   });
 }
 
-test("command palette opens with ⌘K/Ctrl+K and is keyboard operable", async ({ page }) => {
+test("command palette opens with ⌘K/Ctrl+K and is keyboard operable", async ({
+  page,
+}) => {
   await page.goto("/");
   await page.keyboard.press("Control+k");
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await page.keyboard.type("getting");
-  await expect(dialog.getByRole("option", { name: "Getting Started" })).toBeVisible();
+  await expect(
+    dialog.getByRole("option", { name: "Getting Started" }),
+  ).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog).not.toBeVisible();
 });
 
-test("skip link is the first focusable element and targets main content", async ({ page }) => {
+test("skip link is the first focusable element and targets main content", async ({
+  page,
+}) => {
   await page.goto("/");
   await page.keyboard.press("Tab");
   const focused = page.locator(":focus");
@@ -55,7 +78,9 @@ test("skip link is the first focusable element and targets main content", async 
 // Navigates to the exact mirrored page. This is a full page navigation, not a soft
 // client-side transition — see DECISIONS.md D-025 for why that's an accepted, disclosed
 // deviation from SITE_SPEC.md under static export on GitHub Pages.
-test("language switch navigates to the exact mirrored page", async ({ page }) => {
+test("language switch navigates to the exact mirrored page", async ({
+  page,
+}) => {
   await page.goto("/docs/getting-started");
   await page.getByRole("link", { name: "ไทย", exact: true }).click();
   await expect(page).toHaveURL(/\/th\/docs\/getting-started\/?$/);
