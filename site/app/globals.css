@@ -536,3 +536,46 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ---- Hero HUD backdrop (DECISIONS.md D-059) ------------------------------------------------
+   The one deliberate exception to "nothing loops": a faint, decorative, aria-hidden drawing that
+   turns slowly. It is paused by default (static drawing), runs only while hero-hud.tsx marks it
+   data-hud-running (not paused by the reader, on screen, tab visible), and has a pause button
+   (WCAG 2.2.2). Reduce Motion collapses these through the global rule above, leaving the static
+   drawing. Only transform and opacity animate. */
+.hud-anim {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation-play-state: paused;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+[data-hud-running="true"] .hud-anim {
+  animation-play-state: running;
+}
+.hud-spin { animation-name: hud-spin; animation-duration: 80s; }
+.hud-spin-slow { animation-name: hud-spin; animation-duration: 140s; }
+.hud-spin-slower { animation-name: hud-spin; animation-duration: 240s; }
+.hud-spin-rev { animation-name: hud-spin-rev; animation-duration: 100s; }
+.hud-spin-rev-slow { animation-name: hud-spin-rev; animation-duration: 160s; }
+.hud-sweep { animation-name: hud-spin; animation-duration: 18s; }
+.hud-scan { animation-name: hud-scan; animation-duration: 12s; opacity: 0; }
+.hud-blink { animation-name: hud-blink; animation-duration: 6s; animation-timing-function: ease-in-out; opacity: 0.35; }
+.hud-detail { display: none; }
+@media (min-width: 640px) {
+  .hud-detail { display: inline; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud-toggle { display: none; }
+}
+@keyframes hud-spin { to { transform: rotate(360deg); } }
+@keyframes hud-spin-rev { to { transform: rotate(-360deg); } }
+@keyframes hud-scan {
+  0% { transform: translateY(0); opacity: 0; }
+  10%, 85% { opacity: 0.7; }
+  100% { transform: translateY(600px); opacity: 0; }
+}
+@keyframes hud-blink {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.95; }
+}

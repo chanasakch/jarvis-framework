@@ -93,6 +93,8 @@ export const th: Dictionary = {
       getStarted: "เริ่มต้นใช้งาน",
       viewOnGithub: "ดูใน GitHub",
       copyInstall: "คัดลอกคำสั่งติดตั้ง",
+      hudPause: "หยุดแอนิเมชันพื้นหลัง",
+      hudPlay: "เล่นแอนิเมชันพื้นหลัง",
       copied: "คัดลอกแล้ว",
     },
     problem: {
