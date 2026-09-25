@@ -52,6 +52,15 @@ role-by-stage grid, DORA measures, problem-to-mechanism list). See DECISIONS.md 
 Also fixed: a phone-width sideways scroll from the lifecycle panel (D-052), and an axe test-harness
 race with reveal-on-scroll animations. Verified: 35 unit, 166 e2e + axe, i18n 152/152.
 
+## Visuals across the site — COMPLETE, committed locally, not pushed (2026-09-25)
+
+Animated, data-driven pictures on the workflows, gates, commands, standards, getting-started,
+introduction, concepts and changelog pages plus the landing stats strip; FAQ, Troubleshooting and
+Configuration deliberately left as text. See DECISIONS.md D-056. Also fixed a changelog parser that
+cut every wrapped release note off mid-sentence.
+
+Verified: 56 unit, 278 e2e + axe, i18n 152/152, links with and without basePath.
+
 ## Framework — COMPLETE (steps 0–15, 17; 16 skipped — needs a real project)
 
 See commits `jarvis: step 0` … `jarvis: step 17` and `jarvis: settings.json`.
