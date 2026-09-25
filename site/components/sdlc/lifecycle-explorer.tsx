@@ -1,19 +1,10 @@
 "use client";
 
 import * as TabsPrimitive from "@radix-ui/react-tabs";
-import {
-  FileText,
-  Hammer,
-  Pause,
-  Play,
-  Rocket,
-  Ruler,
-  Search,
-  ShieldCheck,
-  type LucideIcon,
-} from "lucide-react";
+import { Pause, Play } from "lucide-react";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 
+import { STAGE_ICONS } from "@/components/sdlc/stage-icons";
 import { StatusBadge } from "@/components/mdx/status-badge";
 import { Button } from "@/components/ui/button";
 import { useInView } from "@/hooks/use-in-view";
@@ -48,14 +39,6 @@ export interface StageData {
   optional: { phase: string; flag: string }[];
 }
 
-const ICONS: Record<StageId, LucideIcon> = {
-  discover: Search,
-  define: FileText,
-  design: Ruler,
-  build: Hammer,
-  verify: ShieldCheck,
-  ship: Rocket,
-};
 
 /** Time on each stage while the walkthrough plays. Long enough to read the stage's
  *  headline; the reader can pause or pick a stage at any time. */
@@ -109,7 +92,7 @@ function StagePanel({
 }) {
   const L = dict.sdlc.lifecycle;
   const copy = L.stages[stage.id];
-  const Icon = ICONS[stage.id];
+  const Icon = STAGE_ICONS[stage.id];
   const hasApproval = stage.approvals.length > 0;
 
   return (
@@ -176,14 +159,14 @@ function StagePanel({
         <Field label={L.producesLabel}>
           <ul className="flex flex-wrap gap-x-3 gap-y-1">
             {compactPaths(stage.outputs).map((o) => (
-              <li key={o} className="font-mono text-xs text-muted-foreground">
+              <li key={o} className="font-mono text-xs break-all text-muted-foreground">
                 {o}
               </li>
             ))}
             {stage.conditionalOutputs.map((o) => (
               <li
                 key={`${o.flag}:${o.file}`}
-                className="font-mono text-xs text-muted-foreground"
+                className="font-mono text-xs break-all text-muted-foreground"
               >
                 {o.file}{" "}
                 <span className="font-sans">
@@ -321,7 +304,7 @@ export function LifecycleExplorer({
         value={active.id}
         onValueChange={onSelect}
         orientation="horizontal"
-        className="grid items-center gap-8 @4xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]"
+        className="grid grid-cols-[minmax(0,1fr)] items-center gap-8 @4xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]"
       >
         <div>
           <div className="relative mx-auto aspect-square w-full max-w-104">
@@ -441,7 +424,7 @@ export function LifecycleExplorer({
                     : i === pos.index
                       ? "current"
                       : "upcoming";
-                const Icon = ICONS[stage.id];
+                const Icon = STAGE_ICONS[stage.id];
                 return (
                   <TabsPrimitive.Trigger
                     key={stage.id}
