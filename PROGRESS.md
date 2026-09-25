@@ -42,6 +42,16 @@ command (`npx jarvis-framework init`) that never worked, now `npx github:chanasa
 
 Verified: 28 unit tests, 118 e2e + axe (both themes, both locales), typecheck, lint, link check.
 
+## SDLC page: business explainer — COMPLETE (2026-09-25)
+
+`/docs/sdlc` (EN + TH) now opens with what an SDLC is and does in general, then how Jarvis fits;
+the Jarvis sections that were there are kept. Seven new sections, each with a picture that plays
+once (analogy, cost-of-change curve, scroll-linked journey, Waterfall/Agile/DevOps sketches,
+role-by-stage grid, DORA measures, problem-to-mechanism list). See DECISIONS.md D-054.
+
+Also fixed: a phone-width sideways scroll from the lifecycle panel (D-052), and an axe test-harness
+race with reveal-on-scroll animations. Verified: 35 unit, 166 e2e + axe, i18n 152/152.
+
 ## Framework — COMPLETE (steps 0–15, 17; 16 skipped — needs a real project)
 
 See commits `jarvis: step 0` … `jarvis: step 17` and `jarvis: settings.json`.
