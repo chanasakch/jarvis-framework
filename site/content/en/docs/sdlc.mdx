@@ -1,7 +1,78 @@
 ---
 title: SDLC process
-description: The software development lifecycle in six stages, who does each step on a normal team, and where Jarvis puts an agent, a gate or a human approval.
+description: What an SDLC is in business terms, the software development lifecycle in six stages, who does each step on a normal team, and where Jarvis puts an agent, a gate or a human approval.
 ---
+
+## What an SDLC is
+
+SDLC stands for software development lifecycle. It is the set of steps that takes an idea to software
+customers can actually use, from understanding the problem to releasing it and looking after it.
+
+Nobody builds a house by pouring foundations before knowing what the owner wants. Software is the same.
+A team that works in stages is not slower. It is made to answer the right questions while the answers
+are still cheap to change.
+
+<SdlcAnalogy />
+
+## Why a business should care
+
+Executives and owners do not read the code, but they live with what it costs in time, money and customer
+trust. An SDLC is what makes those three predictable. A widely held idea in the software industry is that
+the later a problem is found, the more it costs to fix, because the fix spreads from a misunderstanding to
+documents, designs, code, tests and customers' data.
+
+<CostCurve />
+
+The stages of an SDLC are checkpoints for finding problems while they are still cheap to fix. They are not
+there to create paperwork. What a business gets back is predictability, because you know where the work
+stands, and accountability you can trace, because you know who decided what and why.
+
+## From idea to customer, stage by stage
+
+The made-up example below follows one idea through six stages. Each stage has a business question to
+answer, something that comes out, and something that tends to go wrong if it is skipped. Scroll down to
+follow the journey.
+
+<BusinessJourney />
+
+## How teams work
+
+The six stages above do not mean work goes in one straight line, once. Teams choose different rhythms.
+Three common approaches:
+
+<ModelsCompare />
+
+No approach is the right one. Many teams mix them, for example working in short Agile rounds and using
+DevOps to make releasing routine. What every approach shares is the same six stages. What differs is how
+often the work comes back around.
+
+## Who is involved when
+
+<WhoWhen />
+
+The grid shows why the business belongs in Discover and Define, and not only at Ship. Those first two
+stages belong to the people who know the problem best, and a misunderstanding there is the most expensive
+one on the chart above.
+
+## How to tell whether it works
+
+Four measures from the DORA research programme are widely used to judge how well a team delivers software.
+They look at results the business can see, not at how busy the team is.
+
+<DoraMetrics />
+
+## Where Jarvis comes in
+
+Everything above is about an SDLC in general and has nothing to do with any one tool. Jarvis is a framework
+that runs on Claude Code. It takes work in units called work items and carries each one through these same
+stages. Every stage gets an owner that is an agent, an output that is a file, and a check before the next
+stage can start. The list below pairs problems a typical team runs into with what Jarvis does about each.
+
+<JarvisBridge />
+
+Jarvis does not force a delivery model. Inside one work item the phases run in order, but a team can open
+small work items one after another, so it fits an Agile rhythm, and `/jarvis-portfolio` gives an overview
+when several are open at once. The rest of this page goes into how Jarvis works in each stage.
 
 ## The lifecycle at a glance
 
@@ -18,8 +89,7 @@ stops for good when you pick a stage, and the pause button is always there.
 
 ## What the process is for
 
-A software development lifecycle (SDLC) is the set of steps that turns a request into running
-software. Teams that skip the steps still get software, but the decisions end up in chat
+Teams that skip the steps of an SDLC still get software, but the decisions end up in chat
 threads, requirements drift between the first message and the last commit, and a review
 depends on who happens to be free.
 

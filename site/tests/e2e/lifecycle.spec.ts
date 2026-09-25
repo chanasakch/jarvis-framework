@@ -4,8 +4,12 @@ const STAGES = ["Discover", "Define", "Design", "Build", "Verify", "Ship"];
 /** One autoplay step is 5.2s (AUTOPLAY_MS in components/sdlc/lifecycle-explorer.tsx). */
 const ONE_STEP = 5300;
 
+// Scoped to the lifecycle's own tablist: /docs/sdlc also has a cost chart whose tabs carry
+// the same stage names, so an unscoped role query would match both.
 const stage = (page: Page, name: string) =>
-  page.getByRole("tab", { name, exact: true });
+  page
+    .getByRole("tablist", { name: /SDLC stages|ขั้นของ SDLC/ })
+    .getByRole("tab", { name, exact: true });
 const root = (page: Page) => page.locator("[data-playing]").first();
 const selected = (page: Page, name: string) =>
   expect(stage(page, name)).toHaveAttribute("aria-selected", "true");

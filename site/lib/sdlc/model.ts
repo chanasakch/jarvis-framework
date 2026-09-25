@@ -249,3 +249,40 @@ export function compactPaths(files: string[]): string[] {
   }
   return out;
 }
+
+// ---------------------------------------------------------------------------------------
+// The business-side explainer that precedes the Jarvis lifecycle on /docs/sdlc. Nothing here
+// is about Jarvis: it is what an SDLC is, who is involved when, and how to tell whether one
+// works. Ids only; every word a reader sees lives in the dictionary (EN and TH).
+// ---------------------------------------------------------------------------------------
+
+/** The six stages plus the point after release, where a problem costs the most to fix. */
+export const COST_POINT_IDS = [...STAGE_IDS, "live"] as const;
+export type CostPointId = (typeof COST_POINT_IDS)[number];
+
+export const MODEL_IDS = ["waterfall", "agile", "devops"] as const;
+export type ModelId = (typeof MODEL_IDS)[number];
+
+export const METRIC_IDS = ["leadTime", "frequency", "failureRate", "restoreTime"] as const;
+export type MetricId = (typeof METRIC_IDS)[number];
+
+export const BRIDGE_IDS = ["drift", "decisions", "review", "approval", "skipped", "docs", "parallel"] as const;
+export type BridgeId = (typeof BRIDGE_IDS)[number];
+
+export const WHO_IDS = ["owner", "analyst", "designer", "architect", "developer", "qa", "devops", "pm"] as const;
+export type WhoId = (typeof WHO_IDS)[number];
+
+/** How involved a role typically is in a stage: 2 leads it, 1 takes part, 0 is not involved.
+ *  A typical split, not a rule; teams divide the work differently, and the page says so. */
+export type Involvement = 0 | 1 | 2;
+
+export const WHO_WHEN: Record<WhoId, Record<StageId, Involvement>> = {
+  owner: { discover: 2, define: 2, design: 1, build: 0, verify: 1, ship: 2 },
+  analyst: { discover: 2, define: 2, design: 1, build: 1, verify: 1, ship: 0 },
+  designer: { discover: 0, define: 2, design: 2, build: 1, verify: 1, ship: 0 },
+  architect: { discover: 1, define: 1, design: 2, build: 1, verify: 1, ship: 1 },
+  developer: { discover: 0, define: 1, design: 1, build: 2, verify: 1, ship: 1 },
+  qa: { discover: 0, define: 1, design: 1, build: 1, verify: 2, ship: 1 },
+  devops: { discover: 0, define: 0, design: 1, build: 1, verify: 1, ship: 2 },
+  pm: { discover: 1, define: 1, design: 2, build: 1, verify: 1, ship: 2 },
+};

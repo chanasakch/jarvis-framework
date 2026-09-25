@@ -1,4 +1,4 @@
-import type { RoleId, StageId } from "@/lib/sdlc/model";
+import type { BridgeId, CostPointId, MetricId, ModelId, RoleId, StageId, WhoId } from "@/lib/sdlc/model";
 
 export const LOCALES = ["en", "th"] as const;
 export type Locale = (typeof LOCALES)[number];
@@ -213,6 +213,56 @@ export interface Dictionary {
       commandsLabel: string;
       noAgent: string;
       items: Record<RoleId, { name: string; note: string }>;
+    };
+    /** The plain-language SDLC explainer that comes before the Jarvis lifecycle. */
+    business: {
+      analogy: {
+        ariaLabel: string;
+        houseLabel: string;
+        softwareLabel: string;
+        note: string;
+        steps: Record<StageId, { house: string; software: string }>;
+      };
+      cost: {
+        ariaLabel: string;
+        replay: string;
+        tabsLabel: string;
+        foundHere: string;
+        caption: string;
+        points: Record<CostPointId, { label: string; note: string }>;
+      };
+      journey: {
+        ariaLabel: string;
+        exampleTag: string;
+        questionLabel: string;
+        outputLabel: string;
+        skippedLabel: string;
+        exampleLabel: string;
+        stages: Record<StageId, { title: string; question: string; output: string; skipped: string; example: string }>;
+      };
+      models: {
+        replay: string;
+        whenLabel: string;
+        watchLabel: string;
+        items: Record<ModelId, { name: string; how: string; when: string; watch: string }>;
+      };
+      whoWhen: {
+        caption: string;
+        roleHeader: string;
+        lead: string;
+        involved: string;
+        none: string;
+        roles: Record<WhoId, string>;
+      };
+      metrics: {
+        note: string;
+        items: Record<MetricId, { name: string; meaning: string }>;
+      };
+      bridge: {
+        painLabel: string;
+        howLabel: string;
+        items: Record<BridgeId, { pain: string; how: string }>;
+      };
     };
     trace: {
       ariaLabel: string;

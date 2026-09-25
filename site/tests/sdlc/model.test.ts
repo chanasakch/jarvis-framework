@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { areaPath, chartPoints, COST_VALUES, smoothPath } from "@/lib/sdlc/chart";
+
 import type { Agent, SlashCommand, Workflow } from "@/lib/generated/schemas";
 import {
   arcPath,
@@ -15,6 +17,10 @@ import {
   compactPaths,
   validateLifecycle,
   validateRoles,
+  COST_POINT_IDS,
+  STAGE_IDS,
+  WHO_IDS,
+  WHO_WHEN,
 } from "@/lib/sdlc/model";
 
 const phase = (
@@ -232,5 +238,45 @@ describe("hydration safety", () => {
       const { x, y } = polar(stageAngle(i, 6));
       for (const n of [x, y]) expect(String(n).split(".")[1]?.length ?? 0).toBeLessThanOrEqual(3);
     }
+  });
+});
+
+describe("business explainer data", () => {
+  it("has a role-by-stage row for every role, and someone leads every stage", () => {
+    for (const role of WHO_IDS) {
+      expect(Object.keys(WHO_WHEN[role]).sort()).toEqual([...STAGE_IDS].sort());
+    }
+    for (const stage of STAGE_IDS) {
+      const leaders = WHO_IDS.filter((r) => WHO_WHEN[r][stage] === 2);
+      expect(leaders.length, `${stage} has no leading role`).toBeGreaterThan(0);
+    }
+  });
+
+  it("orders the cost points by when a problem is found, and the cost never falls", () => {
+    expect([...COST_POINT_IDS]).toEqual(["discover", "define", "design", "build", "verify", "ship", "live"]);
+    const values = COST_POINT_IDS.map((id) => COST_VALUES[id]);
+    expect(values).toEqual([...values].sort((a, b) => a - b));
+  });
+});
+
+describe("cost chart geometry", () => {
+  it("puts later points further right and higher up the chart (smaller y)", () => {
+    const pts = chartPoints();
+    expect(pts).toHaveLength(7);
+    for (let i = 1; i < pts.length; i++) {
+      expect(pts[i]!.x).toBeGreaterThan(pts[i - 1]!.x);
+      expect(pts[i]!.y).toBeLessThan(pts[i - 1]!.y);
+    }
+  });
+
+  it("builds one Bezier segment per gap and closes the area to the baseline", () => {
+    const pts = chartPoints();
+    expect((smoothPath(pts).match(/ C /g) ?? []).length).toBe(pts.length - 1);
+    expect(areaPath(pts)).toMatch(/ Z$/);
+  });
+
+  it("emits no number with more than one decimal, so server and browser print the same", () => {
+    const numbers = (areaPath(chartPoints()).match(/-?\d+(\.\d+)?/g) ?? []).map(String);
+    for (const n of numbers) expect(n.split(".")[1]?.length ?? 0).toBeLessThanOrEqual(1);
   });
 });

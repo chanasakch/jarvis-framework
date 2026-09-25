@@ -6,6 +6,13 @@ import { StatusBadge } from "@/components/mdx/status-badge";
 import { Callout } from "@/components/mdx/callout";
 import { File, Folder, FileTree } from "@/components/mdx/file-tree";
 import { Step, Steps } from "@/components/mdx/steps";
+import { SdlcAnalogy } from "@/components/sdlc/analogy";
+import { BusinessJourney } from "@/components/sdlc/business-journey";
+import { CostCurve } from "@/components/sdlc/cost-curve";
+import { JarvisBridge } from "@/components/sdlc/jarvis-bridge";
+import { DoraMetrics } from "@/components/sdlc/metrics";
+import { ModelsCompare } from "@/components/sdlc/models-compare";
+import { WhoWhen } from "@/components/sdlc/who-when";
 import { RoleMap } from "@/components/sdlc/role-map";
 import { SdlcLifecycle } from "@/components/sdlc/sdlc-lifecycle";
 import { TraceChain } from "@/components/sdlc/trace-chain";
@@ -90,5 +97,12 @@ export function getMdxComponents(locale: Locale) {
   SdlcLifecycle: () => <SdlcLifecycle dict={getDictionary(locale)} />,
   RoleMap: () => <RoleMap dict={getDictionary(locale)} />,
   TraceChain: () => <TraceChain dict={getDictionary(locale)} />,
+  SdlcAnalogy: () => <SdlcAnalogy dict={getDictionary(locale)} />,
+  CostCurve: () => <CostCurve dict={getDictionary(locale)} />,
+  BusinessJourney: () => <BusinessJourney dict={getDictionary(locale)} />,
+  ModelsCompare: () => <ModelsCompare dict={getDictionary(locale)} />,
+  WhoWhen: () => <WhoWhen dict={getDictionary(locale)} />,
+  DoraMetrics: () => <DoraMetrics dict={getDictionary(locale)} />,
+  JarvisBridge: () => <JarvisBridge dict={getDictionary(locale)} />,
   };
 }

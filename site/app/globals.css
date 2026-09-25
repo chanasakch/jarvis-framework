@@ -102,6 +102,9 @@
   /* A marker gliding from one lifecycle stage to the next: long enough to follow by eye,
      short enough that autoplay never feels like it is waiting on the animation. */
   --motion-travel: 700ms;
+  /* The SDLC explainer's drawn-in lines and charts: a curve that draws over about a second
+     and a half reads as being drawn; faster reads as a flash. Every use plays once. */
+  --motion-chart: 1500ms;
 
   --radius: 0.625rem;
 
@@ -363,6 +366,115 @@
   [data-seen="true"] .trace-node:not(:last-child)::after {
     animation-name: trace-draw-x;
   }
+}
+
+/* SDLC business explainer (/docs/sdlc, before the Jarvis lifecycle).
+ *
+ * Everything here plays ONCE, when its section scrolls into view, and finishes within a few
+ * seconds: nothing loops, so none of it is moving content a reader would need a pause control
+ * for (WCAG 2.2.2). A section's root carries data-seen="false"/"true" (hooks/use-in-view.ts).
+ * Before it flips, and without JavaScript, every element is fully visible, so the content never
+ * depends on the animation having run. Under reduced motion the global rule below collapses
+ * each animation to its final frame.
+ */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes reveal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fade-in-soft {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes chart-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes dot-travel {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+/* --i is the element's index; 5 x --motion-stagger spaces a list so it reads as a sequence. */
+[data-seen="true"] .reveal {
+  animation: reveal-up var(--motion-travel) ease-out both;
+  animation-delay: calc(var(--i, 0) * 5 * var(--motion-stagger));
+}
+/* Timeline cards reveal individually as each one scrolls in (no shared data-seen root). */
+.journey-card {
+  animation: reveal-up var(--motion-travel) ease-out both;
+}
+[data-seen="true"] .reveal-pop {
+  animation: reveal-pop var(--motion-base) ease-out both;
+  animation-delay: calc(var(--i, 0) * 4 * var(--motion-stagger));
+  transform-origin: center;
+  transform-box: fill-box;
+}
+[data-seen="true"] .chart-draw {
+  stroke-dasharray: 1;
+  animation: chart-draw var(--motion-chart) ease-out both;
+}
+[data-seen="true"] .chart-fade {
+  animation: fade-in-soft var(--motion-chart) ease-out both;
+  animation-delay: 350ms;
+}
+/* Delivery-model diagrams: each has one small sequence of its own. */
+.model-bar {
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+[data-seen="true"] .model-bar {
+  animation: bar-grow 480ms ease-out both;
+  animation-delay: calc(var(--i, 0) * 260ms);
+}
+[data-seen="true"] .model-ring {
+  stroke-dasharray: 1;
+  animation: chart-draw 720ms ease-out both;
+  animation-delay: calc(var(--i, 0) * 620ms);
+}
+[data-seen="true"] .model-loop {
+  stroke-dasharray: 1;
+  animation: chart-draw 1900ms ease-in-out both;
+}
+[data-seen="true"] .model-dot {
+  /* Two laps of the loop, about 3.8s in all, then it rests. */
+  animation: dot-travel 1900ms linear 2 both;
+  animation-delay: 300ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
