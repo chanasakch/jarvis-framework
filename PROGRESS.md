@@ -31,6 +31,17 @@ Engine and plumbing:
 Verified: 72/72 script tests (9 new), audit 9/9, `pack.js` regenerated, site content regenerates
 with no site edit (D-045's auto-discovery).
 
+## SDLC process page — COMPLETE (2026-09-25)
+
+`/docs/sdlc` (EN + TH) and a lifecycle section on the landing page: an animated six-stage ring
+whose agents, outputs and approval points are read from the generated `feature` workflow, a
+16-role map, a traceability chain, and the loops that make it a cycle. See DECISIONS.md D-052.
+
+Also fixed on the way: 16 untranslated generated keys from D-049 (now 152/152), and an install
+command (`npx jarvis-framework init`) that never worked, now `npx github:chanasakch/jarvis-framework init`.
+
+Verified: 28 unit tests, 118 e2e + axe (both themes, both locales), typecheck, lint, link check.
+
 ## Framework — COMPLETE (steps 0–15, 17; 16 skipped — needs a real project)
 
 See commits `jarvis: step 0` … `jarvis: step 17` and `jarvis: settings.json`.
