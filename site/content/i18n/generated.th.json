@@ -134,5 +134,21 @@
   "workflow:performance.description": "ปรับความเร็วหรือการใช้ทรัพยากรโดยวัดผลได้ ต้องมีหลักฐาน before/after เสมอ",
   "workflow:refactor.description": "เปลี่ยนโครงสร้างภายในโดยไม่เปลี่ยนพฤติกรรม ต้องมีหลักฐาน parity เสมอ",
   "workflow:security.description": "แก้ช่องโหว่หรือ hardening ระบบ `review.security.critical` อยู่ใน `gates.non_forceable` ของ `jarvis.config.yaml` การ force ผ่าน gate นี้จึงต้องใส่ `--accept-risk` ด้วย",
-  "workflow:spike.description": "งานค้นคว้าที่จำกัดเวลา จบที่ investigation ไม่มีโค้ด production และไม่มี phase implement ผลลัพธ์คือ spike-report.md กับ ADR ฉบับร่าง ถ้าจะทำต่อให้สร้าง work item ใหม่แยกด้วย `jarvis.js new`"
+  "workflow:spike.description": "งานค้นคว้าที่จำกัดเวลา จบที่ investigation ไม่มีโค้ด production และไม่มี phase implement ผลลัพธ์คือ spike-report.md กับ ADR ฉบับร่าง ถ้าจะทำต่อให้สร้าง work item ใหม่แยกด้วย `jarvis.js new`",
+  "command:jarvis-health.description": "รันการตรวจสุขภาพ codebase ข้ามทั้ง repo ได้แก่ architecture drift, tech debt และความสอดคล้องระหว่าง feature ตลอดเวลา ไม่ผูกกับ work item ใด",
+  "command:jarvis-health.bodyExcerpt": "รันการตรวจสุขภาพ codebase โดยมอบหมายให้ `jarvis-staff` งานนี้ไม่ใช่ work item และไม่มี gate ห้ามรัน `jarvis new`, `set` หรือ `validate` กับมัน",
+  "command:jarvis-portfolio.description": "ภาพรวมข้าม work item ได้แก่สถานะ roadmap, dependency, ความเสี่ยง และไฟล์ที่ชนกัน ของทุก work item ของ Jarvis ที่ยังทำอยู่",
+  "command:jarvis-portfolio.bodyExcerpt": "สรุป portfolio ข้างบนเป็นรายงานแบบ PM สั้น ๆ ตัวเลขทุกตัวมาจาก JSON ห้ามประเมินเอง ห้ามอนุมานสถานะที่ CLI ไม่ได้รายงาน และห้ามรันงานของ phase จากคำสั่งนี้",
+  "cli:portfolio.description": "ทุก item ที่ยังทำอยู่: phase, อายุ, dependency, ความเสี่ยง, ไฟล์ที่ชนกัน",
+  "cli:link.description": "บันทึก dependency ข้าม work item",
+  "cli:health.description": "อายุของ codebase health report (ดู /jarvis-health)",
+  "agent:jarvis-devops.description": "phase Architecture และ Release: เขียน infra-plan.md (CI/CD, IaC, กลยุทธ์การ deploy, SLO และ alert) และ deploy-plan.md (การ promote ข้าม environment, ตรวจก่อนและหลัง deploy, ซ้อม rollback) ทำงานเฉพาะเมื่อ work item ตั้ง flag has_infra_change เป็น true",
+  "agent:jarvis-devops.role": "ออกแบบ pipeline, infrastructure และ observability ที่การเปลี่ยนแปลงต้องใช้ ไม่แตะตัวแอปพลิเคชัน",
+  "agent:jarvis-review-devops.description": "phase Review: เขียน review/devops.md ตรวจ diff ในเรื่องความปลอดภัยของ CI/CD, การ pin เวอร์ชัน, สิทธิ์ของ CI, การจัดการ secret, IaC และ state, การย้อน deploy ได้, probe, resource limit และ observability ทำงานเฉพาะเมื่อ work item ตั้ง flag has_infra_change เป็น true",
+  "agent:jarvis-review-devops.role": "ตรวจเฉพาะ diff ที่ระบุใน Handoff Brief หาข้อบกพร่องด้าน CI/CD, infrastructure-as-code, การ deploy และ observability",
+  "agent:jarvis-staff.description": "สุขภาพ codebase ข้ามทั้ง repo: เขียน architecture-health report ลงวันที่ เรื่อง drift จาก ADR, ความไม่สอดคล้องระหว่าง feature, มาตรฐานที่เริ่มหย่อน และไฟล์ที่ถูกแก้บ่อย พร้อมดูแล tech-debt register ทำงานเมื่อสั่งผ่าน /jarvis-health โดยไม่ผูกกับ work item ใด",
+  "agent:jarvis-staff.role": "ตรวจ codebase ทั้งก้อนตามช่วงเวลา ไม่ใช่ diff เดียว",
+  "config:review.conditional_reviewers.has_infra_change.description": "reviewer ด้าน devops เพิ่มเข้ามาเฉพาะเมื่อ work item แตะ CI, infra หรือ config การ deploy",
+  "config:staff_review.max_age_days.description": "report จาก /jarvis-health ที่เก่ากว่านี้ status จะรายงานว่าเก่าเกินไป",
+  "standard:devops.summary": "กำกับ pipeline CI/CD, infrastructure-as-code, การ deploy และ observability ที่การเปลี่ยนแปลงต้องส่งมอบไปพร้อมกัน"
 }
