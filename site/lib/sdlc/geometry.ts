@@ -21,17 +21,26 @@ export function stageAngle(index: number, count: number): number {
   return -90 + (360 / count) * index;
 }
 
+/**
+ * Rounds to three decimals (0.001 of a 100-unit viewBox, far below a pixel). Every number
+ * this file hands to the markup goes through it, and that is a correctness rule, not
+ * tidiness: these components render on the server and again in the browser, and
+ * `Math.sin`/`Math.cos` are not guaranteed to agree to the last bit between Node and a
+ * given browser. A raw `21.42116167511353` on one side and `21.421161675113535` on the
+ * other is a React hydration mismatch on the SVG `transform` attribute (DECISIONS.md D-053).
+ * Rounding first makes both sides print the same string.
+ */
+const fmt = (n: number) => Number(n.toFixed(3));
+
 export function polar(
   angleDeg: number,
   radius: number = RING_RADIUS,
 ): { x: number; y: number } {
   return {
-    x: CENTER + radius * Math.cos(rad(angleDeg)),
-    y: CENTER + radius * Math.sin(rad(angleDeg)),
+    x: fmt(CENTER + radius * Math.cos(rad(angleDeg))),
+    y: fmt(CENTER + radius * Math.sin(rad(angleDeg))),
   };
 }
-
-const fmt = (n: number) => Number(n.toFixed(3));
 
 /** SVG arc from one angle to another around the centre; `clockwise` picks the sweep. */
 export function arcPath(

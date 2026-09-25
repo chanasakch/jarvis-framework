@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { Agent, SlashCommand, Workflow } from "@/lib/generated/schemas";
 import {
   arcPath,
+  connectorChevron,
   connectorPath,
   polar,
   rotationDelta,
@@ -194,5 +195,42 @@ describe("compactPaths", () => {
     const joined = compactPaths(files).join(" ");
     for (const name of ["a", "b", "c", "d"]) expect(joined).toContain(name);
     expect(joined).toContain("x.md");
+  });
+});
+
+describe("hydration safety", () => {
+  // The lifecycle renders on the server and again in the browser. Math.sin and Math.cos
+  // are not guaranteed to agree to the last bit between Node and a given browser, and a
+  // one-digit difference in an SVG attribute is a React hydration mismatch (D-053). So every
+  // number geometry hands to the markup must survive a last-bit change in sin and cos.
+  const snapshot = () => {
+    const out: unknown[] = [];
+    for (let i = 0; i < 6; i++) {
+      out.push(polar(stageAngle(i, 6)), connectorPath(i, 6), connectorChevron(i, 6));
+    }
+    out.push(polar(stageAngle(3, 6) + 9, 18.5), arcPath(stageAngle(4, 6) - 9, stageAngle(3, 6) + 9, 18.5, false));
+    return JSON.stringify(out);
+  };
+
+  it("renders the same markup values when sin and cos differ in their last bits", () => {
+    const exact = snapshot();
+    const sin = Math.sin;
+    const cos = Math.cos;
+    // About two ulps: what a different engine or libm can legitimately return.
+    const sinSpy = vi.spyOn(Math, "sin").mockImplementation((x) => sin(x) * (1 + 4e-16));
+    const cosSpy = vi.spyOn(Math, "cos").mockImplementation((x) => cos(x) * (1 - 4e-16));
+    try {
+      expect(snapshot()).toBe(exact);
+    } finally {
+      sinSpy.mockRestore();
+      cosSpy.mockRestore();
+    }
+  });
+
+  it("emits no coordinate with more than three decimals", () => {
+    for (let i = 0; i < 6; i++) {
+      const { x, y } = polar(stageAngle(i, 6));
+      for (const n of [x, y]) expect(String(n).split(".")[1]?.length ?? 0).toBeLessThanOrEqual(3);
+    }
   });
 });
