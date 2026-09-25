@@ -54,6 +54,20 @@ for (const path of ["/docs/sdlc", "/th/docs/sdlc", "/", "/th"]) {
     expect(count, "the lifecycle should offer six stages").toBe(6);
     for (let i = 0; i < count; i++) {
       await stages.nth(i).click();
+      // Freeze every running transition halfway. The marker's layer turns about the ring's
+      // centre, and the box that encloses a turning square is widest mid-turn, so this is
+      // the worst moment to measure. Left to run, the check depends on machine speed: a fast
+      // laptop measures after the turn has finished and passes, a slower CI runner measures
+      // during it and fails (which is how this was found).
+      await page.waitForTimeout(60);
+      await page.evaluate(() => {
+        for (const a of document.getAnimations()) {
+          if (a instanceof CSSTransition) {
+            a.pause();
+            a.currentTime = 350;
+          }
+        }
+      });
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - window.innerWidth,
       );

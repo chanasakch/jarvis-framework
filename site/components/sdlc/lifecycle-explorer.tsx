@@ -39,7 +39,6 @@ export interface StageData {
   optional: { phase: string; flag: string }[];
 }
 
-
 /** Time on each stage while the walkthrough plays. Long enough to read the stage's
  *  headline; the reader can pause or pick a stage at any time. */
 const AUTOPLAY_MS = 5200;
@@ -159,7 +158,10 @@ function StagePanel({
         <Field label={L.producesLabel}>
           <ul className="flex flex-wrap gap-x-3 gap-y-1">
             {compactPaths(stage.outputs).map((o) => (
-              <li key={o} className="font-mono text-xs break-all text-muted-foreground">
+              <li
+                key={o}
+                className="font-mono text-xs break-all text-muted-foreground"
+              >
                 {o}
               </li>
             ))}
@@ -399,16 +401,26 @@ export function LifecycleExplorer({
             </div>
 
             {/* The work item. It turns about the ring's centre, so it glides from stage to
-                stage along the inner edge and keeps going forward through the wrap. */}
+                stage along the inner edge and keeps going forward through the wrap.
+                The turning layer is a full-size square, and the box that encloses a turning
+                square is up to 1.41x wider than the square (506px for a 358px ring, at 45
+                degrees). A transformed box counts toward the page's scrollable width, so on a
+                phone that made the page scroll sideways for the length of every turn. The
+                clip keeps that box out of the page's overflow; the pin itself sits well inside
+                the ring and is never cut (DECISIONS.md D-054). */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 transition-transform duration-(--motion-travel) ease-in-out"
-              style={{ transform: `rotate(${pos.rotation}deg)` }}
+              className="pointer-events-none absolute inset-0 overflow-clip"
             >
-              <span
-                className="absolute left-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand ring-4 ring-brand/25"
-                style={{ top: `${CENTER - PIN_RADIUS}%` }}
-              />
+              <div
+                className="absolute inset-0 transition-transform duration-(--motion-travel) ease-in-out"
+                style={{ transform: `rotate(${pos.rotation}deg)` }}
+              >
+                <span
+                  className="absolute left-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand ring-4 ring-brand/25"
+                  style={{ top: `${CENTER - PIN_RADIUS}%` }}
+                />
+              </div>
             </div>
 
             <TabsPrimitive.List
