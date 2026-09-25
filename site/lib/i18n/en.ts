@@ -94,6 +94,18 @@ export const en: Dictionary = {
       copyInstall: "Copy install command",
       copied: "Copied",
     },
+    meet: {
+      eyebrow: "Meet Jarvis",
+      heading: "One command runs the whole lifecycle.",
+      body: "Type /jarvis and it takes it from there. It never approves its own work: at every gate it stops and waits for a person.",
+      steps: [
+        { title: "Reads the state", body: "It looks up where the work item stands before it does anything, so a session can pick up exactly where the last one stopped." },
+        { title: "Hands off to a specialist", body: "The next phase goes to the agent that owns it: analyst, architect, developer, tester, reviewer." },
+        { title: "Stops at the gate", body: "A script and a gatekeeper agent check the result. Approving, forcing or skipping stay human commands." },
+      ],
+      pause: "Pause animation",
+      play: "Play animation",
+    },
     problem: {
       heading: "The problem, and the approach",
       problemLabel: "The problem",

@@ -112,6 +112,14 @@ export interface Dictionary {
       copyInstall: string;
       copied: string;
     };
+    meet: {
+      eyebrow: string;
+      heading: string;
+      body: string;
+      steps: { title: string; body: string }[];
+      pause: string;
+      play: string;
+    };
     problem: {
       heading: string;
       problemLabel: string;

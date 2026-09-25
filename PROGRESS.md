@@ -214,3 +214,6 @@ Verification after every fix: `tsc`, `eslint`, vitest, `npm run build`, `check:l
 - `jarvis.js doctor --list --json` — blocked by this repo's own `guard.js` hooks
   protecting `.jarvis/scripts/**` outside `JARVIS_DEV=1`; non-blocking, worked around in
   the site by parsing `doctor()`'s source directly (`parse-requirements.ts`).
+
+## Meet Jarvis section (D-059)
+- Landing page has a separate "Meet Jarvis" section with a rotating 3D orb whose core pulses, with a pause button. Replaces the abandoned hero-backdrop attempt. Committed locally, not pushed.
